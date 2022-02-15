@@ -5,6 +5,7 @@
 #include "d3dApp.h"
 #include <WindowsX.h>
 
+
 using Microsoft::WRL::ComPtr;
 using namespace std;
 using namespace DirectX;
