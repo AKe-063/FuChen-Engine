@@ -1,5 +1,8 @@
 #pragma once
 
+#include "DXSampleHelper.h"
+#include "Win32Application.h"
+
 class DXSample
 {
 public:
@@ -10,6 +13,10 @@ public:
 	virtual void OnUpdate() = 0;
 	virtual void OnRender() = 0;
 	virtual void OnDestroy() = 0;
+
+	// Samples override the event handlers to handle specific messages.
+	virtual void OnKeyDown(UINT8 /*key*/) {}
+	virtual void OnKeyUp(UINT8 /*key*/) {}
 
 	// 访问成员函数
 	UINT GetWidth() const { return m_width; }
