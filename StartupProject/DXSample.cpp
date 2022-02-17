@@ -20,22 +20,7 @@ DXSample::~DXSample()
 {
 }
 
-// Helper function for parsing any supplied command line args.
-_Use_decl_annotations_
-void DXSample::ParseCommandLineArgs(_In_reads_(argc) WCHAR* argv[], int argc)
-{
-	for (int i = 1; i < argc; ++i)
-	{
-		if (_wcsnicmp(argv[i], L"-warp", wcslen(argv[i])) == 0 ||
-			_wcsnicmp(argv[i], L"/warp", wcslen(argv[i])) == 0)
-		{
-			m_useWarpDevice = true;
-			m_title = m_title + L"(WARP)";
-		}
-	}
-}
-
-//解析资源完整路径
+// Helper function for resolving the full path of assets.
 std::wstring DXSample::GetAssetFullPath(LPCWSTR assetName)
 {
 	return m_assetsPath + assetName;
@@ -44,7 +29,10 @@ std::wstring DXSample::GetAssetFullPath(LPCWSTR assetName)
 // Helper function for acquiring the first available hardware adapter that supports Direct3D 12.
 // If no such adapter can be found, *ppAdapter will be set to nullptr.
 _Use_decl_annotations_
-void DXSample::GetHardwareAdapter(_In_ IDXGIFactory1* pFactory, _Outptr_result_maybenull_ IDXGIAdapter1** ppAdapter, bool requestHighPerformanceAdapter /*= false*/)
+void DXSample::GetHardwareAdapter(
+	IDXGIFactory1* pFactory,
+	IDXGIAdapter1** ppAdapter,
+	bool requestHighPerformanceAdapter)
 {
 	*ppAdapter = nullptr;
 
@@ -57,7 +45,7 @@ void DXSample::GetHardwareAdapter(_In_ IDXGIFactory1* pFactory, _Outptr_result_m
 			UINT adapterIndex = 0;
 			SUCCEEDED(factory6->EnumAdapterByGpuPreference(
 				adapterIndex,
-				requestHighPerformanceAdapter == true ? DXGI_GPU_PREFERENCE_HIGH_PERFORMANCE : DXGI_GPU_PREFERENCE_UNSPECIFIED, 
+				requestHighPerformanceAdapter == true ? DXGI_GPU_PREFERENCE_HIGH_PERFORMANCE : DXGI_GPU_PREFERENCE_UNSPECIFIED,
 				IID_PPV_ARGS(&adapter)));
 			++adapterIndex)
 		{
@@ -82,7 +70,7 @@ void DXSample::GetHardwareAdapter(_In_ IDXGIFactory1* pFactory, _Outptr_result_m
 
 	if (adapter.Get() == nullptr)
 	{
-		for (UINT adapterIndex = 0; SUCCEEDED(pFactory->EnumAdapters1(adapterIndex,&adapter)); ++adapterIndex)
+		for (UINT adapterIndex = 0; SUCCEEDED(pFactory->EnumAdapters1(adapterIndex, &adapter)); ++adapterIndex)
 		{
 			DXGI_ADAPTER_DESC1 desc;
 			adapter->GetDesc1(&desc);
@@ -106,7 +94,25 @@ void DXSample::GetHardwareAdapter(_In_ IDXGIFactory1* pFactory, _Outptr_result_m
 	*ppAdapter = adapter.Detach();
 }
 
+// Helper function for setting the window's title text.
 void DXSample::SetCustomWindowText(LPCWSTR text)
 {
-
+	std::wstring windowText = m_title + L": " + text;
+	SetWindowText(Win32Application::GetHwnd(), windowText.c_str());
 }
+
+// Helper function for parsing any supplied command line args.
+_Use_decl_annotations_
+void DXSample::ParseCommandLineArgs(WCHAR* argv[], int argc)
+{
+	for (int i = 1; i < argc; ++i)
+	{
+		if (_wcsnicmp(argv[i], L"-warp", wcslen(argv[i])) == 0 ||
+			_wcsnicmp(argv[i], L"/warp", wcslen(argv[i])) == 0)
+		{
+			m_useWarpDevice = true;
+			m_title = m_title + L" (WARP)";
+		}
+	}
+}
+

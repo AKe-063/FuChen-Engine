@@ -2,7 +2,7 @@
 #include "D3D12HelloWindow.h"
 
 D3D12HelloWindow::D3D12HelloWindow(UINT width, UINT height, std::wstring name) :
-	DXSample(width,height,name),
+	DXSample(width, height, name),
 	m_frameIndex(0),
 	m_rtvDescriptorSize(0)
 {
@@ -14,35 +14,6 @@ void D3D12HelloWindow::OnInit()
 	LoadAssets();
 }
 
-void D3D12HelloWindow::OnUpdate()
-{
-
-}
-
-void D3D12HelloWindow::OnRender()
-{
-	// Record all the commands we need to render the scene into the command list.
-	PopulateCommandList();
-
-	// Execute the command list.
-	ID3D12CommandList* ppCommandLists[] = { m_commandList.Get() };
-	m_commandQueue->ExecuteCommandLists(_countof(ppCommandLists), ppCommandLists);
-
-	//Present the frame
-	ThrowIfFailed(m_swapChain->Present(1, 0));
-
-	WaitForPreviousFrame();
-}
-
-void D3D12HelloWindow::OnDestroy()
-{
-	// Ensure that the GPU is no longer referencing resources that are about to be
-	// cleaned up by the destructor.
-	WaitForPreviousFrame();
-
-	CloseHandle(m_fenceEvent);
-}
-
 // Load the rendering pipeline dependencies.
 void D3D12HelloWindow::LoadPipeline()
 {
@@ -50,13 +21,14 @@ void D3D12HelloWindow::LoadPipeline()
 
 #if defined(_DEBUG)
 	// Enable the debug layer (requires the Graphics Tools "optional feature").
+	// NOTE: Enabling the debug layer after device creation will invalidate the active device.
 	{
 		ComPtr<ID3D12Debug> debugController;
 		if (SUCCEEDED(D3D12GetDebugInterface(IID_PPV_ARGS(&debugController))))
 		{
 			debugController->EnableDebugLayer();
 
-			//Enable additional debug layers.
+			// Enable additional debug layers.
 			dxgiFactoryFlags |= DXGI_CREATE_FACTORY_DEBUG;
 		}
 	}
@@ -95,7 +67,7 @@ void D3D12HelloWindow::LoadPipeline()
 
 	ThrowIfFailed(m_device->CreateCommandQueue(&queueDesc, IID_PPV_ARGS(&m_commandQueue)));
 
-	//Describe and create the swap chain.
+	// Describe and create the swap chain.
 	DXGI_SWAP_CHAIN_DESC1 swapChainDesc = {};
 	swapChainDesc.BufferCount = FrameCount;
 	swapChainDesc.Width = m_width;
@@ -107,7 +79,7 @@ void D3D12HelloWindow::LoadPipeline()
 
 	ComPtr<IDXGISwapChain1> swapChain;
 	ThrowIfFailed(factory->CreateSwapChainForHwnd(
-		m_commandQueue.Get(),
+		m_commandQueue.Get(),        // Swap chain needs the queue so that it can force a flush on it.
 		Win32Application::GetHwnd(),
 		&swapChainDesc,
 		nullptr,
@@ -121,7 +93,7 @@ void D3D12HelloWindow::LoadPipeline()
 	ThrowIfFailed(swapChain.As(&m_swapChain));
 	m_frameIndex = m_swapChain->GetCurrentBackBufferIndex();
 
-	//Create desctiptor heaps.
+	// Create descriptor heaps.
 	{
 		// Describe and create a render target view (RTV) descriptor heap.
 		D3D12_DESCRIPTOR_HEAP_DESC rtvHeapDesc = {};
@@ -133,7 +105,7 @@ void D3D12HelloWindow::LoadPipeline()
 		m_rtvDescriptorSize = m_device->GetDescriptorHandleIncrementSize(D3D12_DESCRIPTOR_HEAP_TYPE_RTV);
 	}
 
-	//Create frame resources
+	// Create frame resources.
 	{
 		CD3DX12_CPU_DESCRIPTOR_HANDLE rtvHandle(m_rtvHeap->GetCPUDescriptorHandleForHeapStart());
 
@@ -149,7 +121,7 @@ void D3D12HelloWindow::LoadPipeline()
 	ThrowIfFailed(m_device->CreateCommandAllocator(D3D12_COMMAND_LIST_TYPE_DIRECT, IID_PPV_ARGS(&m_commandAllocator)));
 }
 
-//Load the sample assets.
+// Load the sample assets.
 void D3D12HelloWindow::LoadAssets()
 {
 	// Create the command list.
@@ -159,18 +131,48 @@ void D3D12HelloWindow::LoadAssets()
 	// to record yet. The main loop expects it to be closed, so close it now.
 	ThrowIfFailed(m_commandList->Close());
 
-	//Create synchronization objects.
+	// Create synchronization objects.
 	{
 		ThrowIfFailed(m_device->CreateFence(0, D3D12_FENCE_FLAG_NONE, IID_PPV_ARGS(&m_fence)));
 		m_fenceValue = 1;
 
-		//Create an event handle to ues for frame synachronization.
+		// Create an event handle to use for frame synchronization.
 		m_fenceEvent = CreateEvent(nullptr, FALSE, FALSE, nullptr);
 		if (m_fenceEvent == nullptr)
 		{
 			ThrowIfFailed(HRESULT_FROM_WIN32(GetLastError()));
 		}
 	}
+}
+
+// Update frame-based values.
+void D3D12HelloWindow::OnUpdate()
+{
+}
+
+// Render the scene.
+void D3D12HelloWindow::OnRender()
+{
+	// Record all the commands we need to render the scene into the command list.
+	PopulateCommandList();
+
+	// Execute the command list.
+	ID3D12CommandList* ppCommandLists[] = { m_commandList.Get() };
+	m_commandQueue->ExecuteCommandLists(_countof(ppCommandLists), ppCommandLists);
+
+	// Present the frame.
+	ThrowIfFailed(m_swapChain->Present(1, 0));
+
+	WaitForPreviousFrame();
+}
+
+void D3D12HelloWindow::OnDestroy()
+{
+	// Ensure that the GPU is no longer referencing resources that are about to be
+	// cleaned up by the destructor.
+	WaitForPreviousFrame();
+
+	CloseHandle(m_fenceEvent);
 }
 
 void D3D12HelloWindow::PopulateCommandList()
@@ -185,17 +187,17 @@ void D3D12HelloWindow::PopulateCommandList()
 	// re-recording.
 	ThrowIfFailed(m_commandList->Reset(m_commandAllocator.Get(), m_pipelineState.Get()));
 
-	//Indicate that the back buffer will be used as a render target.
+	// Indicate that the back buffer will be used as a render target.
 	m_commandList->ResourceBarrier(1, &CD3DX12_RESOURCE_BARRIER::Transition(m_renderTargets[m_frameIndex].Get(), D3D12_RESOURCE_STATE_PRESENT, D3D12_RESOURCE_STATE_RENDER_TARGET));
 
 	CD3DX12_CPU_DESCRIPTOR_HANDLE rtvHandle(m_rtvHeap->GetCPUDescriptorHandleForHeapStart(), m_frameIndex, m_rtvDescriptorSize);
 
-	//Record commands
-	const float clearColor[] = { 0.0f,0.2f,0.4f,1.0f };
+	// Record commands.
+	const float clearColor[] = { 0.5f, 0.2f, 0.35f, 0.3f };
 	m_commandList->ClearRenderTargetView(rtvHandle, clearColor, 0, nullptr);
 
-	//Indicate that the back buffer will now be used to present.
-	m_commandList->ResourceBarrier(1, &CD3DX12_RESOURCE_BARRIER::Transition(m_renderTargets[m_frameIndex].Get(), D3D12_RESOURCE_STATE_PRESENT, D3D12_RESOURCE_STATE_RENDER_TARGET));
+	// Indicate that the back buffer will now be used to present.
+	m_commandList->ResourceBarrier(1, &CD3DX12_RESOURCE_BARRIER::Transition(m_renderTargets[m_frameIndex].Get(), D3D12_RESOURCE_STATE_RENDER_TARGET, D3D12_RESOURCE_STATE_PRESENT));
 
 	ThrowIfFailed(m_commandList->Close());
 }
@@ -212,7 +214,7 @@ void D3D12HelloWindow::WaitForPreviousFrame()
 	ThrowIfFailed(m_commandQueue->Signal(m_fence.Get(), fence));
 	m_fenceValue++;
 
-	//Wait until the previous frame is finished.
+	// Wait until the previous frame is finished.
 	if (m_fence->GetCompletedValue() < fence)
 	{
 		ThrowIfFailed(m_fence->SetEventOnCompletion(fence, m_fenceEvent));

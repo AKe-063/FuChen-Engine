@@ -7,5 +7,4 @@ INT WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, PSTR lpCmdLine,
 
 	D3D12HelloWindow sample(1280, 720, L"D3D12 Hello Window");
 	return Win32Application::Run(&sample, hInstance, nCmdShow);
-
 }
