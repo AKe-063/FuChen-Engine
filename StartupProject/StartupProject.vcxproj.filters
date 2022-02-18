@@ -47,5 +47,8 @@
     <ClInclude Include="Win32Application.h">
       <Filter>头文件</Filter>
     </ClInclude>
+    <ClInclude Include="d3dx12.h">
+      <Filter>头文件</Filter>
+    </ClInclude>
   </ItemGroup>
 </Project>
