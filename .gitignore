@@ -32,8 +32,6 @@ bld/
 [Oo]ut/
 [Ll]og/
 [Ll]ogs/
-!StartupProject/x64/Debug/shaders.hlsl
-!shaders.hlsl
 
 # Visual Studio 2015/2017 cache/options directory
 .vs/
