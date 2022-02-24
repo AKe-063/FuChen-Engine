@@ -5,10 +5,10 @@
 using namespace DirectX;
 using Microsoft::WRL::ComPtr;
 
-class D3D12HelloWindow : public DXSample
+class D3D12HelloDirect3D : public DXSample
 {
 public:
-	D3D12HelloWindow(UINT width, UINT height, std::wstring name);
+	D3D12HelloDirect3D(UINT width, UINT height, std::wstring name);
 
 	virtual void OnInit();
 	virtual void OnUpdate();

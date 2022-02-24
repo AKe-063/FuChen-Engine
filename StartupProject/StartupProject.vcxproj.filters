@@ -24,7 +24,7 @@
     <ClCompile Include="DXSample.cpp">
       <Filter>源文件</Filter>
     </ClCompile>
-    <ClCompile Include="D3D12HelloWindow.cpp">
+    <ClCompile Include="D3D12HelloDirect3D.cpp">
       <Filter>源文件</Filter>
     </ClCompile>
     <ClCompile Include="Win32Application.cpp">
@@ -41,7 +41,7 @@
     <ClInclude Include="DXSampleHelper.h">
       <Filter>头文件</Filter>
     </ClInclude>
-    <ClInclude Include="D3D12HelloWindow.h">
+    <ClInclude Include="D3D12HelloDirect3D.h">
       <Filter>头文件</Filter>
     </ClInclude>
     <ClInclude Include="Win32Application.h">

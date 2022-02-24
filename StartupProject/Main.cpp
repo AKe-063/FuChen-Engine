@@ -1,10 +1,10 @@
 #include "stdafx.h"
-#include "D3D12HelloWindow.h"
+#include "D3D12HelloDirect3D.h"
 
 _Use_decl_annotations_
 INT WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, PSTR lpCmdLine, INT nCmdShow)
 {
 
-	D3D12HelloWindow sample(1280, 720, L"D3D12 Hello Window");
+	D3D12HelloDirect3D sample(1280, 720, L"D3D12 Hello Window");
 	return Win32Application::Run(&sample, hInstance, nCmdShow);
 }
