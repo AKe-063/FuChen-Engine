@@ -133,6 +133,16 @@ void Camera::InitialView()
 	 mLook = RUL[2];
 }
 
+void Camera::Walk(const float& d)
+{
+
+}
+
+void Camera::Strafe(const float& d)
+{
+
+}
+
 XMMATRIX Camera::GetProj()
 {
 	return XMLoadFloat4x4(&mProj);
