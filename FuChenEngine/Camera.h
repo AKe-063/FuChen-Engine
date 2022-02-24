@@ -33,7 +33,7 @@ private:
 	XMFLOAT3 mUp = { 0.0f, 1.0f, 0.0f };
 	XMFLOAT3 mRight = { 1.0f, 0.0f, 0.0f };
 	XMFLOAT3 mLook = { 0.0f, 0.0f, 1.0f };
-	bool mViewDirty = true;
+	bool mViewDirty = false;
 	bool mViewNeedInit = true;
 
 	XMFLOAT4X4 mView = MathHelper::Identity4x4();
