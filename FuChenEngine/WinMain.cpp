@@ -12,7 +12,7 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE prevInstance,
 
 	try
 	{
-		StaticMesh theApp(hInstance, "D:/SeaStar/SecondStage/OutputMesh/ExportFile/SM_Chair.dat");
+		StaticMesh theApp(hInstance, "../FuChenEngine/ExportFile/SM_Chair.dat");
 		if (!theApp.Initialize())
 			return 0;
 

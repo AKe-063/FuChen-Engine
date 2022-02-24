@@ -24,6 +24,7 @@ private:
 	virtual void OnMouseDown(WPARAM btnState, int x, int y)override;
 	virtual void OnMouseUp(WPARAM btnState, int x, int y)override;
 	virtual void OnMouseMove(WPARAM btnState, int x, int y)override;
+	void OnKeyboardInput(const GameTimer& gt);
 
 	void BuildDescriptorHeaps();
 	void BuildConstantBuffers();

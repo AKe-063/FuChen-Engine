@@ -1,0 +1,33 @@
+{
+	"staticMeshesNum": 1,
+	"staticMeshes": [
+		{
+			"name": "SM_SkySphere",
+			"vertices": 2208,
+			"texcoords": 2,
+			"transform":
+			{
+				"rotation":
+				{
+					"x": 0,
+					"y": 0,
+					"z": 0,
+					"w": 1
+				},
+				"translation":
+				{
+					"x": 0,
+					"y": 0,
+					"z": 0
+				},
+				"scale3D":
+				{
+					"x": 400,
+					"y": 400,
+					"z": 400
+				}
+			}
+		}
+	],
+	"actorName": "ThirdPersonExampleMap_SkySphereBlueprint"
+}

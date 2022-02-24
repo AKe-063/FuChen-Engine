@@ -1,0 +1,33 @@
+{
+	"staticMeshesNum": 1,
+	"staticMeshes": [
+		{
+			"name": "MatineeCam_SM",
+			"vertices": 3202,
+			"texcoords": 1,
+			"transform":
+			{
+				"rotation":
+				{
+					"x": 0,
+					"y": 0,
+					"z": 0,
+					"w": 1
+				},
+				"translation":
+				{
+					"x": -1050.0025634765625,
+					"y": 390,
+					"z": 234.77687072753906
+				},
+				"scale3D":
+				{
+					"x": 1,
+					"y": 1,
+					"z": 1
+				}
+			}
+		}
+	],
+	"actorName": "ThirdPersonExampleMap_ThirdPersonCharacter_167"
+}

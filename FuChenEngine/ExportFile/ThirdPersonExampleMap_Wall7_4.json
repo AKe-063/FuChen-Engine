@@ -1,0 +1,33 @@
+{
+	"staticMeshesNum": 1,
+	"staticMeshes": [
+		{
+			"name": "1M_Cube",
+			"vertices": 24,
+			"texcoords": 2,
+			"transform":
+			{
+				"rotation":
+				{
+					"x": -9.4843207989470102e-06,
+					"y": -9.4843198894523084e-06,
+					"z": -0.70710676908493042,
+					"w": 0.70710670948028564
+				},
+				"translation":
+				{
+					"x": 1075.3343505859375,
+					"y": 0.016338951885700226,
+					"z": 530.2344970703125
+				},
+				"scale3D":
+				{
+					"x": 30,
+					"y": 0.5,
+					"z": 8
+				}
+			}
+		}
+	],
+	"actorName": "ThirdPersonExampleMap_Wall7_4"
+}

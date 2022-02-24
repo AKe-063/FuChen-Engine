@@ -83,11 +83,13 @@ void StaticMesh::OnResize()
 
 void StaticMesh::Update(const GameTimer& gt)
 {
+	OnKeyboardInput(gt);
 	// Convert Spherical to Cartesian coordinates.
-// 	float x = mRadius * sinf(mPhi) * cosf(mTheta);
-// 	float z = mRadius * sinf(mPhi) * sinf(mTheta);
-// 	float y = mRadius * cosf(mPhi);
-	XMVECTOR position = XMVectorSet( 100.0f,100.0f,-350.f,1.0f );
+	float x = mRadius * sinf(mPhi) * cosf(mTheta);
+	float z = mRadius * sinf(mPhi) * sinf(mTheta);
+	float y = mRadius * cosf(mPhi);
+	//XMVECTOR position = XMVectorSet( 100.0f,100.0f,-350.f,1.0f );
+	XMVECTOR position = XMVectorSet(x,y,z,1.0f);
 	mCamera.SetPosition(position);
 
 	// Build the view matrix.
@@ -214,6 +216,25 @@ void StaticMesh::OnMouseMove(WPARAM btnState, int x, int y)
 
 	mLastMousePos.x = x;
 	mLastMousePos.y = y;
+}
+
+void StaticMesh::OnKeyboardInput(const GameTimer& gt)
+{
+	const float dt = gt.DeltaTime();
+
+	if (GetAsyncKeyState('W') & 0x8000)
+		mCamera.Walk(10.0f * dt);
+
+	if (GetAsyncKeyState('S') & 0x8000)
+		mCamera.Walk(-10.0f * dt);
+
+	if (GetAsyncKeyState('A') & 0x8000)
+		mCamera.Strafe(-10.0f * dt);
+
+	if (GetAsyncKeyState('D') & 0x8000)
+		mCamera.Strafe(10.0f * dt);
+
+	mCamera.UpdateViewMatrix();
 }
 
 void StaticMesh::BuildDescriptorHeaps()

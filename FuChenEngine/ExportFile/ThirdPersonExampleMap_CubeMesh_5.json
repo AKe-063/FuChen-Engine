@@ -1,0 +1,33 @@
+{
+	"staticMeshesNum": 1,
+	"staticMeshes": [
+		{
+			"name": "1M_Cube_Chamfer",
+			"vertices": 138,
+			"texcoords": 2,
+			"transform":
+			{
+				"rotation":
+				{
+					"x": 0,
+					"y": 0,
+					"z": 0,
+					"w": 1
+				},
+				"translation":
+				{
+					"x": -290,
+					"y": -470,
+					"z": 202.280517578125
+				},
+				"scale3D":
+				{
+					"x": 2,
+					"y": 2,
+					"z": 1.5
+				}
+			}
+		}
+	],
+	"actorName": "ThirdPersonExampleMap_CubeMesh_5"
+}

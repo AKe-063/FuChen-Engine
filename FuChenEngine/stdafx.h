@@ -24,7 +24,7 @@
 #include <comdef.h>
 #include <float.h>
 #include <cmath>
-#include "Common/d3dx12.h"
+#include "../FuChenEngine/Common/d3dx12.h"
 
 #include "d3dUtil.h"
 #include "GameTimer.h"

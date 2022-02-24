@@ -1,0 +1,87 @@
+{
+	"staticMeshesNum": 3,
+	"staticMeshes": [
+		{
+			"name": "SM_MatPreviewMesh_02",
+			"vertices": 6736,
+			"texcoords": 2,
+			"transform":
+			{
+				"rotation":
+				{
+					"x": 0,
+					"y": 0,
+					"z": 0,
+					"w": 1
+				},
+				"translation":
+				{
+					"x": -1010,
+					"y": -160,
+					"z": 270
+				},
+				"scale3D":
+				{
+					"x": 1,
+					"y": 1,
+					"z": 1
+				}
+			}
+		},
+		{
+			"name": "SM_Rock",
+			"vertices": 664,
+			"texcoords": 1,
+			"transform":
+			{
+				"rotation":
+				{
+					"x": 0,
+					"y": 0,
+					"z": 0,
+					"w": 1
+				},
+				"translation":
+				{
+					"x": -440,
+					"y": -160,
+					"z": 30
+				},
+				"scale3D":
+				{
+					"x": 1,
+					"y": 1,
+					"z": 1
+				}
+			}
+		},
+		{
+			"name": "SM_Chair",
+			"vertices": 1467,
+			"texcoords": 1,
+			"transform":
+			{
+				"rotation":
+				{
+					"x": 0,
+					"y": 0,
+					"z": 0,
+					"w": 1
+				},
+				"translation":
+				{
+					"x": -720,
+					"y": -160,
+					"z": 460
+				},
+				"scale3D":
+				{
+					"x": 1,
+					"y": 1,
+					"z": 1
+				}
+			}
+		}
+	],
+	"actorName": "ThirdPersonExampleMap_NewBlueprint_C_1"
+}

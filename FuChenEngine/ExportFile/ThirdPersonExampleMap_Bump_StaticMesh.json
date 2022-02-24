@@ -1,0 +1,33 @@
+{
+	"staticMeshesNum": 1,
+	"staticMeshes": [
+		{
+			"name": "Bump_StaticMesh",
+			"vertices": 50,
+			"texcoords": 3,
+			"transform":
+			{
+				"rotation":
+				{
+					"x": 0,
+					"y": 0,
+					"z": 0,
+					"w": 1
+				},
+				"translation":
+				{
+					"x": 169,
+					"y": -40,
+					"z": 94
+				},
+				"scale3D":
+				{
+					"x": 1,
+					"y": 1,
+					"z": 1
+				}
+			}
+		}
+	],
+	"actorName": "ThirdPersonExampleMap_Bump_StaticMesh"
+}
