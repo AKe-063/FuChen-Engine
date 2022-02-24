@@ -84,26 +84,9 @@ void StaticMesh::OnResize()
 void StaticMesh::Update(const GameTimer& gt)
 {
 	OnKeyboardInput(gt);
-	// Convert Spherical to Cartesian coordinates.
-	float x = mRadius * sinf(mPhi) * cosf(mTheta);
-	float z = mRadius * sinf(mPhi) * sinf(mTheta);
-	float y = mRadius * cosf(mPhi);
-	//XMVECTOR position = XMVectorSet( 100.0f,100.0f,-350.f,1.0f );
-	XMVECTOR position = XMVectorSet(x,y,z,1.0f);
-	mCamera.SetPosition(position);
-
-	// Build the view matrix.
-// 	XMVECTOR pos = XMVectorSet(x, y, z, 1.0f);
-// 	XMVECTOR target = XMVectorZero();
-// 	XMVECTOR up = XMVectorSet(0.0f, 1.0f, 0.0f, 0.0f);
-
-	//XMMATRIX view = XMMatrixLookAtLH(pos, target, up); 
 	mCamera.SetView();
 
-// 	XMMATRIX world = XMLoadFloat4x4(&mWorld);
-// 	XMMATRIX proj = XMLoadFloat4x4(&mCamera.GetProj());
 	XMMATRIX worldViewProj = XMLoadFloat4x4(&mWorld) * mCamera.GetView() * mCamera.GetProj();
-
 	// Update the constant buffer with the latest worldViewProj matrix.
 	ObjectConstants objConstants;
 	XMStoreFloat4x4(&objConstants.WorldViewProj, XMMatrixTranspose(worldViewProj));
@@ -221,18 +204,19 @@ void StaticMesh::OnMouseMove(WPARAM btnState, int x, int y)
 void StaticMesh::OnKeyboardInput(const GameTimer& gt)
 {
 	const float dt = gt.DeltaTime();
+	const float speed = 1000.0f;
 
 	if (GetAsyncKeyState('W') & 0x8000)
-		mCamera.Walk(10.0f * dt);
+		mCamera.Walk(speed * dt);
 
 	if (GetAsyncKeyState('S') & 0x8000)
-		mCamera.Walk(-10.0f * dt);
+		mCamera.Walk(speed * dt * -1);
 
 	if (GetAsyncKeyState('A') & 0x8000)
-		mCamera.Strafe(-10.0f * dt);
+		mCamera.Strafe(speed * dt * -1);
 
 	if (GetAsyncKeyState('D') & 0x8000)
-		mCamera.Strafe(10.0f * dt);
+		mCamera.Strafe(speed * dt);
 
 	mCamera.UpdateViewMatrix();
 }

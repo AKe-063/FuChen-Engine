@@ -36,10 +36,10 @@ void Camera::SetView()
 		InitialView();
 		mViewNeedInit = false;
 	}
-	else
-	{
-		UpdateViewMatrix();
-	}
+// 	else
+// 	{
+// 		UpdateViewMatrix();
+// 	}
 }
 
 void Camera::SetProj(const XMFLOAT4X4& proj)
@@ -119,6 +119,13 @@ void Camera::UpdateViewMatrix()
 
 void Camera::InitialView()
 {
+// 	float x = mRadius * sinf(mPhi) * cosf(mTheta);
+// 	float z = mRadius * sinf(mPhi) * sinf(mTheta);
+// 	float y = mRadius * cosf(mPhi);
+	XMVECTOR position = XMVectorSet( 0.0f,0.0f,-350.f,1.0f );
+	//XMVECTOR position = XMVectorSet(x, y, z, 1.0f);
+	SetPosition(position);
+
 	XMVECTOR up = XMLoadFloat3(&mUp);
 	XMStoreFloat4x4(&mView, XMMatrixLookAtLH(mPosition, mTarget, up));
 	
@@ -135,12 +142,26 @@ void Camera::InitialView()
 
 void Camera::Walk(const float& d)
 {
+	XMVECTOR s = XMVectorReplicate(d);
+	XMVECTOR l = XMLoadFloat3(&mLook);
+	XMVECTOR p = mPosition;
+	XMFLOAT3 position;
+	XMStoreFloat3(&position, XMVectorMultiplyAdd(s, l, p));
+	mPosition = XMLoadFloat3(&position);
 
+	mViewDirty = true;
 }
 
 void Camera::Strafe(const float& d)
 {
+	XMVECTOR s = XMVectorReplicate(d);
+	XMVECTOR r = XMLoadFloat3(&mRight);
+	XMVECTOR p = mPosition;
+	XMFLOAT3 position;
+	XMStoreFloat3(&position, XMVectorMultiplyAdd(s, r, p));
+	mPosition = XMLoadFloat3(&position);
 
+	mViewDirty = true;
 }
 
 XMMATRIX Camera::GetProj()
