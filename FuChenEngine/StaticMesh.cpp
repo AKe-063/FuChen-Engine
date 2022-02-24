@@ -175,10 +175,8 @@ void StaticMesh::OnMouseMove(WPARAM btnState, int x, int y)
 		float dy = XMConvertToRadians(0.25f * static_cast<float>(y - mLastMousePos.y));
 
 		// Update angles based on input to orbit camera around box.
-// 		mTheta += dx;
-// 		mPhi += dy;
 		mCamera.Pitch(dy);
-		mCamera.RotateY(dx);
+		mCamera.Yaw(dx);
 
 		// Restrict the angle mPhi.
 		mPhi = MathHelper::Clamp(mPhi, 0.1f, MathHelper::Pi - 0.1f);
@@ -217,6 +215,12 @@ void StaticMesh::OnKeyboardInput(const GameTimer& gt)
 
 	if (GetAsyncKeyState('D') & 0x8000)
 		mCamera.Strafe(speed * dt);
+
+	if (GetAsyncKeyState('Q') & 0x8000)
+		mCamera.Roll(0.05);
+
+	if (GetAsyncKeyState('E') & 0x8000)
+		mCamera.Roll(-0.05);
 
 	mCamera.UpdateViewMatrix();
 }

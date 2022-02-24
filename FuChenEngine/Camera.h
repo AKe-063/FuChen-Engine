@@ -13,7 +13,8 @@ public:
 	void SetView();
 	void SetProj(const XMFLOAT4X4& proj);
 	void Pitch(const float& angle);
-	void RotateY(const float& angle);
+	void Yaw(const float& angle); 
+	void Roll(const float& angle);
 	void UpdateViewMatrix();
 	void InitialView();
 	void Walk(const float& d);

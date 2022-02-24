@@ -53,13 +53,24 @@ void Camera::Pitch(const float& angle)
 	mViewDirty = true;
 }
 
-void Camera::RotateY(const float& angle)
+void Camera::Yaw(const float& angle)
 {
-	XMMATRIX R = XMMatrixRotationY(angle);
+	//XMMATRIX R = XMMatrixRotationY(angle);
+	XMMATRIX R = XMMatrixRotationAxis(XMLoadFloat3(&mUp), angle);
+
+	XMStoreFloat3(&mRight, XMVector3TransformNormal(XMLoadFloat3(&mRight), R));
+	//XMStoreFloat3(&mUp, XMVector3TransformNormal(XMLoadFloat3(&mUp), R));
+	XMStoreFloat3(&mLook, XMVector3TransformNormal(XMLoadFloat3(&mLook), R));
+
+	mViewDirty = true;
+}
+
+void Camera::Roll(const float& angle)
+{
+	XMMATRIX R = XMMatrixRotationAxis(XMLoadFloat3(&mLook),angle);
 
 	XMStoreFloat3(&mRight, XMVector3TransformNormal(XMLoadFloat3(&mRight), R));
 	XMStoreFloat3(&mUp, XMVector3TransformNormal(XMLoadFloat3(&mUp), R));
-	XMStoreFloat3(&mLook, XMVector3TransformNormal(XMLoadFloat3(&mLook), R));
 
 	mViewDirty = true;
 }
