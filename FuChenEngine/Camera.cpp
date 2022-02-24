@@ -36,10 +36,6 @@ void Camera::SetView()
 		InitialView();
 		mViewNeedInit = false;
 	}
-// 	else
-// 	{
-// 		UpdateViewMatrix();
-// 	}
 }
 
 void Camera::SetProj(const XMFLOAT4X4& proj)

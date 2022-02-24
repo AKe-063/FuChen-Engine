@@ -58,7 +58,10 @@ struct Vertex
 	void operator=(const FVector& vector)
 	{
 		Pos = XMFLOAT3(vector.x, vector.y, vector.z);
-		Color = XMFLOAT4(Colors::LightGreen);
+		float x = (float)(rand() / (float)RAND_MAX);
+		float y = (float)(rand() / (float)RAND_MAX);
+		float z = (float)(rand() / (float)RAND_MAX);
+		Color = XMFLOAT4(x,y,z,1.0f);
 	}
 };
 
