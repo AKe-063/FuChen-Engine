@@ -133,30 +133,6 @@ void Camera::InitialView()
 	 mLook = RUL[2];
 }
 
-void Camera::Walk(const float& d)
-{
-	XMVECTOR s = XMVectorReplicate(d);
-	XMVECTOR l = XMLoadFloat3(&mLook);
-	XMVECTOR p = mPosition;
-	XMFLOAT3 position;
-	XMStoreFloat3(&position, XMVectorMultiplyAdd(s, l, p));
-	mPosition = XMLoadFloat3(&position);
-
-	mViewDirty = true;
-}
-
-void Camera::Strafe(const float& d)
-{
-	XMVECTOR s = XMVectorReplicate(d);
-	XMVECTOR r = XMLoadFloat3(&mRight);
-	XMVECTOR p = mPosition;
-	XMFLOAT3 position;
-	XMStoreFloat3(&position, XMVectorMultiplyAdd(s, r, p));
-	mPosition = XMLoadFloat3(&position);
-
-	mViewDirty = true;
-}
-
 XMMATRIX Camera::GetProj()
 {
 	return XMLoadFloat4x4(&mProj);
