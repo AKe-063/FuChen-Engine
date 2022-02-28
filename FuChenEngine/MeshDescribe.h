@@ -40,7 +40,15 @@ struct MeshesLODInfo
 	int numIndices = 0;
 	std::vector<FVector> vertices;
 	std::vector<int32_t> indices;
-	int numTexcoords = 0;
+	int numTexcoords ;
+};
+
+struct FMeshInfoStruct
+{
+	std::string name;
+	int vertices;
+	int texcoords;
+	FTransform transform;
 };
 
 struct AssetInfo
@@ -48,6 +56,13 @@ struct AssetInfo
 	std::string name;
 	int numLOD;
 	std::vector<MeshesLODInfo> loDs;
+};
+
+struct ActorInfo
+{
+	int staticMeshesNum;
+	std::vector<FMeshInfoStruct> staticMeshes;
+	std::string actorName;
 };
 
 struct Vertex
