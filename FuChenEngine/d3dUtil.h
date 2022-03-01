@@ -131,6 +131,8 @@ struct SubmeshGeometry
 
 struct MeshGeometry
 {
+    DirectX::XMFLOAT4X4 mMeshWorld;
+
 	// Give it a name so we can look it up by name.
 	std::string Name;
 

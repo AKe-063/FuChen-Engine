@@ -25,7 +25,7 @@ Win32App::Win32App(HINSTANCE hInstance)
 	{
 		actorsInfo.push_back(Ar->DeserializeActorInfo(name));
 	}
-	
+
 	for (ActorInfo actor : actorsInfo)
 	{
 		for (int i = 0; i < actor.staticMeshesNum; i++)
@@ -33,7 +33,7 @@ Win32App::Win32App(HINSTANCE hInstance)
 			if (meshesInfo.find(actor.staticMeshes[i].name) == meshesInfo.end())
 			{
 				meshesInfo.insert(std::pair<std::string, AssetInfo>(
-					actor.staticMeshes[i].name, 
+					actor.staticMeshes[i].name,
 					Ar->DeserializeAssetInfo(actor.staticMeshes[i].name)));
 			}
 		}
@@ -207,10 +207,7 @@ void Win32App::OnResize()
 	mScissorRect = { 0, 0, mWindow->GetWidth(), mWindow->GetHeight() };
 
 	// The window resized, so update the aspect ratio and recompute the projection matrix.
-	XMMATRIX P = XMMatrixPerspectiveFovLH(0.25f * MathHelper::Pi, AspectRatio(), 1.0f, 1000.0f);
-	XMFLOAT4X4 proj;
-	XMStoreFloat4x4(&proj, P);
-	mCamera.SetProj(proj);
+	mCamera.SetLens(0.25f * MathHelper::Pi, AspectRatio(), 1.0f, 10000.0f);
 }
 
 void Win32App::Update(const GameTimer& gt)
@@ -218,11 +215,11 @@ void Win32App::Update(const GameTimer& gt)
 	OnKeyboardInput(gt);
 	mCamera.SetView();
 
-	XMMATRIX worldViewProj = XMLoadFloat4x4(&mWorld) * mCamera.GetView() * mCamera.GetProj();
-	// Update the constant buffer with the latest worldViewProj matrix.
-	ObjectConstants objConstants;
-	XMStoreFloat4x4(&objConstants.WorldViewProj, XMMatrixTranspose(worldViewProj));
-	mObjectCB->CopyData(0, objConstants);
+// 	XMMATRIX worldViewProj = XMLoadFloat4x4(&mWorld) * mCamera.GetView() * mCamera.GetProj();
+// 	// Update the constant buffer with the latest worldViewProj matrix.
+// 	ObjectConstants objConstants;
+// 	XMStoreFloat4x4(&objConstants.WorldViewProj, XMMatrixTranspose(worldViewProj));
+// 	mObjectCB->CopyData(0, objConstants);
 }
 
 void Win32App::Draw(const GameTimer& gt)
@@ -254,16 +251,24 @@ void Win32App::Draw(const GameTimer& gt)
 
 	mCommandList->SetGraphicsRootSignature(mRootSignature.Get());
 
-	mCommandList->IASetVertexBuffers(0, 1, &mBoxGeo->VertexBufferView());
-	mCommandList->IASetIndexBuffer(&mBoxGeo->IndexBufferView());
-	mCommandList->IASetPrimitiveTopology(D3D11_PRIMITIVE_TOPOLOGY_TRIANGLELIST);
+	for (int i = 0; i < mMeshes.size(); i++)
+	{
+		mCommandList->IASetVertexBuffers(0, 1, &mMeshes[i].VertexBufferView());
+		mCommandList->IASetIndexBuffer(&mMeshes[i].IndexBufferView());
+		mCommandList->IASetPrimitiveTopology(D3D11_PRIMITIVE_TOPOLOGY_TRIANGLELIST);
 
-	mCommandList->SetGraphicsRootDescriptorTable(0, mCbvHeap->GetGPUDescriptorHandleForHeapStart());
+		XMMATRIX worldViewProj = XMLoadFloat4x4(&mWorld) * mCamera.GetView() * mCamera.GetProj();
+		// Update the constant buffer with the latest worldViewProj matrix.
+		ObjectConstants objConstants;
+		XMStoreFloat4x4(&objConstants.WorldViewProj, XMMatrixTranspose(worldViewProj));
+		mObjectCB->CopyData(0, objConstants);
 
-	mCommandList->DrawIndexedInstanced(
-		mBoxGeo->DrawArgs["box"].IndexCount,
-		1, 0, 0, 0);
+		mCommandList->SetGraphicsRootDescriptorTable(0, mCbvHeap->GetGPUDescriptorHandleForHeapStart());
 
+		mCommandList->DrawIndexedInstanced(
+			mMeshes[i].DrawArgs[mMeshes[i].Name].IndexCount,
+			1, 0, 0, 0);
+	}
 	// Indicate a state transition on the resource usage.
 	mCommandList->ResourceBarrier(1, &CD3DX12_RESOURCE_BARRIER::Transition(CurrentBackBuffer(),
 		D3D12_RESOURCE_STATE_RENDER_TARGET, D3D12_RESOURCE_STATE_PRESENT));
@@ -842,7 +847,7 @@ bool Win32App::InitWindow()
 void Win32App::BuildDescriptorHeaps()
 {
 	D3D12_DESCRIPTOR_HEAP_DESC cbvHeapDesc;
-	cbvHeapDesc.NumDescriptors = 2;
+	cbvHeapDesc.NumDescriptors = 1;
 	cbvHeapDesc.Type = D3D12_DESCRIPTOR_HEAP_TYPE_CBV_SRV_UAV;
 	cbvHeapDesc.Flags = D3D12_DESCRIPTOR_HEAP_FLAG_SHADER_VISIBLE;
 	cbvHeapDesc.NodeMask = 0;
@@ -872,25 +877,25 @@ void Win32App::BuildConstantBuffers()
 		&cbvDesc,
 		handle);
 
-	mPassCB = std::make_unique<UploadBuffer<PassConstants>>(md3dDevice.Get(), 1, true);
-
-	UINT objPCBByteSize = d3dUtil::CalcConstantBufferByteSize(sizeof(PassConstants));
-
-	D3D12_GPU_VIRTUAL_ADDRESS pcbAddress = mObjectCB->Resource()->GetGPUVirtualAddress();
-	// Offset to the ith object constant buffer in the buffer.
-	int boxPCBufIndex = 0;
-	pcbAddress += boxPCBufIndex * objPCBByteSize;
-
-	handle = CD3DX12_CPU_DESCRIPTOR_HANDLE(mCbvHeap->GetCPUDescriptorHandleForHeapStart());
-	handle.Offset(1, mCbvSrvUavDescriptorSize);
-
-	D3D12_CONSTANT_BUFFER_VIEW_DESC cbvDesc1;
-	cbvDesc1.BufferLocation = pcbAddress;
-	cbvDesc1.SizeInBytes = d3dUtil::CalcConstantBufferByteSize(sizeof(PassConstants));
-
-	md3dDevice->CreateConstantBufferView(
-		&cbvDesc1,
-		handle);
+	// 	mPassCB = std::make_unique<UploadBuffer<PassConstants>>(md3dDevice.Get(), 1, true);
+	// 
+	// 	UINT objPCBByteSize = d3dUtil::CalcConstantBufferByteSize(sizeof(PassConstants));
+	// 
+	// 	D3D12_GPU_VIRTUAL_ADDRESS pcbAddress = mObjectCB->Resource()->GetGPUVirtualAddress();
+	// 	// Offset to the ith object constant buffer in the buffer.
+	// 	int boxPCBufIndex = 0;
+	// 	pcbAddress += boxPCBufIndex * objPCBByteSize;
+	// 
+	// 	handle = CD3DX12_CPU_DESCRIPTOR_HANDLE(mCbvHeap->GetCPUDescriptorHandleForHeapStart());
+	// 	handle.Offset(1, mCbvSrvUavDescriptorSize);
+	// 
+	// 	D3D12_CONSTANT_BUFFER_VIEW_DESC cbvDesc1;
+	// 	cbvDesc1.BufferLocation = pcbAddress;
+	// 	cbvDesc1.SizeInBytes = d3dUtil::CalcConstantBufferByteSize(sizeof(PassConstants));
+	// 
+	// 	md3dDevice->CreateConstantBufferView(
+	// 		&cbvDesc1,
+	// 		handle);
 }
 
 void Win32App::BuildRootSignature()
@@ -948,50 +953,65 @@ void Win32App::BuildShadersAndInputLayout()
 
 void Win32App::BuildBoxGeometry()
 {
-	AssetInfo meshInfo;
 	std::vector<Vertex> vertices;
 	Vertex vertice;
-	for (int i = 0; i < meshInfo.loDs[0].numVertices; i++)
+
+	for (ActorInfo actor : actorsInfo)
 	{
-		vertice = meshInfo.loDs[0].vertices[i];
-		vertices.push_back(vertice);
+		for (FMeshInfoStruct fMeshInfo : actor.staticMeshes)
+		{
+			vertices.clear();
+			AssetInfo meshInfo = meshesInfo[fMeshInfo.name];
+
+			std::unique_ptr<MeshGeometry> mMesh = std::make_unique<MeshGeometry>();
+			mMesh->Name = meshInfo.name;
+
+			for (int i = 0; i < meshInfo.loDs[0].numVertices; i++)
+			{
+				vertice = meshInfo.loDs[0].vertices[i] + fMeshInfo.transform.Translation;
+				//vertice = meshInfo.loDs[0].normals[i];
+				vertice.Color.x = meshInfo.loDs[0].normals[i].x ;
+				vertice.Color.y = meshInfo.loDs[0].normals[i].y ;
+				vertice.Color.z = meshInfo.loDs[0].normals[i].z ;
+				vertice.Color.w = meshInfo.loDs[0].normals[i].w;
+				vertices.push_back(vertice);
+			}
+
+			std::vector<std::uint16_t> indices;
+			for (int i = 0; i < meshInfo.loDs[0].numIndices; i++)
+			{
+				indices.push_back(meshInfo.loDs[0].indices[i]);
+			}
+
+			const UINT vbByteSize = (UINT)vertices.size() * sizeof(Vertex);
+			const UINT ibByteSize = (UINT)indices.size() * sizeof(std::uint16_t);
+
+			ThrowIfFailed(D3DCreateBlob(vbByteSize, &mMesh->VertexBufferCPU));
+			CopyMemory(mMesh->VertexBufferCPU->GetBufferPointer(), vertices.data(), vbByteSize);
+
+			ThrowIfFailed(D3DCreateBlob(ibByteSize, &mMesh->IndexBufferCPU));
+			CopyMemory(mMesh->IndexBufferCPU->GetBufferPointer(), indices.data(), ibByteSize);
+
+			mMesh->VertexBufferGPU = d3dUtil::CreateDefaultBuffer(md3dDevice.Get(),
+				mCommandList.Get(), vertices.data(), vbByteSize, mMesh->VertexBufferUploader);
+
+			mMesh->IndexBufferGPU = d3dUtil::CreateDefaultBuffer(md3dDevice.Get(),
+				mCommandList.Get(), indices.data(), ibByteSize, mMesh->IndexBufferUploader);
+
+			mMesh->VertexByteStride = sizeof(Vertex);
+			mMesh->VertexBufferByteSize = vbByteSize;
+			mMesh->IndexFormat = DXGI_FORMAT_R16_UINT;
+			mMesh->IndexBufferByteSize = ibByteSize;
+
+			SubmeshGeometry submesh;
+			submesh.IndexCount = (UINT)indices.size();
+			submesh.StartIndexLocation = 0;
+			submesh.BaseVertexLocation = 0;
+
+			mMesh->DrawArgs[mMesh->Name] = submesh;
+			mMeshes.push_back(*mMesh.get());
+		}
 	}
-
-	std::vector<std::uint16_t> indices;
-	for (int i = 0; i < meshInfo.loDs[0].numIndices; i++)
-	{
-		indices.push_back(meshInfo.loDs[0].indices[i]);
-	}
-
-	const UINT vbByteSize = (UINT)vertices.size() * sizeof(Vertex);
-	const UINT ibByteSize = (UINT)indices.size() * sizeof(std::uint16_t);
-
-	mBoxGeo = std::make_unique<MeshGeometry>();
-	mBoxGeo->Name = "boxGeo";
-
-	ThrowIfFailed(D3DCreateBlob(vbByteSize, &mBoxGeo->VertexBufferCPU));
-	CopyMemory(mBoxGeo->VertexBufferCPU->GetBufferPointer(), vertices.data(), vbByteSize);
-
-	ThrowIfFailed(D3DCreateBlob(ibByteSize, &mBoxGeo->IndexBufferCPU));
-	CopyMemory(mBoxGeo->IndexBufferCPU->GetBufferPointer(), indices.data(), ibByteSize);
-
-	mBoxGeo->VertexBufferGPU = d3dUtil::CreateDefaultBuffer(md3dDevice.Get(),
-		mCommandList.Get(), vertices.data(), vbByteSize, mBoxGeo->VertexBufferUploader);
-
-	mBoxGeo->IndexBufferGPU = d3dUtil::CreateDefaultBuffer(md3dDevice.Get(),
-		mCommandList.Get(), indices.data(), ibByteSize, mBoxGeo->IndexBufferUploader);
-
-	mBoxGeo->VertexByteStride = sizeof(Vertex);
-	mBoxGeo->VertexBufferByteSize = vbByteSize;
-	mBoxGeo->IndexFormat = DXGI_FORMAT_R16_UINT;
-	mBoxGeo->IndexBufferByteSize = ibByteSize;
-
-	SubmeshGeometry submesh;
-	submesh.IndexCount = (UINT)indices.size();
-	submesh.StartIndexLocation = 0;
-	submesh.BaseVertexLocation = 0;
-
-	mBoxGeo->DrawArgs["box"] = submesh;
 }
 
 void Win32App::BuildPSO()
@@ -1011,6 +1031,7 @@ void Win32App::BuildPSO()
 		mpsByteCode->GetBufferSize()
 	};
 	psoDesc.RasterizerState = CD3DX12_RASTERIZER_DESC(D3D12_DEFAULT);
+	psoDesc.RasterizerState.FrontCounterClockwise = TRUE;
 	psoDesc.BlendState = CD3DX12_BLEND_DESC(D3D12_DEFAULT);
 	psoDesc.DepthStencilState = CD3DX12_DEPTH_STENCIL_DESC(D3D12_DEFAULT);
 	psoDesc.SampleMask = UINT_MAX;

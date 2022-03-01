@@ -67,8 +67,9 @@ private:
 	ComPtr<ID3D12RootSignature> mRootSignature = nullptr;
 	ComPtr<ID3D12DescriptorHeap> mCbvHeap = nullptr;
 	std::unique_ptr<UploadBuffer<ObjectConstants>> mObjectCB = nullptr;
-	std::unique_ptr<UploadBuffer<PassConstants>> mPassCB = nullptr;
-	std::unique_ptr<MeshGeometry> mBoxGeo = nullptr;
+	//std::unique_ptr<UploadBuffer<PassConstants>> mPassCB = nullptr;
+	//std::unique_ptr<MeshGeometry> mMeshes = nullptr;
+	std::vector<MeshGeometry> mMeshes;
 
 	ComPtr<ID3DBlob> mvsByteCode = nullptr;
 	ComPtr<ID3DBlob> mpsByteCode = nullptr;

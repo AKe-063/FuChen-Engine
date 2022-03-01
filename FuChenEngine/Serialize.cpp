@@ -38,6 +38,10 @@ AssetInfo Serialize::DeserializeAssetInfo(const std::string& name)
 
 		fin.read((char*)&meshesLODInfo.numTexcoords, sizeof(int32_t));
 
+		fin.read((char*)&num, sizeof(int32_t));
+		meshesLODInfo.normals.resize(num);
+		fin.read((char*)meshesLODInfo.normals.data(), sizeof(FVector4) * num);
+
 		assetInfo.loDs.push_back(meshesLODInfo);
 	}
 	fin.close();

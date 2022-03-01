@@ -23,6 +23,24 @@ public:
 	float x;
 	float y;
 	float z;
+
+	FVector operator+(const FVector& vector)
+	{
+		FVector addResult;
+		addResult.x = vector.x + x;
+		addResult.y = vector.y + y;
+		addResult.z = vector.z + z;
+		return addResult;
+	}
+
+	FVector operator*(const FVector& vector)
+	{
+		FVector addResult;
+		addResult.x = vector.x * x;
+		addResult.y = vector.y * y;
+		addResult.z = vector.z * z;
+		return addResult;
+	}
 };
 
 class FTransform
@@ -41,6 +59,7 @@ struct MeshesLODInfo
 	std::vector<FVector> vertices;
 	std::vector<int32_t> indices;
 	int numTexcoords ;
+	std::vector<FVector4> normals;
 };
 
 struct FMeshInfoStruct
@@ -69,14 +88,21 @@ struct Vertex
 {
 	XMFLOAT3 Pos;
 	XMFLOAT4 Color;
+	//XMFLOAT4 Normal;
 
 	void operator=(const FVector& vector)
 	{
 		Pos = XMFLOAT3(vector.x, vector.y, vector.z);
-		float x = (float)(rand() / (float)RAND_MAX);
-		float y = (float)(rand() / (float)RAND_MAX);
-		float z = (float)(rand() / (float)RAND_MAX);
-		Color = XMFLOAT4(x,y,z,1.0f);
+// 		float x = (float)(rand() / (float)RAND_MAX);
+// 		float y = (float)(rand() / (float)RAND_MAX);
+// 		float z = (float)(rand() / (float)RAND_MAX);
+// 		Color = XMFLOAT4(x,y,z,1.0f);
+	}
+
+	void operator=(const FVector4& vector)
+	{
+		//Normal = XMFLOAT4(vector.x, vector.y, vector.z, vector.w);
+		Color = XMFLOAT4(vector.x * 0.5f + 0.5f, vector.y * 0.5f + 0.5f, vector.z * 0.5f + 0.5f, 1.0f);
 	}
 };
 
