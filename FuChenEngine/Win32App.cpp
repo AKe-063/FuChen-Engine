@@ -1,6 +1,5 @@
 #include "stdafx.h"
 #include "Win32App.h"
-#include "AppStaticFunctionLibrary.h"
 #include "Serialize.h"
 
 using Microsoft::WRL::ComPtr;
@@ -260,10 +259,7 @@ void Win32App::Draw(const GameTimer& gt)
 		mCommandList->IASetIndexBuffer(&mMeshes[i].IndexBufferView());
 		mCommandList->IASetPrimitiveTopology(D3D11_PRIMITIVE_TOPOLOGY_TRIANGLELIST);
 
-		//mat4 worldViewProj = mat4(mWorld) * mCamera.GetView() * mCamera.GetProj();
 		mat4 worldViewProj = mCamera.GetProj() * mCamera.GetView() * mat4(mWorld);
-		//mat4 worldViewProj = mat4(mWorld) * mCamera.GetProj() * mCamera.GetView();
-		//mat4 worldViewProj = mCamera.GetView() * mCamera.GetProj() * mat4(mWorld);
 		
 		// Update the constant buffer with the latest worldViewProj matrix.
 		ObjectConstants objConstants;
@@ -954,7 +950,8 @@ void Win32App::BuildShadersAndInputLayout()
 	mInputLayout =
 	{
 		{ "POSITION", 0, DXGI_FORMAT_R32G32B32_FLOAT, 0, 0, D3D12_INPUT_CLASSIFICATION_PER_VERTEX_DATA, 0 },
-		{ "COLOR", 0, DXGI_FORMAT_R32G32B32A32_FLOAT, 0, 12, D3D12_INPUT_CLASSIFICATION_PER_VERTEX_DATA, 0 }
+		{ "Color", 0, DXGI_FORMAT_R32G32B32A32_FLOAT, 0, 12, D3D12_INPUT_CLASSIFICATION_PER_VERTEX_DATA, 0 },
+		{ "Normal", 0, DXGI_FORMAT_R32G32B32A32_FLOAT, 0, 28, D3D12_INPUT_CLASSIFICATION_PER_VERTEX_DATA, 0 }
 	};
 }
 
@@ -976,7 +973,8 @@ void Win32App::BuildBoxGeometry()
 			for (int i = 0; i < meshInfo.loDs[0].numVertices; i++)
 			{
 				vertice = meshInfo.loDs[0].vertices[i] * fMeshInfo.transform.Scale3D + fMeshInfo.transform.Translation;
-				vertice = meshInfo.loDs[0].normals[i];
+				vertice.SetNormal(meshInfo.loDs[0].normals[i]);
+				vertice.SetColor(meshInfo.loDs[0].normals[i]);
 				vertices.push_back(vertice);
 			}
 

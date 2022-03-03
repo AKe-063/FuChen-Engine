@@ -48,9 +48,6 @@
     <ClInclude Include="Win32Window.h">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="AppStaticFunctionLibrary.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
     <ClInclude Include="Serialize.h">
       <Filter>Header Files</Filter>
     </ClInclude>
@@ -84,9 +81,6 @@
       <Filter>Source Files</Filter>
     </ClCompile>
     <ClCompile Include="Win32Window.cpp">
-      <Filter>Source Files</Filter>
-    </ClCompile>
-    <ClCompile Include="AppStaticFunctionLibrary.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
     <ClCompile Include="Serialize.cpp">

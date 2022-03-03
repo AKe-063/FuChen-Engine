@@ -87,21 +87,21 @@ struct Vertex
 {
 	vec3 Pos;
 	vec4 Color;
-	//vec4 Normal;
+	vec4 Normal;
 
 	void operator=(const FVector& vector)
 	{
 		Pos = vec3(vector.x, vector.y, vector.z);
-// 		float x = (float)(rand() / (float)RAND_MAX);
-// 		float y = (float)(rand() / (float)RAND_MAX);
-// 		float z = (float)(rand() / (float)RAND_MAX);
-// 		Color = vec4(x,y,z,1.0f);
 	}
 
-	void operator=(const FVector4& vector)
+	void SetNormal(const FVector4& vector)
 	{
-		//Normal = XMFLOAT4(vector.x, vector.y, vector.z, vector.w);
-		Color = vec4(vector.x * 0.5f + 0.5f, vector.y * 0.5f + 0.5f, vector.z * 0.5f + 0.5f, 1.0f);
+		Normal = vec4(vector.x, vector.y, vector.z, vector.w);
+	}
+
+	void SetColor(const FVector4& vector)
+	{
+		Color = vec4(vector.x, vector.y, vector.z, vector.w);
 	}
 };
 
