@@ -5,8 +5,7 @@
 #include "Win32Window.h"
 
 using Microsoft::WRL::ComPtr;
-using namespace DirectX;
-using namespace DirectX::PackedVector;
+using namespace glm;
 
 class Win32App: public App
 {
@@ -78,11 +77,7 @@ private:
 
 	ComPtr<ID3D12PipelineState> mPSO = nullptr;
 
-	XMFLOAT4X4 mWorld = MathHelper::Identity4x4();
-
-	float mTheta = 1.5f * XM_PI;
-	float mPhi = XM_PIDIV4;
-	float mRadius = 500.0f;
+	mat4x4 mWorld = MathHelper::Identity4x4();
 
 	POINT mLastMousePos;
 

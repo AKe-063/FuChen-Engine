@@ -47,40 +47,54 @@ public:
 	// Returns the polar angle of the point (x,y) in [0, 2*PI).
 	static float AngleFromXY(float x, float y);
 
-	static DirectX::XMVECTOR SphericalToCartesian(float radius, float theta, float phi)
+// 	static DirectX::XMVECTOR SphericalToCartesian(float radius, float theta, float phi)
+// 	{
+// 		return DirectX::XMVectorSet(
+// 			radius*sinf(phi)*cosf(theta),
+// 			radius*cosf(phi),
+// 			radius*sinf(phi)*sinf(theta),
+// 			1.0f);
+// 	}
+
+//     static DirectX::XMMATRIX InverseTranspose(DirectX::CXMMATRIX M)
+// 	{
+// 		// Inverse-transpose is just applied to normals.  So zero out 
+// 		// translation row so that it doesn't get into our inverse-transpose
+// 		// calculation--we don't want the inverse-transpose of the translation.
+//         DirectX::XMMATRIX A = M;
+//         A.r[3] = DirectX::XMVectorSet(0.0f, 0.0f, 0.0f, 1.0f);
+// 
+//         DirectX::XMVECTOR det = DirectX::XMMatrixDeterminant(A);
+//         return DirectX::XMMatrixTranspose(DirectX::XMMatrixInverse(&det, A));
+// 	}
+
+//     static DirectX::XMFLOAT4X4 Identity4x4()
+//     {
+//         static DirectX::XMFLOAT4X4 I(
+//             1.0f, 0.0f, 0.0f, 0.0f,
+//             0.0f, 1.0f, 0.0f, 0.0f,
+//             0.0f, 0.0f, 1.0f, 0.0f,
+//             0.0f, 0.0f, 0.0f, 1.0f);
+// 
+//         return I;
+//     }
+
+	static glm::mat4 Identity4x4()
 	{
-		return DirectX::XMVectorSet(
-			radius*sinf(phi)*cosf(theta),
-			radius*cosf(phi),
-			radius*sinf(phi)*sinf(theta),
-			1.0f);
+		static glm::mat4 I(
+			1.0f, 0.0f, 0.0f, 0.0f,
+			0.0f, 1.0f, 0.0f, 0.0f,
+			0.0f, 0.0f, 1.0f, 0.0f,
+			0.0f, 0.0f, 0.0f, 1.0f);
+
+		return I;
 	}
 
-    static DirectX::XMMATRIX InverseTranspose(DirectX::CXMMATRIX M)
-	{
-		// Inverse-transpose is just applied to normals.  So zero out 
-		// translation row so that it doesn't get into our inverse-transpose
-		// calculation--we don't want the inverse-transpose of the translation.
-        DirectX::XMMATRIX A = M;
-        A.r[3] = DirectX::XMVectorSet(0.0f, 0.0f, 0.0f, 1.0f);
+//     static DirectX::XMVECTOR RandUnitVec3();
+//     static DirectX::XMVECTOR RandHemisphereUnitVec3(DirectX::XMVECTOR n);
 
-        DirectX::XMVECTOR det = DirectX::XMMatrixDeterminant(A);
-        return DirectX::XMMatrixTranspose(DirectX::XMMatrixInverse(&det, A));
-	}
-
-    static DirectX::XMFLOAT4X4 Identity4x4()
-    {
-        static DirectX::XMFLOAT4X4 I(
-            1.0f, 0.0f, 0.0f, 0.0f,
-            0.0f, 1.0f, 0.0f, 0.0f,
-            0.0f, 0.0f, 1.0f, 0.0f,
-            0.0f, 0.0f, 0.0f, 1.0f);
-
-        return I;
-    }
-
-    static DirectX::XMVECTOR RandUnitVec3();
-    static DirectX::XMVECTOR RandHemisphereUnitVec3(DirectX::XMVECTOR n);
+	static glm::vec4 RandUnitVec3();
+	static glm::vec4 RandHemisphereUnitVec3(glm::vec4 n);
 
 	static const float Infinity;
 	static const float Pi;

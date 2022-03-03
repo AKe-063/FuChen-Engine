@@ -7,10 +7,10 @@
 #include <dxgi1_4.h>
 #include <d3d12.h>
 #include <D3Dcompiler.h>
-#include <DirectXMath.h>
-#include <DirectXPackedVector.h>
-#include <DirectXColors.h>
-#include <DirectXCollision.h>
+// #include <DirectXMath.h>
+// #include <DirectXPackedVector.h>
+// #include <DirectXColors.h>
+// #include <DirectXCollision.h>
 #include <string>
 #include <memory>
 #include <algorithm>
@@ -27,6 +27,14 @@
 #include <float.h>
 #include <cmath>
 #include "../FuChenEngine/Common/d3dx12.h"
+
+#include <GL/glew.h>
+#include <GLFW/glfw3.h>
+#include <glm/glm.hpp>
+#include <glm/ext/scalar_constants.hpp>
+#include <glm/gtc/constants.hpp>
+#include <glm/gtx/rotate_vector.hpp>
+#include <glm/gtx/color_space.hpp>
 
 #include "d3dUtil.h"
 #include "GameTimer.h"

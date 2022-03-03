@@ -3,7 +3,7 @@
 
 using Microsoft::WRL::ComPtr;
 using namespace std;
-using namespace DirectX;
+using namespace glm;
 
 App* App::mApp = nullptr;
 App* App::GetApp()
@@ -25,5 +25,5 @@ App::~App()
 
 float App::AspectRatio()const
 {
-	return static_cast<float>(mWindow->GetWidth()) / mWindow->GetHeight();
+	return static_cast<float>(mWindow->GetWidth() / mWindow->GetHeight());
 }

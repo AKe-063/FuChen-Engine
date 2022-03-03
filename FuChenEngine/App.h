@@ -3,6 +3,8 @@
 #include <crtdbg.h>
 #include "Window.h"
 
+using namespace glm;
+
 class App
 {
 protected:
@@ -36,6 +38,9 @@ protected:
 	bool      mMaximized = false;  // is the application maximized?
 	bool      mResizing = false;   // are the resize bars being dragged?
     bool      mFullscreenState = false;// fullscreen enabled
+	float mTheta = 1.5f * pi<float>();
+	float mPhi = quarter_pi<float>();
+	float mRadius = 500.0f;
 
 	// Used to keep track of the delta-time?and game time (?.4).
 	GameTimer mTimer;

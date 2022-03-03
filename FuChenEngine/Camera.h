@@ -1,6 +1,6 @@
 #pragma once
 
-using namespace DirectX;
+using namespace glm;
 
 class Camera
 {
@@ -9,9 +9,9 @@ public:
 	~Camera();
 
 	void SetLens(float fovY, float aspect, float zn, float zf);
-	void SetPosition(const XMVECTOR& position);
+	void SetPosition(const vec4& position);
 	void SetView();
-	void SetProj(const XMFLOAT4X4& proj);
+	void SetProj(const mat4& proj);
 	void Pitch(const float& angle);
 	void Yaw(const float& angle); 
 	void Roll(const float& angle);
@@ -20,10 +20,10 @@ public:
 	void Walk(const float& d);
 	void Strafe(const float& d);
 
-	XMMATRIX GetProj();
-	XMMATRIX GetView();
-	XMFLOAT4X4 GetProj4x4();
-	XMFLOAT4X4 GetView4x4();
+	mat4 GetProj();
+	mat4 GetView();
+	mat4x4 GetProj4x4();
+	mat4x4 GetView4x4();
 
 private:
 	float mFovY;
@@ -31,14 +31,14 @@ private:
 	float mNearZ;
 	float mFarZ;
 
-	XMVECTOR mPosition;
-	XMVECTOR mTarget = XMVectorZero();
-	XMFLOAT3 mUp = { 0.0f, 1.0f, 0.0f };
-	XMFLOAT3 mRight = { 1.0f, 0.0f, 0.0f };
-	XMFLOAT3 mLook = { 0.0f, 0.0f, 1.0f };
+	vec4 mPosition;
+	vec4 mTarget = { 0.0f, 0.0f, 0.0f, 0.0f };
+	vec3 mUp = { 0.0f, 1.0f, 0.0f };
+	vec3 mRight = { 1.0f, 0.0f, 0.0f };
+	vec3 mLook = { 0.0f, 0.0f, 1.0f };
 	bool mViewDirty = false;
 	bool mViewNeedInit = true;
 
-	XMFLOAT4X4 mView = MathHelper::Identity4x4();
-	XMFLOAT4X4 mProj = MathHelper::Identity4x4();
+	mat4 mView = MathHelper::Identity4x4();
+	mat4 mProj = MathHelper::Identity4x4();
 };

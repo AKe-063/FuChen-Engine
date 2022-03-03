@@ -5,7 +5,7 @@
 
 using Microsoft::WRL::ComPtr;
 using namespace std;
-using namespace DirectX;
+using namespace glm;
 
 LRESULT CALLBACK
 MainWndProc(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam)
@@ -25,6 +25,8 @@ Win32App::Win32App(HINSTANCE hInstance)
 	{
 		actorsInfo.push_back(Ar->DeserializeActorInfo(name));
 	}
+
+	actorsInfo.erase(actorsInfo.begin());
 
 	for (ActorInfo actor : actorsInfo)
 	{
@@ -207,7 +209,7 @@ void Win32App::OnResize()
 	mScissorRect = { 0, 0, mWindow->GetWidth(), mWindow->GetHeight() };
 
 	// The window resized, so update the aspect ratio and recompute the projection matrix.
-	mCamera.SetLens(0.25f * MathHelper::Pi, AspectRatio(), 1.0f, 10000.0f);
+	mCamera.SetLens(0.25f * MathHelper::Pi, AspectRatio(), 1.0f, 20000.0f);
 }
 
 void Win32App::Update(const GameTimer& gt)
@@ -240,7 +242,8 @@ void Win32App::Draw(const GameTimer& gt)
 		D3D12_RESOURCE_STATE_PRESENT, D3D12_RESOURCE_STATE_RENDER_TARGET));
 
 	// Clear the back buffer and depth buffer.
-	mCommandList->ClearRenderTargetView(CurrentBackBufferView(), Colors::LightSteelBlue, 0, nullptr);
+	FLOAT color[4] = { 0.0f,0.2f,0.5f,0.25f };
+	mCommandList->ClearRenderTargetView(CurrentBackBufferView(), color, 0, nullptr);
 	mCommandList->ClearDepthStencilView(DepthStencilView(), D3D12_CLEAR_FLAG_DEPTH | D3D12_CLEAR_FLAG_STENCIL, 1.0f, 0, 0, nullptr);
 
 	// Specify the buffers we are going to render to.
@@ -257,10 +260,14 @@ void Win32App::Draw(const GameTimer& gt)
 		mCommandList->IASetIndexBuffer(&mMeshes[i].IndexBufferView());
 		mCommandList->IASetPrimitiveTopology(D3D11_PRIMITIVE_TOPOLOGY_TRIANGLELIST);
 
-		XMMATRIX worldViewProj = XMLoadFloat4x4(&mWorld) * mCamera.GetView() * mCamera.GetProj();
+		//mat4 worldViewProj = mat4(mWorld) * mCamera.GetView() * mCamera.GetProj();
+		mat4 worldViewProj = mCamera.GetProj() * mCamera.GetView() * mat4(mWorld);
+		//mat4 worldViewProj = mat4(mWorld) * mCamera.GetProj() * mCamera.GetView();
+		//mat4 worldViewProj = mCamera.GetView() * mCamera.GetProj() * mat4(mWorld);
+		
 		// Update the constant buffer with the latest worldViewProj matrix.
 		ObjectConstants objConstants;
-		XMStoreFloat4x4(&objConstants.WorldViewProj, XMMatrixTranspose(worldViewProj));
+		objConstants.WorldViewProj = transpose(worldViewProj);
 		mObjectCB->CopyData(0, objConstants);
 
 		mCommandList->SetGraphicsRootDescriptorTable(0, mCbvHeap->GetGPUDescriptorHandleForHeapStart());
@@ -308,8 +315,8 @@ void Win32App::OnMouseMove(WPARAM btnState, int x, int y)
 	if ((btnState & MK_LBUTTON) != 0)
 	{
 		// Make each pixel correspond to a quarter of a degree.
-		float dx = XMConvertToRadians(0.25f * static_cast<float>(x - mLastMousePos.x));
-		float dy = XMConvertToRadians(0.25f * static_cast<float>(y - mLastMousePos.y));
+		float dx = radians(0.25f * static_cast<float>(x - mLastMousePos.x));
+		float dy = radians(0.25f * static_cast<float>(y - mLastMousePos.y));
 
 		// Update angles based on input to orbit camera around box.
 		mCamera.Pitch(dy);
@@ -968,12 +975,8 @@ void Win32App::BuildBoxGeometry()
 
 			for (int i = 0; i < meshInfo.loDs[0].numVertices; i++)
 			{
-				vertice = meshInfo.loDs[0].vertices[i] + fMeshInfo.transform.Translation;
-				//vertice = meshInfo.loDs[0].normals[i];
-				vertice.Color.x = meshInfo.loDs[0].normals[i].x ;
-				vertice.Color.y = meshInfo.loDs[0].normals[i].y ;
-				vertice.Color.z = meshInfo.loDs[0].normals[i].z ;
-				vertice.Color.w = meshInfo.loDs[0].normals[i].w;
+				vertice = meshInfo.loDs[0].vertices[i] * fMeshInfo.transform.Scale3D + fMeshInfo.transform.Translation;
+				vertice = meshInfo.loDs[0].normals[i];
 				vertices.push_back(vertice);
 			}
 

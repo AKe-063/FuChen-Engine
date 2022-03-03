@@ -1,7 +1,7 @@
 #include "stdafx.h"
 #include "Camera.h"
 
-using namespace DirectX;
+using namespace glm;
 
 Camera::Camera()
 {
@@ -20,11 +20,11 @@ void Camera::SetLens(float fovY, float aspect, float zn, float zf)
 	mNearZ = zn;
 	mFarZ = zf;
 
-	XMMATRIX P = XMMatrixPerspectiveFovLH(mFovY, mAspect, mNearZ, mFarZ);
-	XMStoreFloat4x4(&mProj, P);
+	mat4 P = perspectiveFovLH(mFovY, 800.0f, 600.0f, mNearZ, mFarZ);
+	mProj = P;
 }
 
-void Camera::SetPosition(const XMVECTOR& position)
+void Camera::SetPosition(const vec4& position)
 {
 	mPosition = position;
 }
@@ -38,39 +38,31 @@ void Camera::SetView()
 	}
 }
 
-void Camera::SetProj(const XMFLOAT4X4& proj)
+void Camera::SetProj(const mat4& proj)
 {
 	mProj = proj;
 }
 
 void Camera::Pitch(const float& angle)
 {
-	XMMATRIX R = XMMatrixRotationAxis(XMLoadFloat3(&mRight), angle);
-
-	XMStoreFloat3(&mUp, XMVector3TransformNormal(XMLoadFloat3(&mUp), R));
-	XMStoreFloat3(&mLook, XMVector3TransformNormal(XMLoadFloat3(&mLook), R));
+	mUp = rotate(mUp, angle, mRight);
+	mLook = rotate(mLook, angle, mRight);
 
 	mViewDirty = true;
 }
 
 void Camera::Yaw(const float& angle)
 {
-	//XMMATRIX R = XMMatrixRotationY(angle);
-	XMMATRIX R = XMMatrixRotationAxis(XMLoadFloat3(&mUp), angle);
-
-	XMStoreFloat3(&mRight, XMVector3TransformNormal(XMLoadFloat3(&mRight), R));
-	//XMStoreFloat3(&mUp, XMVector3TransformNormal(XMLoadFloat3(&mUp), R));
-	XMStoreFloat3(&mLook, XMVector3TransformNormal(XMLoadFloat3(&mLook), R));
+	mRight = rotate(mRight, angle, mUp);
+	mLook = rotate(mLook, angle, mUp);
 
 	mViewDirty = true;
 }
 
 void Camera::Roll(const float& angle)
 {
-	XMMATRIX R = XMMatrixRotationAxis(XMLoadFloat3(&mLook),angle);
-
-	XMStoreFloat3(&mRight, XMVector3TransformNormal(XMLoadFloat3(&mRight), R));
-	XMStoreFloat3(&mUp, XMVector3TransformNormal(XMLoadFloat3(&mUp), R));
+	mRight = rotate(mRight, angle, mLook);
+	mUp = rotate(mUp, angle, mLook);
 
 	mViewDirty = true;
 }
@@ -79,46 +71,49 @@ void Camera::UpdateViewMatrix()
 {
 	if (mViewDirty)
 	{
-		XMVECTOR R = XMLoadFloat3(&mRight);
-		XMVECTOR U = XMLoadFloat3(&mUp);
-		XMVECTOR L = XMLoadFloat3(&mLook);
-		XMVECTOR P = mPosition;
+// 		vec3 R = mRight;
+// 		vec3 U = mUp;
+// 		vec3 L = mLook;
+		vec4 R = vec4(mRight, 0);
+		vec4 U = vec4(mUp, 0);
+		vec4 L = vec4(mLook, 0);
+		vec4 P = mPosition;
 
 		// Keep camera's axes orthogonal to each other and of unit length.
-		L = XMVector3Normalize(L);
-		U = XMVector3Normalize(XMVector3Cross(L, R));
+		L = normalize(L);
+		U = vec4(normalize(cross(vec3(L), vec3(R))),0);
 
 		// U, L already ortho-normal, so no need to normalize cross product.
-		R = XMVector3Cross(U, L);
+		R = vec4(cross(vec3(U), vec3(L)),0);
 
 		// Fill in the view matrix entries.
-		float x = -XMVectorGetX(XMVector3Dot(P, R));
-		float y = -XMVectorGetX(XMVector3Dot(P, U));
-		float z = -XMVectorGetX(XMVector3Dot(P, L));
+		float x = -dot(P, R);
+		float y = -dot(P, U);
+		float z = -dot(P, L);
 
-		XMStoreFloat3(&mRight, R);
-		XMStoreFloat3(&mUp, U);
-		XMStoreFloat3(&mLook, L);
+		mRight = R;
+		mUp = U;
+		mLook = L;
 
-		mView(0, 0) = mRight.x;
-		mView(1, 0) = mRight.y;
-		mView(2, 0) = mRight.z;
-		mView(3, 0) = x;
+		mView[0][0] = mRight.x;
+		mView[1][0] = mRight.y;
+		mView[2][0] = mRight.z;
+		mView[3][0] = x;
 
-		mView(0, 1) = mUp.x;
-		mView(1, 1) = mUp.y;
-		mView(2, 1) = mUp.z;
-		mView(3, 1) = y;
+		mView[0][1] = mUp.x;
+		mView[1][1] = mUp.y;
+		mView[2][1] = mUp.z;
+		mView[3][1] = y;
 
-		mView(0, 2) = mLook.x;
-		mView(1, 2) = mLook.y;
-		mView(2, 2) = mLook.z;
-		mView(3, 2) = z;
+		mView[0][2] = mLook.x;
+		mView[1][2] = mLook.y;
+		mView[2][2] = mLook.z;
+		mView[3][2] = z;
 
-		mView(0, 3) = 0.0f;
-		mView(1, 3) = 0.0f;
-		mView(2, 3) = 0.0f;
-		mView(3, 3) = 1.0f;
+		mView[0][3] = 0.0f;
+		mView[1][3] = 0.0f;
+		mView[2][3] = 0.0f;
+		mView[3][3] = 1.0f;
 
 		mViewDirty = false;
 	}
@@ -126,20 +121,22 @@ void Camera::UpdateViewMatrix()
 
 void Camera::InitialView()
 {
-// 	float x = mRadius * sinf(mPhi) * cosf(mTheta);
-// 	float z = mRadius * sinf(mPhi) * sinf(mTheta);
-// 	float y = mRadius * cosf(mPhi);
-	XMVECTOR position = XMVectorSet( 0.0f,0.0f,-350.f,1.0f );
-	//XMVECTOR position = XMVectorSet(x, y, z, 1.0f);
+	float mTheta = 1.5f * pi<float>();
+	float mPhi = quarter_pi<float>();
+	float mRadius = 5000.0f;
+	float x = mRadius * sinf(mPhi) * cosf(mTheta);
+	float z = mRadius * sinf(mPhi) * sinf(mTheta);
+	float y = mRadius * cosf(mPhi);
+	vec4 position(-x, -y, -z, 1.0f );
 	SetPosition(position);
 
-	XMVECTOR up = XMLoadFloat3(&mUp);
-	XMStoreFloat4x4(&mView, XMMatrixLookAtLH(mPosition, mTarget, up));
+	vec4 up = vec4(mUp,0);
+	mView = lookAtLH(vec3(mPosition), vec3(mTarget), vec3(up));
 	
-	XMFLOAT3 RUL[3];
+	vec3 RUL[3];
 	 for (int i = 0; i < 3; i++)
 	 {
-		 RUL[i] = XMFLOAT3(mView(0, i), mView(1, i), mView(2, i));
+		 RUL[i] = vec3(mView[0][i], mView[1][i], mView[2][i]);
 	 }
 
 	 mRight = RUL[0];
@@ -149,44 +146,44 @@ void Camera::InitialView()
 
 void Camera::Walk(const float& d)
 {
-	XMVECTOR s = XMVectorReplicate(d);
-	XMVECTOR l = XMLoadFloat3(&mLook);
-	XMVECTOR p = mPosition;
-	XMFLOAT3 position;
-	XMStoreFloat3(&position, XMVectorMultiplyAdd(s, l, p));
-	mPosition = XMLoadFloat3(&position);
+	vec4 s = vec4(d,d,d,d);
+	vec4 l = vec4(mLook,0);
+	vec4 p = mPosition;
+	vec3 position;
+	position = s * l + p;
+	mPosition = vec4(position,0);
 
 	mViewDirty = true;
 }
 
 void Camera::Strafe(const float& d)
 {
-	XMVECTOR s = XMVectorReplicate(d);
-	XMVECTOR r = XMLoadFloat3(&mRight);
-	XMVECTOR p = mPosition;
-	XMFLOAT3 position;
-	XMStoreFloat3(&position, XMVectorMultiplyAdd(s, r, p));
-	mPosition = XMLoadFloat3(&position);
+	vec4 s = vec4(d, d, d, d);
+	vec4 r = vec4(mRight, 0);
+	vec4 p = mPosition;
+	vec3 position;
+	position = s * r + p;
+	mPosition = vec4(position, 0);
 
 	mViewDirty = true;
 }
 
-XMMATRIX Camera::GetProj()
-{
-	return XMLoadFloat4x4(&mProj);
-}
-
-XMMATRIX Camera::GetView()
-{
-	return XMLoadFloat4x4(&mView);
-}
-
-DirectX::XMFLOAT4X4 Camera::GetProj4x4()
+mat4 Camera::GetProj()
 {
 	return mProj;
 }
 
-DirectX::XMFLOAT4X4 Camera::GetView4x4()
+mat4 Camera::GetView()
+{
+	return mView;
+}
+
+mat4x4 Camera::GetProj4x4()
+{
+	return mProj;
+}
+
+mat4x4 Camera::GetView4x4()
 {
 	return mView;
 }

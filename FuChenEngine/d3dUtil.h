@@ -126,12 +126,12 @@ struct SubmeshGeometry
 
     // Bounding box of the geometry defined by this submesh. 
     // This is used in later chapters of the book.
-	DirectX::BoundingBox Bounds;
+	//glm::BoundingBox Bounds;
 };
 
 struct MeshGeometry
 {
-    DirectX::XMFLOAT4X4 mMeshWorld;
+    glm::mat4x4 mMeshWorld;
 
 	// Give it a name so we can look it up by name.
 	std::string Name;
@@ -188,11 +188,11 @@ struct MeshGeometry
 
 struct Light
 {
-    DirectX::XMFLOAT3 Strength = { 0.5f, 0.5f, 0.5f };
+    glm::vec3 Strength = { 0.5f, 0.5f, 0.5f };
     float FalloffStart = 1.0f;                          // point/spot light only
-    DirectX::XMFLOAT3 Direction = { 0.0f, -1.0f, 0.0f };// directional/spot light only
+    glm::vec3 Direction = { 0.0f, -1.0f, 0.0f };// directional/spot light only
     float FalloffEnd = 10.0f;                           // point/spot light only
-    DirectX::XMFLOAT3 Position = { 0.0f, 0.0f, 0.0f };  // point/spot light only
+    glm::vec3 Position = { 0.0f, 0.0f, 0.0f };  // point/spot light only
     float SpotPower = 64.0f;                            // spot light only
 };
 
@@ -200,12 +200,12 @@ struct Light
 
 struct MaterialConstants
 {
-	DirectX::XMFLOAT4 DiffuseAlbedo = { 1.0f, 1.0f, 1.0f, 1.0f };
-	DirectX::XMFLOAT3 FresnelR0 = { 0.01f, 0.01f, 0.01f };
+	glm::vec4 DiffuseAlbedo = { 1.0f, 1.0f, 1.0f, 1.0f };
+	glm::vec3 FresnelR0 = { 0.01f, 0.01f, 0.01f };
 	float Roughness = 0.25f;
 
 	// Used in texture mapping.
-	DirectX::XMFLOAT4X4 MatTransform = MathHelper::Identity4x4();
+	glm::mat4x4 MatTransform = MathHelper::Identity4x4();
 };
 
 // Simple struct to represent a material for our demos.  A production 3D engine
@@ -231,10 +231,10 @@ struct Material
 	int NumFramesDirty = gNumFrameResources;
 
 	// Material constant buffer data used for shading.
-	DirectX::XMFLOAT4 DiffuseAlbedo = { 1.0f, 1.0f, 1.0f, 1.0f };
-	DirectX::XMFLOAT3 FresnelR0 = { 0.01f, 0.01f, 0.01f };
+	glm::vec4 DiffuseAlbedo = { 1.0f, 1.0f, 1.0f, 1.0f };
+	glm::vec3 FresnelR0 = { 0.01f, 0.01f, 0.01f };
 	float Roughness = .25f;
-	DirectX::XMFLOAT4X4 MatTransform = MathHelper::Identity4x4();
+	glm::mat4x4 MatTransform = MathHelper::Identity4x4();
 };
 
 struct Texture
