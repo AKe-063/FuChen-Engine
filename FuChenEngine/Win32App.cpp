@@ -93,11 +93,13 @@ bool Win32App::Initialize()
 	// Reset the command list to prep for initialization commands.
 	ThrowIfFailed(mCommandList->Reset(mDirectCmdListAlloc.Get(), nullptr));
 
+	BuildBoxGeometry();
 	BuildDescriptorHeaps();
 	BuildConstantBuffers();
 	BuildRootSignature();
 	BuildShadersAndInputLayout();
-	BuildBoxGeometry();
+	/*BuildBoxGeometry();*/
+	BuildConstantBuffers();
 	BuildPSO();
 
 	// Execute the initialization commands.
@@ -248,25 +250,24 @@ void Win32App::Draw(const GameTimer& gt)
 	// Specify the buffers we are going to render to.
 	mCommandList->OMSetRenderTargets(1, &CurrentBackBufferView(), true, &DepthStencilView());
 
-	ID3D12DescriptorHeap* descriptorHeaps[] = { mCbvHeap.Get() };
-	mCommandList->SetDescriptorHeaps(_countof(descriptorHeaps), descriptorHeaps);
-
 	mCommandList->SetGraphicsRootSignature(mRootSignature.Get());
 
 	for (int i = 0; i < mMeshes.size(); i++)
 	{
+		ID3D12DescriptorHeap* descriptorHeaps[] = { mCbvHeap[i].Get() };
+		mCommandList->SetDescriptorHeaps(_countof(descriptorHeaps), descriptorHeaps);
 		mCommandList->IASetVertexBuffers(0, 1, &mMeshes[i].VertexBufferView());
 		mCommandList->IASetIndexBuffer(&mMeshes[i].IndexBufferView());
 		mCommandList->IASetPrimitiveTopology(D3D11_PRIMITIVE_TOPOLOGY_TRIANGLELIST);
 
-		mat4 worldViewProj = mCamera.GetProj() * mCamera.GetView() * mat4(mWorld);
+		mat4 worldViewProj = mCamera.GetProj() * mCamera.GetView() * mMeshes[i].mMeshWorld;
 		
 		// Update the constant buffer with the latest worldViewProj matrix.
 		ObjectConstants objConstants;
 		objConstants.WorldViewProj = transpose(worldViewProj);
-		mObjectCB->CopyData(0, objConstants);
+		mObjectCB[i]->CopyData(0, objConstants);
 
-		mCommandList->SetGraphicsRootDescriptorTable(0, mCbvHeap->GetGPUDescriptorHandleForHeapStart());
+		mCommandList->SetGraphicsRootDescriptorTable(0, mCbvHeap[i]->GetGPUDescriptorHandleForHeapStart());
 
 		mCommandList->DrawIndexedInstanced(
 			mMeshes[i].DrawArgs[mMeshes[i].Name].IndexCount,
@@ -849,37 +850,44 @@ bool Win32App::InitWindow()
 
 void Win32App::BuildDescriptorHeaps()
 {
-	D3D12_DESCRIPTOR_HEAP_DESC cbvHeapDesc;
-	cbvHeapDesc.NumDescriptors = 1;
-	cbvHeapDesc.Type = D3D12_DESCRIPTOR_HEAP_TYPE_CBV_SRV_UAV;
-	cbvHeapDesc.Flags = D3D12_DESCRIPTOR_HEAP_FLAG_SHADER_VISIBLE;
-	cbvHeapDesc.NodeMask = 0;
-	ThrowIfFailed(md3dDevice->CreateDescriptorHeap(&cbvHeapDesc,
-		IID_PPV_ARGS(&mCbvHeap)));
+	for (int i = 0; i < mMeshes.size(); i++)
+	{
+		ComPtr<ID3D12DescriptorHeap> cbvHeap = nullptr;
+		D3D12_DESCRIPTOR_HEAP_DESC cbvHeapDesc;
+		cbvHeapDesc.NumDescriptors = 1;
+		cbvHeapDesc.Type = D3D12_DESCRIPTOR_HEAP_TYPE_CBV_SRV_UAV;
+		cbvHeapDesc.Flags = D3D12_DESCRIPTOR_HEAP_FLAG_SHADER_VISIBLE;
+		cbvHeapDesc.NodeMask = 0;
+		ThrowIfFailed(md3dDevice->CreateDescriptorHeap(&cbvHeapDesc,
+			IID_PPV_ARGS(&cbvHeap)));
+		mCbvHeap.push_back(cbvHeap);
+	}
 }
 
 void Win32App::BuildConstantBuffers()
 {
-	mObjectCB = std::make_unique<UploadBuffer<ObjectConstants>>(md3dDevice.Get(), 1, true);
+	for (int i = 0; i < mMeshes.size(); i++)
+	{
+		mObjectCB.push_back(std::make_unique<UploadBuffer<ObjectConstants>>(md3dDevice.Get(), 1, true));
 
-	UINT objCBByteSize = d3dUtil::CalcConstantBufferByteSize(sizeof(ObjectConstants));
+		UINT objCBByteSize = d3dUtil::CalcConstantBufferByteSize(sizeof(ObjectConstants));
 
-	D3D12_GPU_VIRTUAL_ADDRESS cbAddress = mObjectCB->Resource()->GetGPUVirtualAddress();
-	// Offset to the ith object constant buffer in the buffer.
-	int boxCBufIndex = 0;
-	cbAddress += boxCBufIndex * objCBByteSize;
+		D3D12_GPU_VIRTUAL_ADDRESS cbAddress = mObjectCB[i]->Resource()->GetGPUVirtualAddress();
+		// Offset to the ith object constant buffer in the buffer.
+		int CBufIndex = 0;
+		cbAddress += CBufIndex * objCBByteSize;
 
-	auto handle = CD3DX12_CPU_DESCRIPTOR_HANDLE(mCbvHeap->GetCPUDescriptorHandleForHeapStart());
-	handle.Offset(0, mCbvSrvUavDescriptorSize);
+		auto handle = CD3DX12_CPU_DESCRIPTOR_HANDLE(mCbvHeap[i]->GetCPUDescriptorHandleForHeapStart());
+		handle.Offset(0, mCbvSrvUavDescriptorSize);
 
-	D3D12_CONSTANT_BUFFER_VIEW_DESC cbvDesc;
-	cbvDesc.BufferLocation = cbAddress;
-	cbvDesc.SizeInBytes = d3dUtil::CalcConstantBufferByteSize(sizeof(ObjectConstants));
+		D3D12_CONSTANT_BUFFER_VIEW_DESC cbvDesc;
+		cbvDesc.BufferLocation = cbAddress;
+		cbvDesc.SizeInBytes = d3dUtil::CalcConstantBufferByteSize(sizeof(ObjectConstants));
 
-	md3dDevice->CreateConstantBufferView(
-		&cbvDesc,
-		handle);
-
+		md3dDevice->CreateConstantBufferView(
+			&cbvDesc,
+			handle);
+	}
 	// 	mPassCB = std::make_unique<UploadBuffer<PassConstants>>(md3dDevice.Get(), 1, true);
 	// 
 	// 	UINT objPCBByteSize = d3dUtil::CalcConstantBufferByteSize(sizeof(PassConstants));
@@ -969,10 +977,26 @@ void Win32App::BuildBoxGeometry()
 
 			std::unique_ptr<MeshGeometry> mMesh = std::make_unique<MeshGeometry>();
 			mMesh->Name = meshInfo.name;
+			mMesh->mMeshWorld = mWorld;
+
+			mMesh->mMeshWorld = translate(
+				mMesh->mMeshWorld, 
+				vec3(fMeshInfo.transform.Translation.x,
+				fMeshInfo.transform.Translation.y,
+				fMeshInfo.transform.Translation.z
+				)) * mat4_cast(qua<float>(
+					fMeshInfo.transform.Rotation.w,
+					fMeshInfo.transform.Rotation.x,
+					fMeshInfo.transform.Rotation.y, 
+					fMeshInfo.transform.Rotation.z
+				)) * scale(
+					vec3(fMeshInfo.transform.Scale3D.x,
+						fMeshInfo.transform.Scale3D.y,
+						fMeshInfo.transform.Scale3D.z));
 
 			for (int i = 0; i < meshInfo.loDs[0].numVertices; i++)
 			{
-				vertice = meshInfo.loDs[0].vertices[i] * fMeshInfo.transform.Scale3D + fMeshInfo.transform.Translation;
+				vertice = meshInfo.loDs[0].vertices[i]; 
 				vertice.SetNormal(meshInfo.loDs[0].normals[i]);
 				vertice.SetColor(meshInfo.loDs[0].normals[i]);
 				vertices.push_back(vertice);

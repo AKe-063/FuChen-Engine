@@ -131,7 +131,7 @@ struct SubmeshGeometry
 
 struct MeshGeometry
 {
-    glm::mat4x4 mMeshWorld;
+    glm::mat4 mMeshWorld = glm::mat4(1.0f);
 
 	// Give it a name so we can look it up by name.
 	std::string Name;

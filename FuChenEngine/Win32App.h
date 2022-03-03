@@ -64,8 +64,8 @@ private:
 	UINT      m4xMsaaQuality = 0;      // quality level of 4X MSAA
 
 	ComPtr<ID3D12RootSignature> mRootSignature = nullptr;
-	ComPtr<ID3D12DescriptorHeap> mCbvHeap = nullptr;
-	std::unique_ptr<UploadBuffer<ObjectConstants>> mObjectCB = nullptr;
+	std::vector<ComPtr<ID3D12DescriptorHeap>> mCbvHeap;
+	std::vector<std::unique_ptr<UploadBuffer<ObjectConstants>>> mObjectCB;
 	//std::unique_ptr<UploadBuffer<PassConstants>> mPassCB = nullptr;
 	//std::unique_ptr<MeshGeometry> mMeshes = nullptr;
 	std::vector<MeshGeometry> mMeshes;

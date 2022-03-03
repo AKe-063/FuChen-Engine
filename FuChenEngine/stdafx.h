@@ -35,6 +35,8 @@
 #include <glm/gtc/constants.hpp>
 #include <glm/gtx/rotate_vector.hpp>
 #include <glm/gtx/color_space.hpp>
+#include <glm/gtc/matrix_transform.hpp>
+#include <glm/gtc/quaternion.hpp>
 
 #include "d3dUtil.h"
 #include "GameTimer.h"
