@@ -15,9 +15,9 @@ protected:
 
 public:
 
-    static App* GetApp();
+    //static App* GetApp();
     
-	float AspectRatio()const;
+	//float AspectRatio()const;
 
 	virtual int Run() = 0;
  
@@ -28,10 +28,8 @@ protected:
 	virtual void Update(const GameTimer& gt)=0;
     virtual void Draw(const GameTimer& gt)=0;
 
-protected:
-
-    std::unique_ptr<Window> mWindow;
-    static App* mApp;
+    //std::shared_ptr<Window> mWindow;
+    //static App* mApp;
 
 	bool      mAppPaused = false;  // is the application paused?
 	bool      mMinimized = false;  // is the application minimized?
@@ -46,6 +44,6 @@ protected:
 	GameTimer mTimer;
 	
 	// Derived class should set these in derived constructor to customize starting values.
-	std::wstring mMainWndCaption = L"d3d App";
+	/*std::wstring mMainWndCaption = L"d3d App";*/
 };
 

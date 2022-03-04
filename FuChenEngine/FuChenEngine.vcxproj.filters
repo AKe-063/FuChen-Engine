@@ -13,6 +13,12 @@
       <UniqueIdentifier>{67DA6AB6-F800-4c08-8B7A-83BB121AAD01}</UniqueIdentifier>
       <Extensions>rc;ico;cur;bmp;dlg;rc2;rct;bin;rgs;gif;jpg;jpeg;jpe;resx;tiff;tif;png;wav;mfcribbon-ms</Extensions>
     </Filter>
+    <Filter Include="Source Files\Lauch">
+      <UniqueIdentifier>{c8efd8f2-3656-439f-bac4-b58e192065b4}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Source Files\Lauch\Windows">
+      <UniqueIdentifier>{546d5bd1-5fe4-4652-9e7b-819622bc1433}</UniqueIdentifier>
+    </Filter>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="App.h">
@@ -68,9 +74,6 @@
     <ClCompile Include="stdafx.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="WinMain.cpp">
-      <Filter>Source Files</Filter>
-    </ClCompile>
     <ClCompile Include="Win32App.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
@@ -85,6 +88,9 @@
     </ClCompile>
     <ClCompile Include="Serialize.cpp">
       <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="WinMain.cpp">
+      <Filter>Source Files\Lauch\Windows</Filter>
     </ClCompile>
   </ItemGroup>
 </Project>

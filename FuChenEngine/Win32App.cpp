@@ -6,18 +6,23 @@ using Microsoft::WRL::ComPtr;
 using namespace std;
 using namespace glm;
 
-LRESULT CALLBACK
-MainWndProc(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam)
-{
-	// Forward hwnd on because we can get messages (e.g., WM_CREATE)
-	// before CreateWindow returns, and thus before mhMainWnd is valid.
-	return static_cast<Win32App*>(App::GetApp())->MsgProc(hwnd, msg, wParam, lParam);
-}
+// LRESULT CALLBACK
+// MainWndProc(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam)
+// {
+// 	// Forward hwnd on because we can get messages (e.g., WM_CREATE)
+// 	// before CreateWindow returns, and thus before mhMainWnd is valid.
+// 	return static_cast<Win32App*>(App::GetApp())->MsgProc(hwnd, msg, wParam, lParam);
+// }
+Win32App* Win32App::mApp = nullptr;
 
 Win32App::Win32App(HINSTANCE hInstance)
-	:App(), mhAppInst(hInstance)
+	:App()
 {
+	// Only one D3DApp can be constructed.
+	assert(mApp == nullptr);
+	mApp = this;
 	mWindow = std::make_unique<Win32Window>();
+	mWindow->SetAppInst(hInstance);
 	std::unique_ptr<Serialize> Ar = std::make_unique<Serialize>();
 	std::vector<std::string> names = Ar->GetNames();
 	for (std::string name : names)
@@ -210,7 +215,7 @@ void Win32App::OnResize()
 	mScissorRect = { 0, 0, mWindow->GetWidth(), mWindow->GetHeight() };
 
 	// The window resized, so update the aspect ratio and recompute the projection matrix.
-	mCamera.SetLens(0.25f * MathHelper::Pi, AspectRatio(), 1.0f, 20000.0f);
+	mCamera.SetLens(0.25f * MathHelper::Pi, mWindow->AspectRatio(), 1.0f, 20000.0f);
 }
 
 void Win32App::Update(const GameTimer& gt)
@@ -299,7 +304,8 @@ void Win32App::OnMouseDown(WPARAM btnState, int x, int y)
 	mLastMousePos.x = x;
 	mLastMousePos.y = y;
 
-	SetCapture(mhMainWnd);
+	//SetCapture(mhMainWnd);
+	SetCapture(mWindow->GetMainWnd());
 }
 
 void Win32App::OnMouseUp(WPARAM btnState, int x, int y)
@@ -444,7 +450,8 @@ void Win32App::CreateSwapChain()
 	sd.SampleDesc.Quality = m4xMsaaState ? (m4xMsaaQuality - 1) : 0;
 	sd.BufferUsage = DXGI_USAGE_RENDER_TARGET_OUTPUT;
 	sd.BufferCount = SwapChainBufferCount;
-	sd.OutputWindow = mhMainWnd;
+	//sd.OutputWindow = mhMainWnd;
+	sd.OutputWindow = mWindow->GetMainWnd();
 	sd.Windowed = true;
 	sd.SwapEffect = DXGI_SWAP_EFFECT_FLIP_DISCARD;
 	sd.Flags = DXGI_SWAP_CHAIN_FLAG_ALLOW_MODE_SWITCH;
@@ -518,11 +525,12 @@ void Win32App::CalculateFrameStats()
 		wstring fpsStr = to_wstring(fps);
 		wstring mspfStr = to_wstring(mspf);
 
-		wstring windowText = mMainWndCaption +
+		wstring windowText = mWindow->GetMainWndCaption() +
 			L"    fps: " + fpsStr +
 			L"   mspf: " + mspfStr;
 
-		SetWindowText(mhMainWnd, windowText.c_str());
+		//SetWindowText(mhMainWnd, windowText.c_str());
+		SetWindowText(mWindow->GetMainWnd(), windowText.c_str());
 
 		// Reset for next average.
 		frameCnt = 0;
@@ -808,44 +816,53 @@ LRESULT Win32App::MsgProc(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam)
 	return DefWindowProc(hwnd, msg, wParam, lParam);
 }
 
+Win32App* Win32App::GetApp()
+{
+	return mApp;
+}
+
 bool Win32App::InitWindow()
 {
-	WNDCLASS wc;
-	wc.style = CS_HREDRAW | CS_VREDRAW;
-	wc.lpfnWndProc = MainWndProc;
-	wc.cbClsExtra = 0;
-	wc.cbWndExtra = 0;
-	wc.hInstance = mhAppInst;
-	wc.hIcon = LoadIcon(0, IDI_APPLICATION);
-	wc.hCursor = LoadCursor(0, IDC_ARROW);
-	wc.hbrBackground = (HBRUSH)GetStockObject(NULL_BRUSH);
-	wc.lpszMenuName = 0;
-	wc.lpszClassName = L"MainWnd";
-
-	if (!RegisterClass(&wc))
-	{
-		MessageBox(0, L"RegisterClass Failed.", 0, 0);
+	if (!mWindow->CreateAWindow())
 		return false;
-	}
-
-	// Compute window rectangle dimensions based on requested client area dimensions.
-	RECT R = { 0, 0, mWindow->GetWidth(), mWindow->GetHeight() };
-	AdjustWindowRect(&R, WS_OVERLAPPEDWINDOW, false);
-	int width = R.right - R.left;
-	int height = R.bottom - R.top;
-
-	mhMainWnd = CreateWindow(L"MainWnd", mMainWndCaption.c_str(),
-		WS_OVERLAPPEDWINDOW, CW_USEDEFAULT, CW_USEDEFAULT, width, height, 0, 0, mhAppInst, 0);
-	if (!mhMainWnd)
-	{
-		MessageBox(0, L"CreateWindow Failed.", 0, 0);
-		return false;
-	}
-
-	ShowWindow(mhMainWnd, SW_SHOW);
-	UpdateWindow(mhMainWnd);
-
-	return true;;
+	
+	return true;
+// 	WNDCLASS wc;
+// 	wc.style = CS_HREDRAW | CS_VREDRAW;
+// 	wc.lpfnWndProc = MainWndProc;
+// 	wc.cbClsExtra = 0;
+// 	wc.cbWndExtra = 0;
+// 	wc.hInstance = mhAppInst;
+// 	wc.hIcon = LoadIcon(0, IDI_APPLICATION);
+// 	wc.hCursor = LoadCursor(0, IDC_ARROW);
+// 	wc.hbrBackground = (HBRUSH)GetStockObject(NULL_BRUSH);
+// 	wc.lpszMenuName = 0;
+// 	wc.lpszClassName = L"MainWnd";
+// 
+// 	if (!RegisterClass(&wc))
+// 	{
+// 		MessageBox(0, L"RegisterClass Failed.", 0, 0);
+// 		return false;
+// 	}
+// 
+// 	// Compute window rectangle dimensions based on requested client area dimensions.
+// 	RECT R = { 0, 0, mWindow->GetWidth(), mWindow->GetHeight() };
+// 	AdjustWindowRect(&R, WS_OVERLAPPEDWINDOW, false);
+// 	int width = R.right - R.left;
+// 	int height = R.bottom - R.top;
+// 
+// 	mhMainWnd = CreateWindow(L"MainWnd", mMainWndCaption.c_str(),
+// 		WS_OVERLAPPEDWINDOW, CW_USEDEFAULT, CW_USEDEFAULT, width, height, 0, 0, mhAppInst, 0);
+// 	if (!mhMainWnd)
+// 	{
+// 		MessageBox(0, L"CreateWindow Failed.", 0, 0);
+// 		return false;
+// 	}
+// 
+// 	ShowWindow(mhMainWnd, SW_SHOW);
+// 	UpdateWindow(mhMainWnd);
+// 
+// 	return true;;
 }
 
 void Win32App::BuildDescriptorHeaps()
@@ -1071,10 +1088,10 @@ void Win32App::BuildPSO()
 
 HINSTANCE Win32App::AppInst() const
 {
-	return mhAppInst;
+	return mWindow->GetAppInst();
 }
 
 HWND Win32App::MainWnd() const
 {
-	return mhMainWnd;
+	return mWindow->GetMainWnd();
 }

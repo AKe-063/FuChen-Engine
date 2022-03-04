@@ -7,6 +7,8 @@
 using Microsoft::WRL::ComPtr;
 using namespace glm;
 
+class Win32Window;
+
 class Win32App: public App
 {
 public:
@@ -16,6 +18,11 @@ public:
 	virtual int Run()override;
 	virtual bool Initialize()override;
 	virtual LRESULT MsgProc(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam);
+
+	static Win32App* GetApp();
+
+protected:
+	static Win32App* mApp;
 
 private:
 	virtual void OnResize()override;
@@ -53,9 +60,10 @@ private:
 
 	HINSTANCE AppInst()const;
 	HWND      MainWnd()const;
-	HINSTANCE mhAppInst = nullptr; // application instance handle
-	HWND      mhMainWnd = nullptr; // main window handle
-
+	std::shared_ptr<Win32Window> mWindow;
+// 	HINSTANCE mhAppInst = nullptr; // application instance handle
+// 	HWND      mhMainWnd = nullptr; // main window handle
+	
 	std::map<std::string, AssetInfo> meshesInfo;
 	std::vector<ActorInfo> actorsInfo;
 

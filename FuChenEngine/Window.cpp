@@ -31,3 +31,8 @@ void Window::SetHeight(const int& newHeight)
 	mwHeight = newHeight;
 }
 
+float Window::AspectRatio() const
+{
+	return static_cast<float>(mwWidth/mwHeight);
+}
+

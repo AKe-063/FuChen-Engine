@@ -10,6 +10,8 @@ public:
 	virtual int GetHeight();
 	virtual void SetWidth(const int& newWidth);
 	virtual void SetHeight(const int& newHeight);
+	virtual bool CreateAWindow() = 0;
+	float AspectRatio()const;
 
 protected:
 	int mwWidth = 800;
