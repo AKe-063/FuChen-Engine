@@ -270,6 +270,7 @@ void Win32App::Draw(const GameTimer& gt)
 		// Update the constant buffer with the latest worldViewProj matrix.
 		ObjectConstants objConstants;
 		objConstants.WorldViewProj = transpose(worldViewProj);
+		objConstants.time = gt.TotalTime();
 		mObjectCB[i]->CopyData(0, objConstants);
 
 		mCommandList->SetGraphicsRootDescriptorTable(0, mCbvHeap[i]->GetGPUDescriptorHandleForHeapStart());
