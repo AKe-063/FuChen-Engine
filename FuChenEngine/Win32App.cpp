@@ -13,14 +13,14 @@ using namespace glm;
 // 	// before CreateWindow returns, and thus before mhMainWnd is valid.
 // 	return static_cast<Win32App*>(App::GetApp())->MsgProc(hwnd, msg, wParam, lParam);
 // }
-Win32App* Win32App::mApp = nullptr;
+std::shared_ptr<Win32App> Win32App::mApp(new Win32App(GetInstanceModule(0)));
 
 Win32App::Win32App(HINSTANCE hInstance)
 	:App()
 {
 	// Only one D3DApp can be constructed.
-	assert(mApp == nullptr);
-	mApp = this;
+// 	assert(mApp == nullptr);
+// 	mApp = std::make_unique<Win32App>();
 	mWindow = std::make_unique<Win32Window>();
 	mWindow->SetAppInst(hInstance);
 	std::unique_ptr<Serialize> Ar = std::make_unique<Serialize>();
@@ -816,7 +816,7 @@ LRESULT Win32App::MsgProc(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam)
 	return DefWindowProc(hwnd, msg, wParam, lParam);
 }
 
-Win32App* Win32App::GetApp()
+std::shared_ptr<Win32App> Win32App::GetApp()
 {
 	return mApp;
 }

@@ -19,10 +19,10 @@ public:
 	virtual bool Initialize()override;
 	virtual LRESULT MsgProc(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam);
 
-	static Win32App* GetApp();
+	static std::shared_ptr<Win32App> GetApp();
 
 protected:
-	static Win32App* mApp;
+	static std::shared_ptr<Win32App> mApp;
 
 private:
 	virtual void OnResize()override;

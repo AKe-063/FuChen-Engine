@@ -12,11 +12,12 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE prevInstance,
 
 	try
 	{
-		Win32App theApp(hInstance);
-		if (!theApp.Initialize())
+		//Win32App theApp(hInstance);
+		std::shared_ptr<Win32App> theApp = Win32App::GetApp();
+		if (!theApp->Initialize())
 			return 0;
 
-		return theApp.Run();
+		return theApp->Run();
 	}
 	catch (DxException& e)
 	{
