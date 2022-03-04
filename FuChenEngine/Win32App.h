@@ -61,8 +61,6 @@ private:
 	HINSTANCE AppInst()const;
 	HWND      MainWnd()const;
 	std::shared_ptr<Win32Window> mWindow;
-// 	HINSTANCE mhAppInst = nullptr; // application instance handle
-// 	HWND      mhMainWnd = nullptr; // main window handle
 	
 	std::map<std::string, AssetInfo> meshesInfo;
 	std::vector<ActorInfo> actorsInfo;
@@ -74,8 +72,6 @@ private:
 	ComPtr<ID3D12RootSignature> mRootSignature = nullptr;
 	std::vector<ComPtr<ID3D12DescriptorHeap>> mCbvHeap;
 	std::vector<std::unique_ptr<UploadBuffer<ObjectConstants>>> mObjectCB;
-	//std::unique_ptr<UploadBuffer<PassConstants>> mPassCB = nullptr;
-	//std::unique_ptr<MeshGeometry> mMeshes = nullptr;
 	std::vector<MeshGeometry> mMeshes;
 
 	ComPtr<ID3DBlob> mvsByteCode = nullptr;

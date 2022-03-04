@@ -154,8 +154,12 @@
     <ClInclude Include="Camera.h" />
     <ClInclude Include="App.h" />
     <ClInclude Include="d3dUtil.h" />
+    <ClInclude Include="FActor.h" />
+    <ClInclude Include="FAssetManager.h" />
+    <ClInclude Include="FScene.h" />
     <ClInclude Include="GameTimer.h" />
     <ClInclude Include="MathHelper.h" />
+    <ClInclude Include="FMesh.h" />
     <ClInclude Include="MeshDescribe.h" />
     <ClInclude Include="Serialize.h" />
     <ClInclude Include="Win32App.h" />
@@ -168,8 +172,12 @@
     <ClCompile Include="Camera.cpp" />
     <ClCompile Include="App.cpp" />
     <ClCompile Include="d3dUtil.cpp" />
+    <ClCompile Include="FActor.cpp" />
+    <ClCompile Include="FAssetManager.cpp" />
+    <ClCompile Include="FScene.cpp" />
     <ClCompile Include="GameTimer.cpp" />
     <ClCompile Include="MathHelper.cpp" />
+    <ClCompile Include="FMesh.cpp" />
     <ClCompile Include="Serialize.cpp" />
     <ClCompile Include="Win32App.cpp" />
     <ClCompile Include="stdafx.cpp">

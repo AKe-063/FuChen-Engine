@@ -3,6 +3,7 @@
 #include <crtdbg.h>
 #include <windows.h>
 #include <windowsx.h>
+#include <debugapi.h>
 #include <wrl.h>
 #include <dxgi1_4.h>
 #include <d3d12.h>
@@ -17,8 +18,8 @@
 #include <vector>
 #include <set>
 #include <map>
-#include <array>
 #include <unordered_map>
+#include <array>
 #include <cstdint>
 #include <fstream>
 #include <sstream>

@@ -18,9 +18,6 @@ std::shared_ptr<Win32App> Win32App::mApp(new Win32App(GetInstanceModule(0)));
 Win32App::Win32App(HINSTANCE hInstance)
 	:App()
 {
-	// Only one D3DApp can be constructed.
-// 	assert(mApp == nullptr);
-// 	mApp = std::make_unique<Win32App>();
 	mWindow = std::make_unique<Win32Window>();
 	mWindow->SetAppInst(hInstance);
 	std::unique_ptr<Serialize> Ar = std::make_unique<Serialize>();
@@ -30,7 +27,7 @@ Win32App::Win32App(HINSTANCE hInstance)
 		actorsInfo.push_back(Ar->DeserializeActorInfo(name));
 	}
 
-	actorsInfo.erase(actorsInfo.begin());
+	//actorsInfo.erase(actorsInfo.begin());
 
 	for (ActorInfo actor : actorsInfo)
 	{
