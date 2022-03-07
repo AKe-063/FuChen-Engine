@@ -24,12 +24,9 @@ public:
     virtual bool Initialize() = 0;
 
 protected:
-	virtual void OnResize() = 0; 
+	//virtual void OnResize() = 0; 
 	virtual void Update(const GameTimer& gt)=0;
-    virtual void Draw(const GameTimer& gt)=0;
-
-    //std::shared_ptr<Window> mWindow;
-    //static App* mApp;
+    //virtual void Draw(const GameTimer& gt)=0;
 
 	bool      mAppPaused = false;  // is the application paused?
 	bool      mMinimized = false;  // is the application minimized?
@@ -41,7 +38,7 @@ protected:
 	float mRadius = 500.0f;
 
 	// Used to keep track of the delta-time?and game time (?.4).
-	GameTimer mTimer;
+	/*GameTimer mTimer;*/
 	
 	// Derived class should set these in derived constructor to customize starting values.
 	/*std::wstring mMainWndCaption = L"d3d App";*/

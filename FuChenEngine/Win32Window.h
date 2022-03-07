@@ -14,8 +14,8 @@ public:
 	void SetAppInst(const HINSTANCE& hInstance);
 	HWND GetMainWnd();
 	std::wstring GetMainWndCaption();
+
 protected:
-	
 
 private:
 	HINSTANCE mhAppInst = nullptr; // application instance handle

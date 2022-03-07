@@ -6,6 +6,7 @@ MainWndProc(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam)
 {
 	// Forward hwnd on because we can get messages (e.g., WM_CREATE)
 	// before CreateWindow returns, and thus before mhMainWnd is valid.
+	//return Win32App::GetApp()->MsgProc(hwnd, msg, wParam, lParam);
 	return Win32App::GetApp()->MsgProc(hwnd, msg, wParam, lParam);
 }
 

@@ -71,9 +71,6 @@ void Camera::UpdateViewMatrix()
 {
 	if (mViewDirty)
 	{
-// 		vec3 R = mRight;
-// 		vec3 U = mUp;
-// 		vec3 L = mLook;
 		vec4 R = vec4(mRight, 0);
 		vec4 U = vec4(mUp, 0);
 		vec4 L = vec4(mLook, 0);
