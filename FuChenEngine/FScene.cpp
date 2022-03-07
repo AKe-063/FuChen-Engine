@@ -1,9 +1,15 @@
 #include "stdafx.h"
 #include "FScene.h"
+#include "Serialize.h"
 
 FScene::FScene()
 {
-
+	std::unique_ptr<Serialize> Ar = std::make_unique<Serialize>();
+	std::vector<std::string> names = Ar->GetNames();
+	for (std::string name : names)
+	{
+		actors.insert({ name, Ar->DeserializeActorInfo(name) });
+	}
 }
 
 FScene::FScene(const std::unordered_map<std::string, FActor>& actors)

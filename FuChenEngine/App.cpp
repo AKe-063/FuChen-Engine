@@ -22,8 +22,3 @@ App::~App()
 {
 	
 }
-
-//float App::AspectRatio()const
-//{
-//	return static_cast<float>(mWindow->GetWidth() / mWindow->GetHeight());
-//}

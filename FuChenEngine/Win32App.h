@@ -3,6 +3,8 @@
 #include "App.h"
 #include "Camera.h"
 #include "Win32Window.h"
+#include "FAssetManager.h"
+#include "FScene.h"
 
 using Microsoft::WRL::ComPtr;
 using namespace glm;
@@ -62,8 +64,10 @@ private:
 	HWND      MainWnd()const;
 	std::shared_ptr<Win32Window> mWindow;
 	
-	std::map<std::string, AssetInfo> meshesInfo;
-	std::vector<ActorInfo> actorsInfo;
+// 	std::map<std::string, AssetInfo> meshesInfo;
+// 	std::vector<ActorInfo> actorsInfo;
+	std::unique_ptr<FAssetManager> fAssetManager;
+	std::unique_ptr<FScene> fScene;
 
 	// Set true to use 4X MSAA (?.1.8).  The default is false.
 	bool      m4xMsaaState = false;    // 4X MSAA enabled

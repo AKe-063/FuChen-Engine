@@ -1,18 +1,10 @@
 #include "stdafx.h"
 #include "Win32App.h"
-#include "Serialize.h"
 
 using Microsoft::WRL::ComPtr;
 using namespace std;
 using namespace glm;
 
-// LRESULT CALLBACK
-// MainWndProc(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam)
-// {
-// 	// Forward hwnd on because we can get messages (e.g., WM_CREATE)
-// 	// before CreateWindow returns, and thus before mhMainWnd is valid.
-// 	return static_cast<Win32App*>(App::GetApp())->MsgProc(hwnd, msg, wParam, lParam);
-// }
 std::shared_ptr<Win32App> Win32App::mApp(new Win32App(GetInstanceModule(0)));
 
 Win32App::Win32App(HINSTANCE hInstance)
@@ -20,27 +12,8 @@ Win32App::Win32App(HINSTANCE hInstance)
 {
 	mWindow = std::make_unique<Win32Window>();
 	mWindow->SetAppInst(hInstance);
-	std::unique_ptr<Serialize> Ar = std::make_unique<Serialize>();
-	std::vector<std::string> names = Ar->GetNames();
-	for (std::string name : names)
-	{
-		actorsInfo.push_back(Ar->DeserializeActorInfo(name));
-	}
-
-	//actorsInfo.erase(actorsInfo.begin());
-
-	for (ActorInfo actor : actorsInfo)
-	{
-		for (int i = 0; i < actor.staticMeshesNum; i++)
-		{
-			if (meshesInfo.find(actor.staticMeshes[i].name) == meshesInfo.end())
-			{
-				meshesInfo.insert(std::pair<std::string, AssetInfo>(
-					actor.staticMeshes[i].name,
-					Ar->DeserializeAssetInfo(actor.staticMeshes[i].name)));
-			}
-		}
-	}
+	fScene = std::make_unique<FScene>();
+	fAssetManager = std::make_unique<FAssetManager>();
 }
 
 Win32App::~Win32App()
@@ -100,8 +73,6 @@ bool Win32App::Initialize()
 	BuildConstantBuffers();
 	BuildRootSignature();
 	BuildShadersAndInputLayout();
-	/*BuildBoxGeometry();*/
-	BuildConstantBuffers();
 	BuildPSO();
 
 	// Execute the initialization commands.
@@ -983,12 +954,20 @@ void Win32App::BuildBoxGeometry()
 	std::vector<Vertex> vertices;
 	Vertex vertice;
 
-	for (ActorInfo actor : actorsInfo)
+	for (std::pair<std::string,FActor> actor : fScene->GetAllActor())
 	{
-		for (FMeshInfoStruct fMeshInfo : actor.staticMeshes)
+		for (FMeshInfoStruct fMeshInfo : actor.second.GetActorInfo().staticMeshes)
 		{
 			vertices.clear();
-			AssetInfo meshInfo = meshesInfo[fMeshInfo.name];
+			AssetInfo meshInfo;
+			if (fAssetManager->AssetContain(fMeshInfo.name))
+			{
+				meshInfo = fAssetManager->GetAssetByName(fMeshInfo.name);
+			}
+			else
+			{
+				assert(0);
+			}
 
 			std::unique_ptr<MeshGeometry> mMesh = std::make_unique<MeshGeometry>();
 			mMesh->Name = meshInfo.name;

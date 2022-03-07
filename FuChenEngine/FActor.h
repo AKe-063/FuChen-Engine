@@ -4,9 +4,11 @@
 class FActor
 {
 public:
-	FActor(const ActorInfo actorIn);
+	FActor(const ActorInfo& actorIn);
 	FActor(const std::string& name, std::vector<FMeshInfoStruct>);
 	~FActor();
+
+	ActorInfo GetActorInfo();
 
 protected:
 	ActorInfo actor;
