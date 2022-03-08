@@ -1,12 +1,9 @@
 #pragma once
 #include "MeshDescribe.h"
-#include "FActor.h"
-#include "FScene.h"
-#include "FAssetManager.h"
 #include "Camera.h"
 #include "Win32Window.h"
-
-class Win32Window;
+#include "FScene.h"
+#include "FAssetManager.h"
 
 class DxRender
 {
@@ -14,8 +11,8 @@ public:
 	DxRender();
 	virtual ~DxRender();
 
-	void OnResize();
-	void Draw(const GameTimer& gt);
+	void OnResize(Camera* mCamera, Win32Window* mWindow);
+	void Draw(const GameTimer& gt, Camera* mCamera);
 
 	//Get Instance
 	Microsoft::WRL::ComPtr<ID3D12Device> GetDevice();
@@ -23,24 +20,23 @@ public:
 	Microsoft::WRL::ComPtr<ID3D12GraphicsCommandList> GetCommandList();
 	Microsoft::WRL::ComPtr<ID3D12CommandQueue> GetCommandQueue();
 	bool Getm4xMsaaState();
-	Win32Window* GetWin32Window();
-	Camera* GetCamera();
+	//Win32Window* GetWin32Window();
 
 	//Init Window
-	bool InitWindow();
+	//bool InitWindow();
 
 	//DX Init
-	bool InitDirect3D();
+	bool InitDirect3D(Win32Window* mWindow);
 	virtual void CreateRtvAndDsvDescriptorHeaps();
 	bool Get4xMsaaState()const;
-	void Set4xMsaaState(bool value);
+	//void Set4xMsaaState(bool value);
 	void CreateCommandObjects();
-	void CreateSwapChain();
+	void CreateSwapChain(Win32Window* mWindow);
 	void FlushCommandQueue();
 	ID3D12Resource* CurrentBackBuffer()const;
 	D3D12_CPU_DESCRIPTOR_HANDLE CurrentBackBufferView()const;
 	D3D12_CPU_DESCRIPTOR_HANDLE DepthStencilView()const;
-	void CalculateFrameStats(GameTimer* mTimer);
+	void CalculateFrameStats(GameTimer* mTimer, Win32Window* mWindow);
 	void LogAdapters();
 	void LogAdapterOutputs(IDXGIAdapter* adapter);
 	void LogOutputDisplayModes(IDXGIOutput* output, DXGI_FORMAT format);
@@ -95,6 +91,5 @@ private:
 	UINT mDsvDescriptorSize = 0;
 	UINT mCbvSrvUavDescriptorSize = 0;
 
-	std::shared_ptr<Win32Window> mWindow;
-	std::shared_ptr<Camera> mCamera;
+	//std::shared_ptr<Win32Window> mWindow;
 };

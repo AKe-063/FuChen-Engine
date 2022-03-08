@@ -1,4 +1,5 @@
 #pragma once
+#include "FTaskManager.h"
 
 using namespace glm;
 
@@ -26,6 +27,9 @@ public:
 	mat4x4 GetView4x4();
 
 private:
+	float mTheta = 1.5f * pi<float>();
+	float mPhi = quarter_pi<float>();
+	float mRadius = 500.0f;
 	float mFovY;
 	float mAspect;
 	float mNearZ;

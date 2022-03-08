@@ -1,8 +1,5 @@
 #pragma once
 #include "Window.h"
-#include "Win32App.h"
-
-class Win32App;
 
 class Win32Window : public Window
 {

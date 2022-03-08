@@ -1,5 +1,5 @@
 #include "stdafx.h"
-#include "Win32App.h"
+#include "Engine.h"
 
 int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE prevInstance,
 	PSTR cmdLine, int showCmd)
@@ -13,7 +13,7 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE prevInstance,
 	try
 	{
 		//Win32App theApp(hInstance);
-		std::shared_ptr<Win32App> theApp = Win32App::GetApp();
+		std::unique_ptr<Engine> theApp = std::make_unique<Engine>(hInstance);
 		if (!theApp->Initialize())
 			return 0;
 

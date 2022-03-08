@@ -37,6 +37,12 @@
     <Filter Include="Source Files\Engine\Launch\Windows">
       <UniqueIdentifier>{546d5bd1-5fe4-4652-9e7b-819622bc1433}</UniqueIdentifier>
     </Filter>
+    <Filter Include="Header Files\Engine\Input">
+      <UniqueIdentifier>{953813d3-54b0-4384-89ee-1cb0956ebad7}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Source Files\Engine\Input">
+      <UniqueIdentifier>{db61040e-0a40-4708-a3f0-cac6978de88a}</UniqueIdentifier>
+    </Filter>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="MeshDescribe.h">
@@ -63,7 +69,7 @@
     <ClInclude Include="UploadBuffer.h">
       <Filter>Header Files\Engine</Filter>
     </ClInclude>
-    <ClInclude Include="Win32App.h">
+    <ClInclude Include="Engine.h">
       <Filter>Header Files\Engine</Filter>
     </ClInclude>
     <ClInclude Include="Win32Window.h">
@@ -87,10 +93,16 @@
     <ClInclude Include="stdafx.h">
       <Filter>Header Files\Engine\PCH</Filter>
     </ClInclude>
-    <ClInclude Include="Input.h">
-      <Filter>Header Files\Game</Filter>
-    </ClInclude>
     <ClInclude Include="DxRender.h">
+      <Filter>Header Files\Engine</Filter>
+    </ClInclude>
+    <ClInclude Include="FWin32Input.h">
+      <Filter>Header Files\Engine\Input</Filter>
+    </ClInclude>
+    <ClInclude Include="FInputBase.h">
+      <Filter>Header Files\Engine\Input</Filter>
+    </ClInclude>
+    <ClInclude Include="FTaskManager.h">
       <Filter>Header Files\Engine</Filter>
     </ClInclude>
   </ItemGroup>
@@ -119,7 +131,7 @@
     <ClCompile Include="Serialize.cpp">
       <Filter>Source Files\Engine</Filter>
     </ClCompile>
-    <ClCompile Include="Win32App.cpp">
+    <ClCompile Include="Engine.cpp">
       <Filter>Source Files\Engine</Filter>
     </ClCompile>
     <ClCompile Include="Win32Window.cpp">
@@ -140,10 +152,16 @@
     <ClCompile Include="stdafx.cpp">
       <Filter>Source Files\Engine\PCH</Filter>
     </ClCompile>
-    <ClCompile Include="Input.cpp">
-      <Filter>Source Files\Game</Filter>
-    </ClCompile>
     <ClCompile Include="DxRender.cpp">
+      <Filter>Source Files\Engine</Filter>
+    </ClCompile>
+    <ClCompile Include="FInputBase.cpp">
+      <Filter>Source Files\Engine\Input</Filter>
+    </ClCompile>
+    <ClCompile Include="FWin32Input.cpp">
+      <Filter>Source Files\Engine\Input</Filter>
+    </ClCompile>
+    <ClCompile Include="FTaskManager.cpp">
       <Filter>Source Files\Engine</Filter>
     </ClCompile>
   </ItemGroup>

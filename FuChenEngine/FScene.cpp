@@ -4,6 +4,7 @@
 
 FScene::FScene()
 {
+	mCamera = std::make_shared<Camera>();
 	std::unique_ptr<Serialize> Ar = std::make_unique<Serialize>();
 	std::vector<std::string> names = Ar->GetNames();
 	for (std::string name : names)
@@ -20,6 +21,11 @@ FScene::FScene(const std::unordered_map<std::string, FActor>& actors)
 FScene::~FScene()
 {
 
+}
+
+Camera* FScene::GetCamera()
+{
+	return mCamera.get();
 }
 
 void FScene::AddNewActor(const std::string& name, const FActor& newActor)

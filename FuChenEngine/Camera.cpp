@@ -5,7 +5,9 @@ using namespace glm;
 
 Camera::Camera()
 {
-
+// 	std::unique_ptr<FTaskManager>& fTaskManager = FTaskManager::GetFTaskManager();
+// 	fTaskManager->Register("OnLMouseMove", [this](const float& value) {this->Pitch(value); });
+	FTaskManager::GetFTaskManager()->Register("OnLMouseMove", [this](const float& value) {this->Pitch(value); });
 }
 
 Camera::~Camera()

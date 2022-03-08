@@ -157,14 +157,16 @@
     <ClInclude Include="DxRender.h" />
     <ClInclude Include="FActor.h" />
     <ClInclude Include="FAssetManager.h" />
-    <ClInclude Include="Input.h" />
+    <ClInclude Include="FInputBase.h" />
     <ClInclude Include="FScene.h" />
+    <ClInclude Include="FTaskManager.h" />
+    <ClInclude Include="FWin32Input.h" />
     <ClInclude Include="GameTimer.h" />
     <ClInclude Include="MathHelper.h" />
     <ClInclude Include="FMesh.h" />
     <ClInclude Include="MeshDescribe.h" />
     <ClInclude Include="Serialize.h" />
-    <ClInclude Include="Win32App.h" />
+    <ClInclude Include="Engine.h" />
     <ClInclude Include="stdafx.h" />
     <ClInclude Include="UploadBuffer.h" />
     <ClInclude Include="Win32Window.h" />
@@ -177,13 +179,15 @@
     <ClCompile Include="DxRender.cpp" />
     <ClCompile Include="FActor.cpp" />
     <ClCompile Include="FAssetManager.cpp" />
-    <ClCompile Include="Input.cpp" />
+    <ClCompile Include="FInputBase.cpp" />
     <ClCompile Include="FScene.cpp" />
+    <ClCompile Include="FTaskManager.cpp" />
+    <ClCompile Include="FWin32Input.cpp" />
     <ClCompile Include="GameTimer.cpp" />
     <ClCompile Include="MathHelper.cpp" />
     <ClCompile Include="FMesh.cpp" />
     <ClCompile Include="Serialize.cpp" />
-    <ClCompile Include="Win32App.cpp" />
+    <ClCompile Include="Engine.cpp" />
     <ClCompile Include="stdafx.cpp">
       <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">Create</PrecompiledHeader>
       <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Release|x64'">Create</PrecompiledHeader>

@@ -1,5 +1,6 @@
 #include "stdafx.h"
 #include "Win32Window.h"
+#include "FWin32Input.h"
 
 LRESULT CALLBACK
 MainWndProc(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam)
@@ -7,7 +8,7 @@ MainWndProc(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam)
 	// Forward hwnd on because we can get messages (e.g., WM_CREATE)
 	// before CreateWindow returns, and thus before mhMainWnd is valid.
 	//return Win32App::GetApp()->MsgProc(hwnd, msg, wParam, lParam);
-	return Win32App::GetApp()->MsgProc(hwnd, msg, wParam, lParam);
+	return FWin32Input::GetFWin32Input()->MsgProc(hwnd, msg, wParam, lParam);
 }
 
 Win32Window::Win32Window()

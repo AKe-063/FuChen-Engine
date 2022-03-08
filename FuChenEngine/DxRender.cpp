@@ -6,9 +6,9 @@ using namespace std;
 
 DxRender::DxRender()
 {
-	mCamera = std::make_shared<Camera>();
-	mWindow = std::make_shared<Win32Window>();
-	mWindow->SetAppInst(GetInstanceModule(0));
+	//mCamera = std::make_shared<Camera>();
+	//mWindow = std::make_shared<Win32Window>();
+	//mWindow->SetAppInst(GetInstanceModule(0));
 }
 
 DxRender::~DxRender()
@@ -16,7 +16,7 @@ DxRender::~DxRender()
 
 }
 
-void DxRender::OnResize()
+void DxRender::OnResize(Camera* mCamera, Win32Window* mWindow)
 {
 	assert(md3dDevice);
 	assert(mSwapChain);
@@ -116,7 +116,7 @@ void DxRender::OnResize()
 	mCamera->SetLens(0.25f * MathHelper::Pi, mWindow->AspectRatio(), 1.0f, 20000.0f);
 }
 
-void DxRender::Draw(const GameTimer& gt)
+void DxRender::Draw(const GameTimer& gt, Camera* mCamera)
 {
 	// Reuse the memory associated with command recording.
 	// We can only reset when the associated command lists have finished execution on the GPU.
@@ -211,25 +211,20 @@ bool DxRender::Getm4xMsaaState()
 	return m4xMsaaState;
 }
 
-Win32Window* DxRender::GetWin32Window()
-{
-	return mWindow.get();
-}
+// Win32Window* DxRender::GetWin32Window()
+// {
+// 	return mWindow.get();
+// }
 
-Camera* DxRender::GetCamera()
-{
-	return mCamera.get();
-}
+// bool DxRender::InitWindow()
+// {
+// 	if (!mWindow->CreateAWindow())
+// 		return false;
+// 
+// 	return true;
+// }
 
-bool DxRender::InitWindow()
-{
-	if (!mWindow->CreateAWindow())
-		return false;
-
-	return true;
-}
-
-bool DxRender::InitDirect3D()
+bool DxRender::InitDirect3D(Win32Window* mWindow)
 {
 #if defined(DEBUG) || defined(_DEBUG) 
 	// Enable the D3D12 debug layer.
@@ -289,7 +284,7 @@ bool DxRender::InitDirect3D()
 #endif
 
 	CreateCommandObjects();
-	CreateSwapChain();
+	CreateSwapChain(mWindow);
 	CreateRtvAndDsvDescriptorHeaps();
 
 	return true;
@@ -530,17 +525,17 @@ bool DxRender::Get4xMsaaState() const
 	return m4xMsaaState;
 }
 
-void DxRender::Set4xMsaaState(bool value)
-{
-	if (m4xMsaaState != value)
-	{
-		m4xMsaaState = value;
-
-		// Recreate the swapchain and buffers with new multisample settings.
-		CreateSwapChain();
-		OnResize();
-	}
-}
+// void DxRender::Set4xMsaaState(bool value)
+// {
+// 	if (m4xMsaaState != value)
+// 	{
+// 		m4xMsaaState = value;
+// 
+// 		// Recreate the swapchain and buffers with new multisample settings.
+// 		CreateSwapChain();
+// 		OnResize();
+// 	}
+// }
 
 void DxRender::CreateCommandObjects()
 {
@@ -566,7 +561,7 @@ void DxRender::CreateCommandObjects()
 	mCommandList->Close();
 }
 
-void DxRender::CreateSwapChain()
+void DxRender::CreateSwapChain(Win32Window* mWindow)
 {
 	// Release the previous swapchain we will be recreating.
 	mSwapChain.Reset();
@@ -638,7 +633,7 @@ D3D12_CPU_DESCRIPTOR_HANDLE DxRender::DepthStencilView()const
 	return mDsvHeap->GetCPUDescriptorHandleForHeapStart();
 }
 
-void DxRender::CalculateFrameStats(GameTimer* mTimer)
+void DxRender::CalculateFrameStats(GameTimer* mTimer, Win32Window* mWindow)
 {
 	// Code computes the average frames per second, and also the 
 	// average time it takes to render one frame.  These stats 
