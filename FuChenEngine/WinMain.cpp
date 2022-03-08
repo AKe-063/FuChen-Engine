@@ -12,12 +12,13 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE prevInstance,
 
 	try
 	{
-		//Win32App theApp(hInstance);
-		std::unique_ptr<Engine> theApp = std::make_unique<Engine>(hInstance);
-		if (!theApp->Initialize())
+		std::unique_ptr<Engine> engine = std::make_unique<Engine>(hInstance);
+		if (!engine->Initialize())
 			return 0;
-
-		return theApp->Run();
+		if (!engine->Run())
+			engine->Destroy();
+		
+		return 0;
 	}
 	catch (DxException& e)
 	{

@@ -186,6 +186,30 @@ void DxRender::Draw(const GameTimer& gt, Camera* mCamera)
 	FlushCommandQueue();
 }
 
+void DxRender::Init(FScene* fScene, FAssetManager* fAssetManager, Win32Window* win32Window)
+{
+	// Do the initial resize code.
+	OnResize(fScene->GetCamera(), win32Window);
+
+	// Reset the command list to prep for initialization commands.
+	ThrowIfFailed(GetCommandList()->Reset(GetCommandAllocator().Get(), nullptr));
+
+	BuildGeometry(fScene, fAssetManager);
+	BuildDescriptorHeaps();
+	BuildConstantBuffers();
+	BuildRootSignature();
+	BuildShadersAndInputLayout();
+	BuildPSO();
+
+	// Execute the initialization commands.
+	ThrowIfFailed(GetCommandList()->Close());
+	ID3D12CommandList* cmdsLists[] = { GetCommandList().Get() };
+	GetCommandQueue()->ExecuteCommandLists(_countof(cmdsLists), cmdsLists);
+
+	// Wait until initialization is complete.
+	FlushCommandQueue();
+}
+
 ComPtr<ID3D12Device> DxRender::GetDevice()
 {
 	return md3dDevice;
@@ -210,19 +234,6 @@ bool DxRender::Getm4xMsaaState()
 {
 	return m4xMsaaState;
 }
-
-// Win32Window* DxRender::GetWin32Window()
-// {
-// 	return mWindow.get();
-// }
-
-// bool DxRender::InitWindow()
-// {
-// 	if (!mWindow->CreateAWindow())
-// 		return false;
-// 
-// 	return true;
-// }
 
 bool DxRender::InitDirect3D(Win32Window* mWindow)
 {
@@ -386,7 +397,7 @@ void DxRender::BuildShadersAndInputLayout()
 	};
 }
 
-void DxRender::BuildBoxGeometry(FScene* fScene, FAssetManager* fAssetManager)
+void DxRender::BuildGeometry(FScene* fScene, FAssetManager* fAssetManager)
 {
 	std::vector<Vertex> vertices;
 	Vertex vertice;
@@ -524,18 +535,6 @@ bool DxRender::Get4xMsaaState() const
 {
 	return m4xMsaaState;
 }
-
-// void DxRender::Set4xMsaaState(bool value)
-// {
-// 	if (m4xMsaaState != value)
-// 	{
-// 		m4xMsaaState = value;
-// 
-// 		// Recreate the swapchain and buffers with new multisample settings.
-// 		CreateSwapChain();
-// 		OnResize();
-// 	}
-// }
 
 void DxRender::CreateCommandObjects()
 {

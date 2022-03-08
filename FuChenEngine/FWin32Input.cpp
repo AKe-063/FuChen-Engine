@@ -1,11 +1,12 @@
 #include "stdafx.h"
 #include "FWin32Input.h"
+#include "Camera.h"
 
 std::unique_ptr<FWin32Input> FWin32Input::fWin32Input(new FWin32Input());
 
 FWin32Input::FWin32Input()
 {
-	fTaskManager = std::make_unique<FTaskManager>();
+
 }
 
 FWin32Input::~FWin32Input()
@@ -31,7 +32,7 @@ LRESULT FWin32Input::MsgProc(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam)
 // 			mAppPaused = false;
 // 			mTimer.Start();
 // 		}
-// 		return 0;
+ 		return 0;
 
 		// WM_SIZE is sent when the user resizes the window.  
 	case WM_SIZE:
@@ -88,14 +89,14 @@ LRESULT FWin32Input::MsgProc(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam)
 // 				}
 // 			}
 // 		}
-// 		return 0;
+ 		return 0;
 
 		// WM_EXITSIZEMOVE is sent when the user grabs the resize bars.
 	case WM_ENTERSIZEMOVE:
 // 		mAppPaused = true;
 // 		mResizing = true;
 // 		mTimer.Stop();
-// 		return 0;
+ 		return 0;
 
 		// WM_EXITSIZEMOVE is sent when the user releases the resize bars.
 		// Here we reset everything based on the new window dimensions.
@@ -104,12 +105,12 @@ LRESULT FWin32Input::MsgProc(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam)
 // 		mResizing = false;
 // 		mTimer.Start();
 // 		OnResize();
-// 		return 0;
+ 		return 0;
 
 		// WM_DESTROY is sent when the window is being destroyed.
 	case WM_DESTROY:
-// 		PostQuitMessage(0);
-// 		return 0;
+		PostQuitMessage(0);
+		return 0;
 
 		// The WM_MENUCHAR message is sent when a menu is active and the user presses 
 		// a key that does not correspond to any mnemonic or accelerator key. 
@@ -141,11 +142,9 @@ LRESULT FWin32Input::MsgProc(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam)
 		{
 			PostQuitMessage(0);
 		}
-// 		else if ((int)wParam == VK_F2)
-// 			Set4xMsaaState(!m4xMsaaState);
-
 		return 0;
 	}
+
 
 	return DefWindowProc(hwnd, msg, wParam, lParam);
 }
@@ -177,31 +176,16 @@ void FWin32Input::OnMouseMove(WPARAM btnState, int x, int y)
 		float dx = glm::radians(0.25f * static_cast<float>(x - mLastMousePos.x));
 		float dy = glm::radians(0.25f * static_cast<float>(y - mLastMousePos.y));
 
-		fTaskManager->Notify("OnLMouseMove",dy);
-
 		// Update angles based on input to orbit camera around box.
-// 		dxRender->GetCamera()->Pitch(dy);
-// 		dxRender->GetCamera()->Yaw(dx);
-// 
-// 		// Restrict the angle mPhi.
-// 		mPhi = MathHelper::Clamp(mPhi, 0.1f, MathHelper::Pi - 0.1f);
+		Camera::GetControlCamera()->Pitch(dy);
+		Camera::GetControlCamera()->Yaw(dx);
+
+		// Restrict the angle mPhi.
+		/*mPhi = MathHelper::Clamp(mPhi, 0.1f, MathHelper::Pi - 0.1f);*/
 
 	}
-// 	else if ((btnState & MK_RBUTTON) != 0)
-// 	{
-// 		// Make each pixel correspond to 0.005 unit in the scene.
-// 		float dx = 0.1f * static_cast<float>(x - mLastMousePos.x);
-// 		float dy = 0.1f * static_cast<float>(y - mLastMousePos.y);
-// 
-// 		// Update the camera radius based on input.
-// 		mRadius += dx - dy;
-// 
-// 		// Restrict the radius.
-// 		mRadius = MathHelper::Clamp(mRadius, 100.0f, 500.0f);
-// 	}
-// 
-// 	mLastMousePos.x = x;
-// 	mLastMousePos.y = y;
+	mLastMousePos.x = x;
+	mLastMousePos.y = y;
 }
 
 void FWin32Input::OnKeyboardInput(const GameTimer& gt)
@@ -209,23 +193,23 @@ void FWin32Input::OnKeyboardInput(const GameTimer& gt)
 	const float dt = gt.DeltaTime();
 	const float speed = 1000.0f;
 
-// 	if (GetAsyncKeyState('W') & 0x8000)
-// 		dxRender->GetCamera()->Walk(speed * dt);
-// 
-// 	if (GetAsyncKeyState('S') & 0x8000)
-// 		dxRender->GetCamera()->Walk(speed * -dt);
-// 
-// 	if (GetAsyncKeyState('A') & 0x8000)
-// 		dxRender->GetCamera()->Strafe(speed * -dt);
-// 
-// 	if (GetAsyncKeyState('D') & 0x8000)
-// 		dxRender->GetCamera()->Strafe(speed * dt);
-// 
-// 	if (GetAsyncKeyState('Q') & 0x8000)
-// 		dxRender->GetCamera()->Roll(0.05f);
-// 
-// 	if (GetAsyncKeyState('E') & 0x8000)
-// 		dxRender->GetCamera()->Roll(-0.05f);
-// 
-// 	dxRender->GetCamera()->UpdateViewMatrix();
+	if (GetAsyncKeyState('W') & 0x8000)
+		Camera::GetControlCamera()->Walk(speed * dt);
+
+	if (GetAsyncKeyState('S') & 0x8000)
+		Camera::GetControlCamera()->Walk(speed * -dt);
+
+	if (GetAsyncKeyState('A') & 0x8000)
+		Camera::GetControlCamera()->Strafe(speed * -dt);
+
+	if (GetAsyncKeyState('D') & 0x8000)
+		Camera::GetControlCamera()->Strafe(speed * dt);
+
+	if (GetAsyncKeyState('Q') & 0x8000)
+		Camera::GetControlCamera()->Roll(0.05f);
+
+	if (GetAsyncKeyState('E') & 0x8000)
+		Camera::GetControlCamera()->Roll(-0.05f);
+
+	Camera::GetControlCamera()->UpdateViewMatrix();
 }

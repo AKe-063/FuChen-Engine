@@ -1,6 +1,5 @@
 #pragma once
 #include "MeshDescribe.h"
-#include "App.h"
 #include "FAssetManager.h"
 #include "FScene.h"
 #include "DxRender.h"
@@ -13,10 +12,11 @@ class Engine
 {
 public:
 	Engine(HINSTANCE hInstance);
-	~Engine();
+	virtual ~Engine();
 
-	virtual int Run();// override;
-	virtual bool Initialize();// override;
+	int Run();
+	bool Initialize();
+	void Destroy();
 
 	static std::unique_ptr<Engine>& GetApp();
 
@@ -24,7 +24,7 @@ protected:
 	static std::unique_ptr<Engine> mEngine;
 
 private:
-	virtual void Update(const GameTimer& gt);// override;
+	void Update(const GameTimer& gt);// override;
 
 	bool InitWindow();
 

@@ -1,5 +1,4 @@
 #pragma once
-#include "FTaskManager.h"
 
 using namespace glm;
 
@@ -20,6 +19,8 @@ public:
 	void InitialView();
 	void Walk(const float& d);
 	void Strafe(const float& d);
+	void SetControlCamera();
+	static Camera* GetControlCamera();
 
 	mat4 GetProj();
 	mat4 GetView();
@@ -45,4 +46,6 @@ private:
 
 	mat4 mView = MathHelper::Identity4x4();
 	mat4 mProj = MathHelper::Identity4x4();
+
+	static Camera* controlCamera;
 };

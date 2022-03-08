@@ -8,18 +8,12 @@ std::unique_ptr<Engine> Engine::mEngine(new Engine(GetInstanceModule(0)));
 
 Engine::Engine(HINSTANCE hInstance)
 {
-	mTimer = std::make_unique<GameTimer>();
-	fScene = std::make_unique<FScene>();
-	fAssetManager = std::make_unique<FAssetManager>();
-	fWin32Input = std::make_unique<FWin32Input>();
-	win32Window = std::make_unique<Win32Window>();
-	win32Window->SetAppInst(GetInstanceModule(0));
+	
 }
 
 Engine::~Engine()
 {
-	if (dxRender->GetDevice() != nullptr)
-		dxRender->FlushCommandQueue();
+	
 }
 
 int Engine::Run()
@@ -59,37 +53,31 @@ int Engine::Run()
 
 bool Engine::Initialize()
 {
+	mTimer = std::make_unique<GameTimer>();
+	fScene = std::make_unique<FScene>();
+	fAssetManager = std::make_unique<FAssetManager>();
+	fWin32Input = std::make_unique<FWin32Input>();
+	win32Window = std::make_unique<Win32Window>();
+	win32Window->SetAppInst(GetInstanceModule(0));
 	dxRender = std::make_unique<DxRender>();
 
 	if (!(InitWindow() && dxRender->InitDirect3D(win32Window.get())))
 		return false;
 
-	// Do the initial resize code.
-	dxRender->OnResize(fScene->GetCamera(), win32Window.get());
-
-	// Reset the command list to prep for initialization commands.
-	ThrowIfFailed(dxRender->GetCommandList()->Reset(dxRender->GetCommandAllocator().Get(), nullptr));
-	
-	dxRender->BuildBoxGeometry(fScene.get(), fAssetManager.get());
-	dxRender->BuildDescriptorHeaps();
-	dxRender->BuildConstantBuffers();
-	dxRender->BuildRootSignature();
-	dxRender->BuildShadersAndInputLayout();
-	dxRender->BuildPSO();
-
-	// Execute the initialization commands.
-	ThrowIfFailed(dxRender->GetCommandList()->Close());
-	ID3D12CommandList* cmdsLists[] = { dxRender->GetCommandList().Get() };
-	dxRender->GetCommandQueue()->ExecuteCommandLists(_countof(cmdsLists), cmdsLists);
-
-	// Wait until initialization is complete.
-	dxRender->FlushCommandQueue();
+	dxRender->Init(fScene.get(), fAssetManager.get(), win32Window.get());
 
 	return true;
 }
 
+void Engine::Destroy()
+{
+	if (dxRender->GetDevice() != nullptr)
+		dxRender->FlushCommandQueue();
+}
+
 void Engine::Update(const GameTimer& gt)
 {
+	fWin32Input->OnKeyboardInput(gt);
 	fScene->GetCamera()->UpdateViewMatrix();
 	fScene->GetCamera()->SetView();
 }

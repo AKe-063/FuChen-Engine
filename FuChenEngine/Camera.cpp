@@ -3,16 +3,19 @@
 
 using namespace glm;
 
+Camera* Camera::controlCamera = nullptr;
+
 Camera::Camera()
 {
-// 	std::unique_ptr<FTaskManager>& fTaskManager = FTaskManager::GetFTaskManager();
-// 	fTaskManager->Register("OnLMouseMove", [this](const float& value) {this->Pitch(value); });
-	FTaskManager::GetFTaskManager()->Register("OnLMouseMove", [this](const float& value) {this->Pitch(value); });
+	
 }
 
 Camera::~Camera()
 {
-
+	if (controlCamera == this)
+	{
+		controlCamera = nullptr;
+	}
 }
 
 void Camera::SetLens(float fovY, float aspect, float zn, float zf)
@@ -165,6 +168,16 @@ void Camera::Strafe(const float& d)
 	mPosition = vec4(position, 0);
 
 	mViewDirty = true;
+}
+
+void Camera::SetControlCamera()
+{
+	controlCamera = this;
+}
+
+Camera* Camera::GetControlCamera()
+{
+	return controlCamera;
 }
 
 mat4 Camera::GetProj()

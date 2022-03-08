@@ -13,6 +13,7 @@ public:
 
 	void OnResize(Camera* mCamera, Win32Window* mWindow);
 	void Draw(const GameTimer& gt, Camera* mCamera);
+	void Init(FScene* fScene, FAssetManager* fAssetManager, Win32Window* win32Window);
 
 	//Get Instance
 	Microsoft::WRL::ComPtr<ID3D12Device> GetDevice();
@@ -46,7 +47,7 @@ public:
 	void BuildConstantBuffers();
 	void BuildRootSignature();
 	void BuildShadersAndInputLayout();
-	void BuildBoxGeometry(FScene* fScene, FAssetManager* fAssetManager);
+	void BuildGeometry(FScene* fScene, FAssetManager* fAssetManager);
 	void BuildPSO();
 
 private:

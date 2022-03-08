@@ -5,6 +5,7 @@
 FScene::FScene()
 {
 	mCamera = std::make_shared<Camera>();
+	mCamera->SetControlCamera();
 	std::unique_ptr<Serialize> Ar = std::make_unique<Serialize>();
 	std::vector<std::string> names = Ar->GetNames();
 	for (std::string name : names)

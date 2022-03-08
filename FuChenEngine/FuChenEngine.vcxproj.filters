@@ -48,9 +48,6 @@
     <ClInclude Include="MeshDescribe.h">
       <Filter>Header Files\Engine</Filter>
     </ClInclude>
-    <ClInclude Include="App.h">
-      <Filter>Header Files\Engine</Filter>
-    </ClInclude>
     <ClInclude Include="Camera.h">
       <Filter>Header Files\Engine</Filter>
     </ClInclude>
@@ -102,18 +99,12 @@
     <ClInclude Include="FInputBase.h">
       <Filter>Header Files\Engine\Input</Filter>
     </ClInclude>
-    <ClInclude Include="FTaskManager.h">
-      <Filter>Header Files\Engine</Filter>
-    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="WinMain.cpp">
       <Filter>Source Files\Engine\Launch\Windows</Filter>
     </ClCompile>
     <ClCompile Include="Window.cpp">
-      <Filter>Source Files\Engine</Filter>
-    </ClCompile>
-    <ClCompile Include="App.cpp">
       <Filter>Source Files\Engine</Filter>
     </ClCompile>
     <ClCompile Include="Camera.cpp">
@@ -160,9 +151,6 @@
     </ClCompile>
     <ClCompile Include="FWin32Input.cpp">
       <Filter>Source Files\Engine\Input</Filter>
-    </ClCompile>
-    <ClCompile Include="FTaskManager.cpp">
-      <Filter>Source Files\Engine</Filter>
     </ClCompile>
   </ItemGroup>
 </Project>
