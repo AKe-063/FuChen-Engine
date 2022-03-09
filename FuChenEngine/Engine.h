@@ -25,7 +25,6 @@ protected:
 
 private:
 	void Update(const GameTimer& gt);// override;
-
 	bool InitWindow();
 	Window* CreateAWindow();
 	FInputBase* CreateInput();
@@ -34,7 +33,7 @@ private:
 	std::unique_ptr<FScene> fScene;
 	std::unique_ptr<DxRender> dxRender;
 	std::unique_ptr<FInputBase> fInput;
-	std::unique_ptr<Win32Window> mWindow;
+	std::unique_ptr<Window> mWindow;
 
 	// Used to keep track of the delta-time?and game time (?.4).
 	std::unique_ptr<GameTimer> mTimer;

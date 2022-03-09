@@ -10,7 +10,7 @@ public:
 	HINSTANCE GetAppInst();
 	void SetAppInst(const HINSTANCE& hInstance);
 	HWND GetMainWnd();
-	std::wstring GetMainWndCaption();
+	virtual std::wstring GetMainWndCaption();
 
 protected:
 

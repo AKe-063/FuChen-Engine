@@ -58,7 +58,8 @@ bool Engine::Initialize()
 	fAssetManager = std::make_unique<FAssetManager>();
 	fInput = std::make_unique<FInputBase>();
 	fInput.reset(CreateInput());
-	mWindow = std::make_unique<Win32Window>();
+	mWindow = std::make_unique<Window>();
+	mWindow.reset(CreateAWindow());
 
 	if (!(InitWindow()))
 		return false;

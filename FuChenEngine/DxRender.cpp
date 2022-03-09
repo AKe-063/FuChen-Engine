@@ -4,7 +4,7 @@
 using Microsoft::WRL::ComPtr;
 using namespace std;
 
-DxRender::DxRender(FScene* fScene, FAssetManager* fAssetManager, Win32Window* win32Window)
+DxRender::DxRender(FScene* fScene, FAssetManager* fAssetManager, Window* win32Window)
 {
 	if (!InitDirect3D(win32Window))
 	{
@@ -18,7 +18,7 @@ DxRender::~DxRender()
 
 }
 
-void DxRender::OnResize(Camera* mCamera, Win32Window* mWindow)
+void DxRender::OnResize(Camera* mCamera, Window* mWindow)
 {
 	assert(md3dDevice);
 	assert(mSwapChain);
@@ -188,7 +188,7 @@ void DxRender::Draw(const GameTimer& gt, Camera* mCamera)
 	FlushCommandQueue();
 }
 
-void DxRender::Init(FScene* fScene, FAssetManager* fAssetManager, Win32Window* win32Window)
+void DxRender::Init(FScene* fScene, FAssetManager* fAssetManager, Window* win32Window)
 {
 	// Do the initial resize code.
 	OnResize(fScene->GetCamera(), win32Window);
@@ -243,7 +243,7 @@ bool DxRender::Getm4xMsaaState()
 	return m4xMsaaState;
 }
 
-bool DxRender::InitDirect3D(Win32Window* mWindow)
+bool DxRender::InitDirect3D(Window* mWindow)
 {
 #if defined(DEBUG) || defined(_DEBUG) 
 	// Enable the D3D12 debug layer.
@@ -568,7 +568,7 @@ void DxRender::CreateCommandObjects()
 	mCommandList->Close();
 }
 
-void DxRender::CreateSwapChain(Win32Window* mWindow)
+void DxRender::CreateSwapChain(Window* mWindow)
 {
 	// Release the previous swapchain we will be recreating.
 	mSwapChain.Reset();
@@ -586,7 +586,7 @@ void DxRender::CreateSwapChain(Win32Window* mWindow)
 	sd.BufferUsage = DXGI_USAGE_RENDER_TARGET_OUTPUT;
 	sd.BufferCount = SwapChainBufferCount;
 	//sd.OutputWindow = mhMainWnd;
-	sd.OutputWindow = mWindow->GetMainWnd();
+	sd.OutputWindow = GetActiveWindow();
 	sd.Windowed = true;
 	sd.SwapEffect = DXGI_SWAP_EFFECT_FLIP_DISCARD;
 	sd.Flags = DXGI_SWAP_CHAIN_FLAG_ALLOW_MODE_SWITCH;
@@ -640,7 +640,7 @@ D3D12_CPU_DESCRIPTOR_HANDLE DxRender::DepthStencilView()const
 	return mDsvHeap->GetCPUDescriptorHandleForHeapStart();
 }
 
-void DxRender::CalculateFrameStats(GameTimer* mTimer, Win32Window* mWindow)
+void DxRender::CalculateFrameStats(GameTimer* mTimer, Window* mWindow)
 {
 	// Code computes the average frames per second, and also the 
 	// average time it takes to render one frame.  These stats 
@@ -665,7 +665,7 @@ void DxRender::CalculateFrameStats(GameTimer* mTimer, Win32Window* mWindow)
 			L"   mspf: " + mspfStr;
 
 		//SetWindowText(mhMainWnd, windowText.c_str());
-		SetWindowText(mWindow->GetMainWnd(), windowText.c_str());
+		SetWindowText(GetActiveWindow(), windowText.c_str());
 
 		// Reset for next average.
 		frameCnt = 0;

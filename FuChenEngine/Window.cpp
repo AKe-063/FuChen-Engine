@@ -31,8 +31,18 @@ void Window::SetHeight(const int& newHeight)
 	mwHeight = newHeight;
 }
 
+bool Window::CreateAWindow()
+{
+	return true;
+}
+
 float Window::AspectRatio() const
 {
 	return static_cast<float>(mwWidth/mwHeight);
+}
+
+std::wstring Window::GetMainWndCaption()
+{
+	return L"this is WindowBase.";
 }
 

@@ -8,12 +8,12 @@
 class DxRender
 {
 public:
-	DxRender(FScene* fScene, FAssetManager* fAssetManager, Win32Window* win32Window);
+	DxRender(FScene* fScene, FAssetManager* fAssetManager, Window* win32Window);
 	~DxRender();
 
-	void OnResize(Camera* mCamera, Win32Window* mWindow);
+	void OnResize(Camera* mCamera, Window* mWindow);
 	void Draw(const GameTimer& gt, Camera* mCamera);
-	void Init(FScene* fScene, FAssetManager* fAssetManager, Win32Window* win32Window);
+	void Init(FScene* fScene, FAssetManager* fAssetManager, Window* win32Window);
 	void Destroy();
 
 	//Get Instance
@@ -28,17 +28,17 @@ public:
 	//bool InitWindow();
 
 	//DX Init
-	bool InitDirect3D(Win32Window* mWindow);
+	bool InitDirect3D(Window* mWindow);
 	virtual void CreateRtvAndDsvDescriptorHeaps();
 	bool Get4xMsaaState()const;
 	//void Set4xMsaaState(bool value);
 	void CreateCommandObjects();
-	void CreateSwapChain(Win32Window* mWindow);
+	void CreateSwapChain(Window* mWindow);
 	void FlushCommandQueue();
 	ID3D12Resource* CurrentBackBuffer()const;
 	D3D12_CPU_DESCRIPTOR_HANDLE CurrentBackBufferView()const;
 	D3D12_CPU_DESCRIPTOR_HANDLE DepthStencilView()const;
-	void CalculateFrameStats(GameTimer* mTimer, Win32Window* mWindow);
+	void CalculateFrameStats(GameTimer* mTimer, Window* mWindow);
 	void LogAdapters();
 	void LogAdapterOutputs(IDXGIAdapter* adapter);
 	void LogOutputDisplayModes(IDXGIOutput* output, DXGI_FORMAT format);
