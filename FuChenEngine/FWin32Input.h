@@ -9,6 +9,7 @@ public:
 	LRESULT MsgProc(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam);
 	static FWin32Input* GetFWin32Input();
 	void OnKeyboardInput(const GameTimer& gt);
+	void Update(const GameTimer& gt);
 
 protected:
 	static std::unique_ptr<FWin32Input> fWin32Input;

@@ -4,11 +4,13 @@
 using Microsoft::WRL::ComPtr;
 using namespace std;
 
-DxRender::DxRender()
+DxRender::DxRender(FScene* fScene, FAssetManager* fAssetManager, Win32Window* win32Window)
 {
-	//mCamera = std::make_shared<Camera>();
-	//mWindow = std::make_shared<Win32Window>();
-	//mWindow->SetAppInst(GetInstanceModule(0));
+	if (!InitDirect3D(win32Window))
+	{
+		throw("InitDX False!");
+	}
+	Init(fScene,fAssetManager,win32Window);
 }
 
 DxRender::~DxRender()

@@ -52,3 +52,9 @@ std::unordered_map<std::string, FActor>& FScene::GetAllActor()
 	return actors;
 }
 
+void FScene::Update()
+{
+	GetCamera()->UpdateViewMatrix();
+	GetCamera()->SetView();
+}
+

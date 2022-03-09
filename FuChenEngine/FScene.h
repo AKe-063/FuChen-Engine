@@ -15,6 +15,8 @@ public:
 	void DelAActor(const std::string& name);
 	std::unordered_map<std::string, FActor>& GetAllActor();
 
+	void Update();
+
 protected:
 	std::unordered_map<std::string, FActor> actors;
 

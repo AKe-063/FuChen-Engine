@@ -213,3 +213,8 @@ void FWin32Input::OnKeyboardInput(const GameTimer& gt)
 
 	Camera::GetControlCamera()->UpdateViewMatrix();
 }
+
+void FWin32Input::Update(const GameTimer& gt)
+{
+	OnKeyboardInput(gt);
+}

@@ -8,7 +8,7 @@
 class DxRender
 {
 public:
-	DxRender();
+	DxRender(FScene* fScene, FAssetManager* fAssetManager, Win32Window* win32Window);
 	virtual ~DxRender();
 
 	void OnResize(Camera* mCamera, Win32Window* mWindow);

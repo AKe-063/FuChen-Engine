@@ -59,12 +59,10 @@ bool Engine::Initialize()
 	fWin32Input = std::make_unique<FWin32Input>();
 	win32Window = std::make_unique<Win32Window>();
 	win32Window->SetAppInst(GetInstanceModule(0));
-	dxRender = std::make_unique<DxRender>();
 
-	if (!(InitWindow() && dxRender->InitDirect3D(win32Window.get())))
+	if (!(InitWindow()))
 		return false;
-
-	dxRender->Init(fScene.get(), fAssetManager.get(), win32Window.get());
+	dxRender = std::make_unique<DxRender>(fScene.get(), fAssetManager.get(), win32Window.get());
 
 	return true;
 }
@@ -77,9 +75,8 @@ void Engine::Destroy()
 
 void Engine::Update(const GameTimer& gt)
 {
-	fWin32Input->OnKeyboardInput(gt);
-	fScene->GetCamera()->UpdateViewMatrix();
-	fScene->GetCamera()->SetView();
+	fWin32Input->Update(gt);
+	fScene->Update();
 }
 
 std::unique_ptr<Engine>& Engine::GetApp()
