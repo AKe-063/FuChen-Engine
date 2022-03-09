@@ -43,3 +43,4 @@
 #include "GameTimer.h"
 #include "MathHelper.h"
 #include "UploadBuffer.h"
+#include "FSingleton.h"

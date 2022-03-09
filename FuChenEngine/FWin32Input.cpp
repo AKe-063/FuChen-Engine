@@ -2,8 +2,6 @@
 #include "FWin32Input.h"
 #include "Camera.h"
 
-std::unique_ptr<FWin32Input> FWin32Input::fWin32Input(new FWin32Input());
-
 FWin32Input::FWin32Input()
 {
 
@@ -147,11 +145,6 @@ LRESULT FWin32Input::MsgProc(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam)
 
 
 	return DefWindowProc(hwnd, msg, wParam, lParam);
-}
-
-FWin32Input* FWin32Input::GetFWin32Input()
-{
-	return fWin32Input.get();
 }
 
 void FWin32Input::OnMouseDown(WPARAM btnState, int x, int y)

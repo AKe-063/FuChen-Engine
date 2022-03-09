@@ -1,19 +1,17 @@
 #pragma once
 #include "FInputBase.h"
 
-class FWin32Input : public FInputBase
+class FWin32Input : public FInputBase, public FSingleton<FWin32Input>
 {
 public:
 	FWin32Input();
 	~FWin32Input();
 	LRESULT MsgProc(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam);
-	static FWin32Input* GetFWin32Input();
 	void OnKeyboardInput(const GameTimer& gt);
 	virtual void Update(const GameTimer& gt)override;
 	virtual bool Init()override;
 
 protected:
-	static std::unique_ptr<FWin32Input> fWin32Input;
 
 private:
 	virtual void OnMouseDown(WPARAM btnState, int x, int y);

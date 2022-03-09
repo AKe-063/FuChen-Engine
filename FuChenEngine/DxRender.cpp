@@ -416,7 +416,7 @@ void DxRender::BuildGeometry(FScene* fScene, FAssetManager* fAssetManager)
 		{
 			vertices.clear();
 			AssetInfo meshInfo;
-			if (fAssetManager->AssetContain(fMeshInfo.name))
+			if (fAssetManager->AssetContrain(fMeshInfo.name))
 			{
 				meshInfo = fAssetManager->GetAssetByName(fMeshInfo.name);
 			}

@@ -22,10 +22,6 @@ public:
 	Microsoft::WRL::ComPtr<ID3D12GraphicsCommandList> GetCommandList();
 	Microsoft::WRL::ComPtr<ID3D12CommandQueue> GetCommandQueue();
 	bool Getm4xMsaaState();
-	//Win32Window* GetWin32Window();
-
-	//Init Window
-	//bool InitWindow();
 
 	//DX Init
 	bool InitDirect3D(Window* mWindow);
@@ -92,6 +88,4 @@ private:
 	UINT mRtvDescriptorSize = 0;
 	UINT mDsvDescriptorSize = 0;
 	UINT mCbvSrvUavDescriptorSize = 0;
-
-	//std::shared_ptr<Win32Window> mWindow;
 };

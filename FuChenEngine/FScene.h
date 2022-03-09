@@ -2,7 +2,7 @@
 #include "FActor.h"
 #include "Camera.h"
 
-class FScene
+class FScene : public FSingleton<FScene>
 {
 public:
 	FScene();
@@ -11,6 +11,8 @@ public:
 
 	Camera* GetCamera();
 
+	bool LoadAllActors(const std::string& filePath);
+	std::vector<std::string> GetNames();
 	void AddNewActor(const std::string& name, const FActor& newActor);
 	void DelAActor(const std::string& name);
 	std::unordered_map<std::string, FActor>& GetAllActor();
@@ -21,5 +23,6 @@ protected:
 	std::unordered_map<std::string, FActor> actors;
 
 private:
-	std::shared_ptr<Camera> mCamera;
+	std::unique_ptr<Camera> mCamera;
+	std::vector<std::string> names;
 };

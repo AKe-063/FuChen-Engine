@@ -4,8 +4,6 @@
 using namespace std;
 using namespace glm;
 
-std::unique_ptr<Engine> Engine::mEngine(new Engine());
-
 Engine::Engine()
 {
 	
@@ -54,11 +52,11 @@ int Engine::Run()
 bool Engine::Initialize()
 {
 	mTimer = std::make_unique<GameTimer>();
-	fScene = std::make_unique<FScene>();
-	fAssetManager = std::make_unique<FAssetManager>();
-	fInput = std::make_unique<FInputBase>();
+	fScene.reset(&FScene::GetInstance());
+	fAssetManager.reset(&FAssetManager::GetInstance());
+	//fInput = std::make_unique<FInputBase>();
 	fInput.reset(CreateInput());
-	mWindow = std::make_unique<Window>();
+	//mWindow = std::make_unique<Window>();
 	mWindow.reset(CreateAWindow());
 
 	if (!(InitWindow()))
@@ -71,17 +69,15 @@ bool Engine::Initialize()
 void Engine::Destroy()
 {
 	dxRender->Destroy();
+	fInput.release();
+	fScene.release();
+	fAssetManager.release();
 }
 
 void Engine::Update(const GameTimer& gt)
 {
 	fInput->Update(gt);
 	fScene->Update();
-}
-
-std::unique_ptr<Engine>& Engine::GetApp()
-{
-	return mEngine;
 }
 
 bool Engine::InitWindow()
@@ -102,6 +98,6 @@ Window* Engine::CreateAWindow()
 FInputBase* Engine::CreateInput()
 {
 #if _PLATFORM_WIN32
-	return new FWin32Input();
+	return &FWin32Input::GetInstance();
 #endif
 }

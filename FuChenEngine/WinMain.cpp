@@ -1,5 +1,6 @@
 #include "stdafx.h"
-#include "Engine.h"
+//#include "Engine.h"
+#include "GameInstance.h"
 
 int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE prevInstance,
 	PSTR cmdLine, int showCmd)
@@ -12,11 +13,11 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE prevInstance,
 
 	try
 	{
-		std::unique_ptr<Engine> engine = std::make_unique<Engine>();
-		if (!engine->Initialize())
+		std::unique_ptr<GameInstance> gameIns = std::make_unique<GameInstance>();
+		if (!gameIns->Init())
 			return 0;
-		if (!engine->Run())
-			engine->Destroy();
+		gameIns->Run();
+		gameIns->Destroy();
 		
 		return 0;
 	}

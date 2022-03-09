@@ -13,19 +13,19 @@ GameInstance::~GameInstance()
 
 bool GameInstance::Init()
 {
-	if (engineIns.Initialize() && gameLocIns.Init())
+	if (gameLocIns.Init() && engineIns.Initialize())
 		return true;
 	return false;
 }
 
 void GameInstance::Run()
 {
-	engineIns.Run();
 	gameLocIns.Run();
+	engineIns.Run();
 }
 
 void GameInstance::Destroy()
 {
-	engineIns.Destroy();
 	gameLocIns.Destroy();
+	engineIns.Destroy();
 }

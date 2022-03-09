@@ -18,10 +18,7 @@ public:
 	bool Initialize();
 	void Destroy();
 
-	static std::unique_ptr<Engine>& GetApp();
-
 protected:
-	static std::unique_ptr<Engine> mEngine;
 
 private:
 	void Update(const GameTimer& gt);// override;

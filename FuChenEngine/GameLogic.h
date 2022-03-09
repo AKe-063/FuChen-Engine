@@ -1,5 +1,5 @@
 #pragma once
-
+#include "LoadingSystem.h"
 
 class GameLogic
 {
@@ -10,7 +10,8 @@ public:
 	bool Init();
 	void Run();
 	void Destroy();
-	void LoadMap();
-private:
+	bool LoadMap(const std::string& filePath);
 
+private:
+	LoadingSystem loadSystem;
 };

@@ -4,14 +4,8 @@
 
 FScene::FScene()
 {
-	mCamera = std::make_shared<Camera>();
+	mCamera = std::make_unique<Camera>();
 	mCamera->SetControlCamera();
-	std::unique_ptr<Serialize> Ar = std::make_unique<Serialize>();
-	std::vector<std::string> names = Ar->GetNames();
-	for (std::string name : names)
-	{
-		actors.insert({ name, Ar->DeserializeActorInfo(name) });
-	}
 }
 
 FScene::FScene(const std::unordered_map<std::string, FActor>& actors)
@@ -27,6 +21,38 @@ FScene::~FScene()
 Camera* FScene::GetCamera()
 {
 	return mCamera.get();
+}
+
+bool FScene::LoadAllActors(const std::string& filePath)
+{
+	std::ifstream fin(filePath, std::ios::binary);
+	if (!fin.is_open())
+		return false;
+
+	std::string str;
+	int num = 0, len;
+	fin.read((char*)&num, sizeof(int32_t));
+	for (int i = 0; i < num; i++)
+	{
+		fin.read((char*)&len, sizeof(int32_t));
+		str.resize(len);
+		fin.read((char*)str.data(), sizeof(char) * len);
+		names.push_back(str);
+	}
+
+	fin.close();
+
+	std::unique_ptr<Serialize> Ar = std::make_unique<Serialize>();
+	for (std::string name : names)
+	{
+		actors.insert({ name, Ar->DeserializeActorInfo(name) });
+	}
+	return true;
+}
+
+std::vector<std::string> FScene::GetNames()
+{
+	return names;
 }
 
 void FScene::AddNewActor(const std::string& name, const FActor& newActor)
@@ -56,5 +82,7 @@ void FScene::Update()
 {
 	GetCamera()->UpdateViewMatrix();
 	GetCamera()->SetView();
+// 	Camera::GetControlCamera()->UpdateViewMatrix();
+// 	Camera::GetControlCamera()->SetView();
 }
 

@@ -158,10 +158,12 @@
     <ClInclude Include="FAssetManager.h" />
     <ClInclude Include="FInputBase.h" />
     <ClInclude Include="FScene.h" />
+    <ClInclude Include="FSingleton.h" />
     <ClInclude Include="FWin32Input.h" />
     <ClInclude Include="GameInstance.h" />
     <ClInclude Include="GameLogic.h" />
     <ClInclude Include="GameTimer.h" />
+    <ClInclude Include="LoadingSystem.h" />
     <ClInclude Include="MathHelper.h" />
     <ClInclude Include="FMesh.h" />
     <ClInclude Include="MeshDescribe.h" />
@@ -184,6 +186,7 @@
     <ClCompile Include="GameInstance.cpp" />
     <ClCompile Include="GameLogic.cpp" />
     <ClCompile Include="GameTimer.cpp" />
+    <ClCompile Include="LoadingSystem.cpp" />
     <ClCompile Include="MathHelper.cpp" />
     <ClCompile Include="FMesh.cpp" />
     <ClCompile Include="Serialize.cpp" />

@@ -1,8 +1,6 @@
 #include "stdafx.h"
 #include "FAssetManager.h"
 
-std::unique_ptr<FAssetManager> FAssetManager::fAssetManager(new FAssetManager());
-
 FAssetManager::FAssetManager()
 {
 	std::ifstream fin("../FuChenEngine/ExportFile/AllAssets.dat", std::ios::binary);
@@ -26,11 +24,6 @@ FAssetManager::~FAssetManager()
 
 }
 
-std::unique_ptr<FAssetManager>& FAssetManager::GetFAssetManager()
-{
-	return fAssetManager;
-}
-
 void FAssetManager::LoadAssets(const std::string& assetPath)
 {
 	std::string filePath = "../FuChenEngine/ExportFile/" + assetPath;
@@ -44,7 +37,7 @@ AssetInfo FAssetManager::GetAssetByName(const std::string& name)
 	return assets.find("../FuChenEngine/ExportFile/" + name)->second;
 }
 
-bool FAssetManager::AssetContain(const std::string& name)
+bool FAssetManager::AssetContrain(const std::string& name)
 {
 	if (assets.find("../FuChenEngine/ExportFile/" + name) == assets.end())
 	{
