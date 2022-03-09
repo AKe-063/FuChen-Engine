@@ -8,12 +8,12 @@
 class DxRender
 {
 public:
-	DxRender(FScene* fScene, FAssetManager* fAssetManager, Window* win32Window);
+	DxRender();
 	~DxRender();
 
-	void OnResize(Camera* mCamera, Window* mWindow);
-	void Draw(const GameTimer& gt, Camera* mCamera);
-	void Init(FScene* fScene, FAssetManager* fAssetManager, Window* win32Window);
+	void OnResize();
+	void Draw(const GameTimer& gt);
+	void Init();
 	void Destroy();
 
 	//Get Instance
@@ -24,17 +24,17 @@ public:
 	bool Getm4xMsaaState();
 
 	//DX Init
-	bool InitDirect3D(Window* mWindow);
+	bool InitDirect3D();
 	virtual void CreateRtvAndDsvDescriptorHeaps();
 	bool Get4xMsaaState()const;
 	//void Set4xMsaaState(bool value);
 	void CreateCommandObjects();
-	void CreateSwapChain(Window* mWindow);
+	void CreateSwapChain();
 	void FlushCommandQueue();
 	ID3D12Resource* CurrentBackBuffer()const;
 	D3D12_CPU_DESCRIPTOR_HANDLE CurrentBackBufferView()const;
 	D3D12_CPU_DESCRIPTOR_HANDLE DepthStencilView()const;
-	void CalculateFrameStats(GameTimer* mTimer, Window* mWindow);
+	void CalculateFrameStats(GameTimer* mTimer);
 	void LogAdapters();
 	void LogAdapterOutputs(IDXGIAdapter* adapter);
 	void LogOutputDisplayModes(IDXGIOutput* output, DXGI_FORMAT format);
@@ -44,7 +44,7 @@ public:
 	void BuildConstantBuffers();
 	void BuildRootSignature();
 	void BuildShadersAndInputLayout();
-	void BuildGeometry(FScene* fScene, FAssetManager* fAssetManager);
+	void BuildGeometry();
 	void BuildPSO();
 
 private:
@@ -88,4 +88,6 @@ private:
 	UINT mRtvDescriptorSize = 0;
 	UINT mDsvDescriptorSize = 0;
 	UINT mCbvSrvUavDescriptorSize = 0;
+
+	Window* mWindow;
 };

@@ -8,7 +8,7 @@
 
 using namespace glm;
 
-class Engine
+class Engine : public FSingleton<Engine>
 {
 public:
 	Engine();
@@ -17,6 +17,12 @@ public:
 	int Run();
 	bool Initialize();
 	void Destroy();
+
+	//Get
+	DxRender* GetDxRender();
+	FScene* GetFScene();
+	FAssetManager* GetFAssetManager();
+	Window* GetWindow();
 
 protected:
 

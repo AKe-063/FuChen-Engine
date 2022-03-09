@@ -1,24 +1,26 @@
 #include "stdafx.h"
 #include "DxRender.h"
+#include "Engine.h"
 
 using Microsoft::WRL::ComPtr;
 using namespace std;
 
-DxRender::DxRender(FScene* fScene, FAssetManager* fAssetManager, Window* win32Window)
+DxRender::DxRender()
 {
-	if (!InitDirect3D(win32Window))
+	mWindow = Engine::GetInstance().GetWindow();
+	if (!InitDirect3D())
 	{
 		throw("InitDX False!");
 	}
-	Init(fScene,fAssetManager,win32Window);
+	Init();
 }
 
 DxRender::~DxRender()
 {
-
+	
 }
 
-void DxRender::OnResize(Camera* mCamera, Window* mWindow)
+void DxRender::OnResize()
 {
 	assert(md3dDevice);
 	assert(mSwapChain);
@@ -115,10 +117,10 @@ void DxRender::OnResize(Camera* mCamera, Window* mWindow)
 	mScissorRect = { 0, 0, mWindow->GetWidth(), mWindow->GetHeight() };
 
 	// The window resized, so update the aspect ratio and recompute the projection matrix.
-	mCamera->SetLens(0.25f * MathHelper::Pi, mWindow->AspectRatio(), 1.0f, 20000.0f);
+	FScene::GetInstance().GetCamera()->SetLens(0.25f * MathHelper::Pi, mWindow->AspectRatio(), 1.0f, 20000.0f);
 }
 
-void DxRender::Draw(const GameTimer& gt, Camera* mCamera)
+void DxRender::Draw(const GameTimer& gt)
 {
 	// Reuse the memory associated with command recording.
 	// We can only reset when the associated command lists have finished execution on the GPU.
@@ -153,7 +155,7 @@ void DxRender::Draw(const GameTimer& gt, Camera* mCamera)
 		mCommandList->IASetIndexBuffer(&mMeshes[i].IndexBufferView());
 		mCommandList->IASetPrimitiveTopology(D3D11_PRIMITIVE_TOPOLOGY_TRIANGLELIST);
 
-		mat4 worldViewProj = mCamera->GetProj() * mCamera->GetView() * mMeshes[i].mMeshWorld;
+		mat4 worldViewProj = Engine::GetInstance().GetFScene()->GetCamera()->GetProj() * Engine::GetInstance().GetFScene()->GetCamera()->GetView() * mMeshes[i].mMeshWorld;
 
 		// Update the constant buffer with the latest worldViewProj matrix.
 		ObjectConstants objConstants;
@@ -188,15 +190,15 @@ void DxRender::Draw(const GameTimer& gt, Camera* mCamera)
 	FlushCommandQueue();
 }
 
-void DxRender::Init(FScene* fScene, FAssetManager* fAssetManager, Window* win32Window)
+void DxRender::Init()
 {
 	// Do the initial resize code.
-	OnResize(fScene->GetCamera(), win32Window);
+	OnResize();
 
 	// Reset the command list to prep for initialization commands.
 	ThrowIfFailed(GetCommandList()->Reset(GetCommandAllocator().Get(), nullptr));
 
-	BuildGeometry(fScene, fAssetManager);
+	BuildGeometry();
 	BuildDescriptorHeaps();
 	BuildConstantBuffers();
 	BuildRootSignature();
@@ -243,7 +245,7 @@ bool DxRender::Getm4xMsaaState()
 	return m4xMsaaState;
 }
 
-bool DxRender::InitDirect3D(Window* mWindow)
+bool DxRender::InitDirect3D()
 {
 #if defined(DEBUG) || defined(_DEBUG) 
 	// Enable the D3D12 debug layer.
@@ -303,7 +305,7 @@ bool DxRender::InitDirect3D(Window* mWindow)
 #endif
 
 	CreateCommandObjects();
-	CreateSwapChain(mWindow);
+	CreateSwapChain();
 	CreateRtvAndDsvDescriptorHeaps();
 
 	return true;
@@ -405,20 +407,20 @@ void DxRender::BuildShadersAndInputLayout()
 	};
 }
 
-void DxRender::BuildGeometry(FScene* fScene, FAssetManager* fAssetManager)
+void DxRender::BuildGeometry()
 {
 	std::vector<Vertex> vertices;
 	Vertex vertice;
 
-	for (std::pair<std::string, FActor> actor : fScene->GetAllActor())
+	for (std::pair<std::string, FActor> actor : FScene::GetInstance().GetAllActor())
 	{
 		for (FMeshInfoStruct fMeshInfo : actor.second.GetActorInfo().staticMeshes)
 		{
 			vertices.clear();
 			AssetInfo meshInfo;
-			if (fAssetManager->AssetContrain(fMeshInfo.name))
+			if (FAssetManager::GetInstance().AssetContrain(fMeshInfo.name))
 			{
-				meshInfo = fAssetManager->GetAssetByName(fMeshInfo.name);
+				meshInfo = FAssetManager::GetInstance().GetAssetByName(fMeshInfo.name);
 			}
 			else
 			{
@@ -568,7 +570,7 @@ void DxRender::CreateCommandObjects()
 	mCommandList->Close();
 }
 
-void DxRender::CreateSwapChain(Window* mWindow)
+void DxRender::CreateSwapChain()
 {
 	// Release the previous swapchain we will be recreating.
 	mSwapChain.Reset();
@@ -640,7 +642,7 @@ D3D12_CPU_DESCRIPTOR_HANDLE DxRender::DepthStencilView()const
 	return mDsvHeap->GetCPUDescriptorHandleForHeapStart();
 }
 
-void DxRender::CalculateFrameStats(GameTimer* mTimer, Window* mWindow)
+void DxRender::CalculateFrameStats(GameTimer* mTimer)
 {
 	// Code computes the average frames per second, and also the 
 	// average time it takes to render one frame.  These stats 

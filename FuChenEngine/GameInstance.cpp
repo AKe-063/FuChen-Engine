@@ -3,7 +3,7 @@
 
 GameInstance::GameInstance()
 {
-	
+
 }
 
 GameInstance::~GameInstance()
@@ -13,19 +13,19 @@ GameInstance::~GameInstance()
 
 bool GameInstance::Init()
 {
-	if (gameLocIns.Init() && engineIns.Initialize())
+	if (Engine::GetInstance().Initialize() && gameLogIns.Init())
 		return true;
 	return false;
 }
 
 void GameInstance::Run()
 {
-	gameLocIns.Run();
-	engineIns.Run();
+	Engine::GetInstance().Run();
+	gameLogIns.Run();
 }
 
 void GameInstance::Destroy()
 {
-	gameLocIns.Destroy();
-	engineIns.Destroy();
+	Engine::GetInstance().Destroy();
+	gameLogIns.Destroy();
 }

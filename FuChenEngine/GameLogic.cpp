@@ -1,5 +1,6 @@
 #include "stdafx.h"
 #include "GameLogic.h"
+#include "Engine.h"
 
 GameLogic::GameLogic()
 	:loadSystem()
@@ -17,6 +18,7 @@ bool GameLogic::Init()
 	if (!LoadMap("../FuChenEngine/ExportFile/AllActor.dat"))
 		return false;
 
+	Engine::GetInstance().GetDxRender()->Init();
 	return true;
 }
 

@@ -13,6 +13,5 @@ public:
 	void Destroy();
 
 private:
-	Engine engineIns;
-	GameLogic gameLocIns;
+	GameLogic gameLogIns;
 };

@@ -43,15 +43,30 @@
     <Filter Include="Source Files\Engine\Input">
       <UniqueIdentifier>{db61040e-0a40-4708-a3f0-cac6978de88a}</UniqueIdentifier>
     </Filter>
+    <Filter Include="Source Files\Engine\DX">
+      <UniqueIdentifier>{c0b5e1ff-3a6d-43c5-8ee9-338576c88b9a}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Header Files\Engine\DX">
+      <UniqueIdentifier>{2a2a07d0-4bfb-4c74-b574-c64f84f0939e}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Source Files\Engine\Resource">
+      <UniqueIdentifier>{35baf2a1-b8e3-4108-8818-8dc5c49cd093}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Header Files\Engine\Resource">
+      <UniqueIdentifier>{dc41239f-b3bc-408f-b877-4d6320f8c414}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Header Files\Engine\Window">
+      <UniqueIdentifier>{e6747b92-f8e2-4c02-9dd3-accf88a8cb00}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Source Files\Engine\Window">
+      <UniqueIdentifier>{d8de0a09-0c1d-469c-b936-5f4a414b1637}</UniqueIdentifier>
+    </Filter>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="MeshDescribe.h">
       <Filter>Header Files\Engine</Filter>
     </ClInclude>
     <ClInclude Include="Camera.h">
-      <Filter>Header Files\Engine</Filter>
-    </ClInclude>
-    <ClInclude Include="d3dUtil.h">
       <Filter>Header Files\Engine</Filter>
     </ClInclude>
     <ClInclude Include="GameTimer.h">
@@ -63,35 +78,11 @@
     <ClInclude Include="Serialize.h">
       <Filter>Header Files\Engine</Filter>
     </ClInclude>
-    <ClInclude Include="UploadBuffer.h">
-      <Filter>Header Files\Engine</Filter>
-    </ClInclude>
     <ClInclude Include="Engine.h">
-      <Filter>Header Files\Engine</Filter>
-    </ClInclude>
-    <ClInclude Include="Win32Window.h">
-      <Filter>Header Files\Engine</Filter>
-    </ClInclude>
-    <ClInclude Include="Window.h">
-      <Filter>Header Files\Engine</Filter>
-    </ClInclude>
-    <ClInclude Include="FScene.h">
-      <Filter>Header Files\Engine</Filter>
-    </ClInclude>
-    <ClInclude Include="FActor.h">
-      <Filter>Header Files\Engine</Filter>
-    </ClInclude>
-    <ClInclude Include="FAssetManager.h">
-      <Filter>Header Files\Engine</Filter>
-    </ClInclude>
-    <ClInclude Include="FMesh.h">
       <Filter>Header Files\Engine</Filter>
     </ClInclude>
     <ClInclude Include="stdafx.h">
       <Filter>Header Files\Engine\PCH</Filter>
-    </ClInclude>
-    <ClInclude Include="DxRender.h">
-      <Filter>Header Files\Engine</Filter>
     </ClInclude>
     <ClInclude Include="FWin32Input.h">
       <Filter>Header Files\Engine\Input</Filter>
@@ -105,24 +96,45 @@
     <ClInclude Include="GameLogic.h">
       <Filter>Header Files\Game</Filter>
     </ClInclude>
-    <ClInclude Include="FSingleton.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
     <ClInclude Include="LoadingSystem.h">
       <Filter>Header Files\Game</Filter>
+    </ClInclude>
+    <ClInclude Include="FSingleton.h">
+      <Filter>Header Files\Engine</Filter>
+    </ClInclude>
+    <ClInclude Include="d3dUtil.h">
+      <Filter>Header Files\Engine\DX</Filter>
+    </ClInclude>
+    <ClInclude Include="DxRender.h">
+      <Filter>Header Files\Engine\DX</Filter>
+    </ClInclude>
+    <ClInclude Include="UploadBuffer.h">
+      <Filter>Header Files\Engine\DX</Filter>
+    </ClInclude>
+    <ClInclude Include="FActor.h">
+      <Filter>Header Files\Engine\Resource</Filter>
+    </ClInclude>
+    <ClInclude Include="FAssetManager.h">
+      <Filter>Header Files\Engine\Resource</Filter>
+    </ClInclude>
+    <ClInclude Include="FMesh.h">
+      <Filter>Header Files\Engine\Resource</Filter>
+    </ClInclude>
+    <ClInclude Include="FScene.h">
+      <Filter>Header Files\Engine\Resource</Filter>
+    </ClInclude>
+    <ClInclude Include="Win32Window.h">
+      <Filter>Header Files\Engine\Window</Filter>
+    </ClInclude>
+    <ClInclude Include="Window.h">
+      <Filter>Header Files\Engine\Window</Filter>
     </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="WinMain.cpp">
       <Filter>Source Files\Engine\Launch\Windows</Filter>
     </ClCompile>
-    <ClCompile Include="Window.cpp">
-      <Filter>Source Files\Engine</Filter>
-    </ClCompile>
     <ClCompile Include="Camera.cpp">
-      <Filter>Source Files\Engine</Filter>
-    </ClCompile>
-    <ClCompile Include="d3dUtil.cpp">
       <Filter>Source Files\Engine</Filter>
     </ClCompile>
     <ClCompile Include="GameTimer.cpp">
@@ -137,26 +149,8 @@
     <ClCompile Include="Engine.cpp">
       <Filter>Source Files\Engine</Filter>
     </ClCompile>
-    <ClCompile Include="Win32Window.cpp">
-      <Filter>Source Files\Engine</Filter>
-    </ClCompile>
-    <ClCompile Include="FActor.cpp">
-      <Filter>Source Files\Engine</Filter>
-    </ClCompile>
-    <ClCompile Include="FAssetManager.cpp">
-      <Filter>Source Files\Engine</Filter>
-    </ClCompile>
-    <ClCompile Include="FMesh.cpp">
-      <Filter>Source Files\Engine</Filter>
-    </ClCompile>
-    <ClCompile Include="FScene.cpp">
-      <Filter>Source Files\Engine</Filter>
-    </ClCompile>
     <ClCompile Include="stdafx.cpp">
       <Filter>Source Files\Engine\PCH</Filter>
-    </ClCompile>
-    <ClCompile Include="DxRender.cpp">
-      <Filter>Source Files\Engine</Filter>
     </ClCompile>
     <ClCompile Include="FInputBase.cpp">
       <Filter>Source Files\Engine\Input</Filter>
@@ -172,6 +166,30 @@
     </ClCompile>
     <ClCompile Include="LoadingSystem.cpp">
       <Filter>Source Files\Game</Filter>
+    </ClCompile>
+    <ClCompile Include="DxRender.cpp">
+      <Filter>Source Files\Engine\DX</Filter>
+    </ClCompile>
+    <ClCompile Include="d3dUtil.cpp">
+      <Filter>Source Files\Engine\DX</Filter>
+    </ClCompile>
+    <ClCompile Include="FAssetManager.cpp">
+      <Filter>Source Files\Engine\Resource</Filter>
+    </ClCompile>
+    <ClCompile Include="FMesh.cpp">
+      <Filter>Source Files\Engine\Resource</Filter>
+    </ClCompile>
+    <ClCompile Include="FActor.cpp">
+      <Filter>Source Files\Engine\Resource</Filter>
+    </ClCompile>
+    <ClCompile Include="FScene.cpp">
+      <Filter>Source Files\Engine\Resource</Filter>
+    </ClCompile>
+    <ClCompile Include="Win32Window.cpp">
+      <Filter>Source Files\Engine\Window</Filter>
+    </ClCompile>
+    <ClCompile Include="Window.cpp">
+      <Filter>Source Files\Engine\Window</Filter>
     </ClCompile>
   </ItemGroup>
 </Project>

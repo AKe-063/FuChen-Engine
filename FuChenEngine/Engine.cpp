@@ -35,9 +35,9 @@ int Engine::Run()
 
 			if (!mEnginePaused)
 			{
-				dxRender->CalculateFrameStats(mTimer.get(), mWindow.get());
+				dxRender->CalculateFrameStats(mTimer.get());
 				Update(*mTimer);
-				dxRender->Draw(*mTimer, fScene->GetCamera());
+				dxRender->Draw(*mTimer);
 			}
 			else
 			{
@@ -61,7 +61,8 @@ bool Engine::Initialize()
 
 	if (!(InitWindow()))
 		return false;
-	dxRender = std::make_unique<DxRender>(fScene.get(), fAssetManager.get(), mWindow.get());
+	//dxRender = std::make_unique<DxRender>(mWindow.get());
+	dxRender = std::make_unique<DxRender>();
 
 	return true;
 }
@@ -72,6 +73,26 @@ void Engine::Destroy()
 	fInput.release();
 	fScene.release();
 	fAssetManager.release();
+}
+
+DxRender* Engine::GetDxRender()
+{
+	return dxRender.get();
+}
+
+FScene* Engine::GetFScene()
+{
+	return fScene.get();
+}
+
+FAssetManager* Engine::GetFAssetManager()
+{
+	return fAssetManager.get();
+}
+
+Window* Engine::GetWindow()
+{
+	return mWindow.get();
 }
 
 void Engine::Update(const GameTimer& gt)
