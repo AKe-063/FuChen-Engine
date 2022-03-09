@@ -14,39 +14,20 @@ Engine::~Engine()
 	
 }
 
-int Engine::Run()
+void Engine::Run()
 {
-	MSG msg = { 0 };
+	mTimer->Tick();
 
-	mTimer->Reset();
-
-	while (msg.message != WM_QUIT)
+	if (!mEnginePaused)
 	{
-		// If there are Window messages then process them.
-		if (PeekMessage(&msg, 0, 0, 0, PM_REMOVE))
-		{
-			TranslateMessage(&msg);
-			DispatchMessage(&msg);
-		}
-		// Otherwise, do animation/game stuff.
-		else
-		{
-			mTimer->Tick();
-
-			if (!mEnginePaused)
-			{
-				dxRender->CalculateFrameStats(mTimer.get());
-				Update(*mTimer);
-				dxRender->Draw(*mTimer);
-			}
-			else
-			{
-				Sleep(100);
-			}
-		}
+		dxRender->CalculateFrameStats(mTimer.get());
+		Update();
+		dxRender->Draw(*mTimer);
 	}
-
-	return (int)msg.wParam;
+	else
+	{
+		Sleep(100);
+	}
 }
 
 bool Engine::Initialize()
@@ -54,14 +35,12 @@ bool Engine::Initialize()
 	mTimer = std::make_unique<GameTimer>();
 	fScene.reset(&FScene::GetInstance());
 	fAssetManager.reset(&FAssetManager::GetInstance());
-	//fInput = std::make_unique<FInputBase>();
 	fInput.reset(CreateInput());
-	//mWindow = std::make_unique<Window>();
 	mWindow.reset(CreateAWindow());
+	mCameraInputLogic = std::make_unique<CameraInputLogic>();
 
 	if (!(InitWindow()))
 		return false;
-	//dxRender = std::make_unique<DxRender>(mWindow.get());
 	dxRender = std::make_unique<DxRender>();
 
 	return true;
@@ -95,9 +74,18 @@ Window* Engine::GetWindow()
 	return mWindow.get();
 }
 
-void Engine::Update(const GameTimer& gt)
+GameTimer* Engine::GetTimer()
 {
-	fInput->Update(gt);
+	return mTimer.get();
+}
+
+bool Engine::GetmEnginePaused()
+{
+	return mEnginePaused;
+}
+
+void Engine::Update()
+{
 	fScene->Update();
 }
 

@@ -5,6 +5,7 @@
 #include "DxRender.h"
 #include "Win32Window.h"
 #include "FWin32Input.h"
+#include "CameraInputLogic.h"
 
 using namespace glm;
 
@@ -14,7 +15,7 @@ public:
 	Engine();
 	virtual ~Engine();
 
-	int Run();
+	void Run();
 	bool Initialize();
 	void Destroy();
 
@@ -23,11 +24,13 @@ public:
 	FScene* GetFScene();
 	FAssetManager* GetFAssetManager();
 	Window* GetWindow();
+	GameTimer* GetTimer();
+	bool GetmEnginePaused();
 
 protected:
 
 private:
-	void Update(const GameTimer& gt);// override;
+	void Update();
 	bool InitWindow();
 	Window* CreateAWindow();
 	FInputBase* CreateInput();
@@ -37,6 +40,7 @@ private:
 	std::unique_ptr<DxRender> dxRender;
 	std::unique_ptr<FInputBase> fInput;
 	std::unique_ptr<Window> mWindow;
+	std::unique_ptr<CameraInputLogic> mCameraInputLogic;
 
 	// Used to keep track of the delta-time?and game time (?.4).
 	std::unique_ptr<GameTimer> mTimer;

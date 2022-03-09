@@ -1,5 +1,6 @@
 #pragma once
 #include "LoadingSystem.h"
+#include "CameraInputLogic.h"
 
 class GameLogic
 {
@@ -14,4 +15,5 @@ public:
 
 private:
 	LoadingSystem loadSystem;
+	CameraInputLogic cameraInputLogic;
 };

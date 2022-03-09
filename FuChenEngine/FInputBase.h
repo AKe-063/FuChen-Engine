@@ -7,7 +7,7 @@ public:
 	virtual ~FInputBase();
 
 	virtual bool Init();
-	virtual void Update(const GameTimer& gt);
+	virtual void Update();
 protected:
 
 

@@ -6,17 +6,25 @@ class FWin32Input : public FInputBase, public FSingleton<FWin32Input>
 public:
 	FWin32Input();
 	~FWin32Input();
-	LRESULT MsgProc(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam);
-	void OnKeyboardInput(const GameTimer& gt);
-	virtual void Update(const GameTimer& gt)override;
-	virtual bool Init()override;
+
+	void KeyDown(int KeyCode);
+	void KeyUp(int KeyCode);
+	bool IsKeyDown(int KeyCode);
+
+	void MouseUp(WPARAM wParam, LPARAM lParam);
+	void MouseDown(WPARAM wParam, LPARAM lParam);
+	void MouseMove(WPARAM wParam, LPARAM lParam);
+
+	bool* GetMouseInputFlag();
+	WPARAM* GetMouseWparam();
+	LPARAM* GetMouselParam();
 
 protected:
 
 private:
-	virtual void OnMouseDown(WPARAM btnState, int x, int y);
-	virtual void OnMouseUp(WPARAM btnState, int x, int y);
-	virtual void OnMouseMove(WPARAM btnState, int x, int y);
-	
-	POINT mLastMousePos;
+	//UP 0, DOWN 1, MOVE 2
+	bool mouseInputFlag[3] = { false };
+	WPARAM mouseWparam[3] = { 0 };
+	LPARAM mouselParam[3] = { 0 };
+	bool Keys[256] = { false };
 };

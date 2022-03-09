@@ -3,7 +3,7 @@
 #include "Engine.h"
 
 GameLogic::GameLogic()
-	:loadSystem()
+	:loadSystem(), cameraInputLogic()
 {
 
 }
@@ -24,7 +24,8 @@ bool GameLogic::Init()
 
 void GameLogic::Run()
 {
-
+	cameraInputLogic.OnKeyboardInput();
+	cameraInputLogic.OnMouseInput();
 }
 
 void GameLogic::Destroy()

@@ -152,6 +152,7 @@
   </ItemDefinitionGroup>
   <ItemGroup>
     <ClInclude Include="Camera.h" />
+    <ClInclude Include="CameraInputLogic.h" />
     <ClInclude Include="d3dUtil.h" />
     <ClInclude Include="DxRender.h" />
     <ClInclude Include="FActor.h" />
@@ -176,6 +177,7 @@
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="Camera.cpp" />
+    <ClCompile Include="CameraInputLogic.cpp" />
     <ClCompile Include="d3dUtil.cpp" />
     <ClCompile Include="DxRender.cpp" />
     <ClCompile Include="FActor.cpp" />
