@@ -12,7 +12,7 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE prevInstance,
 
 	try
 	{
-		std::unique_ptr<Engine> engine = std::make_unique<Engine>(hInstance);
+		std::unique_ptr<Engine> engine = std::make_unique<Engine>();
 		if (!engine->Initialize())
 			return 0;
 		if (!engine->Run())

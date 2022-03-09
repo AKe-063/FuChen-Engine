@@ -9,11 +9,12 @@ class DxRender
 {
 public:
 	DxRender(FScene* fScene, FAssetManager* fAssetManager, Win32Window* win32Window);
-	virtual ~DxRender();
+	~DxRender();
 
 	void OnResize(Camera* mCamera, Win32Window* mWindow);
 	void Draw(const GameTimer& gt, Camera* mCamera);
 	void Init(FScene* fScene, FAssetManager* fAssetManager, Win32Window* win32Window);
+	void Destroy();
 
 	//Get Instance
 	Microsoft::WRL::ComPtr<ID3D12Device> GetDevice();

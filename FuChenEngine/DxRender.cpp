@@ -212,6 +212,12 @@ void DxRender::Init(FScene* fScene, FAssetManager* fAssetManager, Win32Window* w
 	FlushCommandQueue();
 }
 
+void DxRender::Destroy()
+{
+	if (md3dDevice != nullptr)
+		FlushCommandQueue();
+}
+
 ComPtr<ID3D12Device> DxRender::GetDevice()
 {
 	return md3dDevice;

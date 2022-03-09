@@ -159,6 +159,8 @@
     <ClInclude Include="FInputBase.h" />
     <ClInclude Include="FScene.h" />
     <ClInclude Include="FWin32Input.h" />
+    <ClInclude Include="GameInstance.h" />
+    <ClInclude Include="GameLogic.h" />
     <ClInclude Include="GameTimer.h" />
     <ClInclude Include="MathHelper.h" />
     <ClInclude Include="FMesh.h" />
@@ -179,6 +181,8 @@
     <ClCompile Include="FInputBase.cpp" />
     <ClCompile Include="FScene.cpp" />
     <ClCompile Include="FWin32Input.cpp" />
+    <ClCompile Include="GameInstance.cpp" />
+    <ClCompile Include="GameLogic.cpp" />
     <ClCompile Include="GameTimer.cpp" />
     <ClCompile Include="MathHelper.cpp" />
     <ClCompile Include="FMesh.cpp" />

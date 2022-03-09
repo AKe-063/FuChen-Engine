@@ -218,3 +218,8 @@ void FWin32Input::Update(const GameTimer& gt)
 {
 	OnKeyboardInput(gt);
 }
+
+bool FWin32Input::Init()
+{
+	return true;
+}

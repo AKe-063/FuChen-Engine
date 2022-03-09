@@ -4,9 +4,9 @@
 using namespace std;
 using namespace glm;
 
-std::unique_ptr<Engine> Engine::mEngine(new Engine(GetInstanceModule(0)));
+std::unique_ptr<Engine> Engine::mEngine(new Engine());
 
-Engine::Engine(HINSTANCE hInstance)
+Engine::Engine()
 {
 	
 }
@@ -37,7 +37,7 @@ int Engine::Run()
 
 			if (!mEnginePaused)
 			{
-				dxRender->CalculateFrameStats(mTimer.get(), win32Window.get());
+				dxRender->CalculateFrameStats(mTimer.get(), mWindow.get());
 				Update(*mTimer);
 				dxRender->Draw(*mTimer, fScene->GetCamera());
 			}
@@ -56,26 +56,25 @@ bool Engine::Initialize()
 	mTimer = std::make_unique<GameTimer>();
 	fScene = std::make_unique<FScene>();
 	fAssetManager = std::make_unique<FAssetManager>();
-	fWin32Input = std::make_unique<FWin32Input>();
-	win32Window = std::make_unique<Win32Window>();
-	win32Window->SetAppInst(GetInstanceModule(0));
+	fInput = std::make_unique<FInputBase>();
+	fInput.reset(CreateInput());
+	mWindow = std::make_unique<Win32Window>();
 
 	if (!(InitWindow()))
 		return false;
-	dxRender = std::make_unique<DxRender>(fScene.get(), fAssetManager.get(), win32Window.get());
+	dxRender = std::make_unique<DxRender>(fScene.get(), fAssetManager.get(), mWindow.get());
 
 	return true;
 }
 
 void Engine::Destroy()
 {
-	if (dxRender->GetDevice() != nullptr)
-		dxRender->FlushCommandQueue();
+	dxRender->Destroy();
 }
 
 void Engine::Update(const GameTimer& gt)
 {
-	fWin32Input->Update(gt);
+	fInput->Update(gt);
 	fScene->Update();
 }
 
@@ -86,8 +85,22 @@ std::unique_ptr<Engine>& Engine::GetApp()
 
 bool Engine::InitWindow()
 {
-	if (!win32Window->CreateAWindow())
+	if (!mWindow->CreateAWindow())
 		return false;
 	
 	return true;
+}
+
+Window* Engine::CreateAWindow()
+{
+#if _PLATFORM_WIN32
+	return new Win32Window();
+#endif
+}
+
+FInputBase* Engine::CreateInput()
+{
+#if _PLATFORM_WIN32
+	return new FWin32Input();
+#endif
 }

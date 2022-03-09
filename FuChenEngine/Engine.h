@@ -11,7 +11,7 @@ using namespace glm;
 class Engine
 {
 public:
-	Engine(HINSTANCE hInstance);
+	Engine();
 	virtual ~Engine();
 
 	int Run();
@@ -27,12 +27,14 @@ private:
 	void Update(const GameTimer& gt);// override;
 
 	bool InitWindow();
+	Window* CreateAWindow();
+	FInputBase* CreateInput();
 
 	std::unique_ptr<FAssetManager> fAssetManager;
 	std::unique_ptr<FScene> fScene;
 	std::unique_ptr<DxRender> dxRender;
-	std::unique_ptr<FWin32Input> fWin32Input;
-	std::unique_ptr<Win32Window> win32Window;
+	std::unique_ptr<FInputBase> fInput;
+	std::unique_ptr<Win32Window> mWindow;
 
 	// Used to keep track of the delta-time?and game time (?.4).
 	std::unique_ptr<GameTimer> mTimer;

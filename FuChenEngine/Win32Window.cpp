@@ -14,7 +14,7 @@ MainWndProc(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam)
 Win32Window::Win32Window()
 	:Window()
 {
-
+	SetAppInst(GetInstanceModule(0));
 }
 
 Win32Window::~Win32Window()

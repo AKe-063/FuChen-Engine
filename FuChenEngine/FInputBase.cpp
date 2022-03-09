@@ -11,3 +11,13 @@ FInputBase::~FInputBase()
 
 }
 
+bool FInputBase::Init()
+{
+	return true;
+}
+
+void FInputBase::Update(const GameTimer& gt)
+{
+
+}
+

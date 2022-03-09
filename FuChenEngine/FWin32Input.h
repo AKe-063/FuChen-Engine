@@ -1,7 +1,7 @@
 #pragma once
 #include "FInputBase.h"
 
-class FWin32Input
+class FWin32Input : public FInputBase
 {
 public:
 	FWin32Input();
@@ -9,7 +9,8 @@ public:
 	LRESULT MsgProc(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam);
 	static FWin32Input* GetFWin32Input();
 	void OnKeyboardInput(const GameTimer& gt);
-	void Update(const GameTimer& gt);
+	virtual void Update(const GameTimer& gt)override;
+	virtual bool Init()override;
 
 protected:
 	static std::unique_ptr<FWin32Input> fWin32Input;
