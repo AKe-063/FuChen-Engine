@@ -8,7 +8,7 @@ public:
 	FActor(const std::string& name, std::vector<FMeshInfoStruct>);
 	~FActor();
 
-	ActorInfo GetActorInfo();
+	ActorInfo& GetActorInfo();
 
 protected:
 	ActorInfo actor;

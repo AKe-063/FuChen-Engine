@@ -16,7 +16,7 @@ FActor::~FActor()
 
 }
 
-ActorInfo FActor::GetActorInfo()
+ActorInfo& FActor::GetActorInfo()
 {
 	return actor;
 }
