@@ -35,7 +35,7 @@ bool FScene::LoadAllActors(const std::string& filePath)
 	for (int i = 0; i < num; i++)
 	{
 		fin.read((char*)&len, sizeof(int32_t));
-		str.resize(len);
+		str.resize(len-1);
 		fin.read((char*)str.data(), sizeof(char) * len);
 		names.push_back(str);
 		actorCount.push_back(str);
@@ -58,13 +58,20 @@ std::vector<std::string> FScene::GetNames()
 
 void FScene::AddNewActor(const std::string& name)
 {
+	//以下为测试所用
 	if (actors.find(name) != actors.end())
 	{
 		std::string newName = name;
-		int num = count(actorCount.begin(), actorCount.end(), "name");
-		newName = newName.erase(newName.length() - 1) + (char*)num;
+		int num = count(actorCount.begin(), actorCount.end(), name);
+		newName = name + std::to_string(num);
 		FActor newActor(actors.find(name)->second);
 		newActor.GetActorInfo().actorName = newName;
+		for (int i = 0; i < newActor.GetActorInfo().staticMeshesNum; i++)
+		{
+			float x = newActor.GetActorInfo().staticMeshes[i].transform.Translation.x + 200.0f;
+			newActor.GetActorInfo().staticMeshes[i].transform.Translation.x = x;
+		}
+		
 		actors.insert(std::make_pair(newName, newActor));
 		names.push_back(newName);
 		actorCount.push_back(name);

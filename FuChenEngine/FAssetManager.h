@@ -9,6 +9,7 @@ public:
 	FAssetManager();
 	virtual ~FAssetManager();
 
+	bool LoadAssetsLib(const std::string& assetsPath);
 	void LoadAssets(const std::string& assetPath);
 	AssetInfo GetAssetByName(const std::string& name);
 	bool AssetContrain(const std::string& name);

@@ -1,7 +1,7 @@
 #include "stdafx.h"
 #include "FActor.h"
 
-FActor::FActor(const ActorInfo& actorIn)
+FActor::FActor(const ActorInfo actorIn)
 {
 	actor = actorIn;
 }

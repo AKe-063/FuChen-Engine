@@ -51,7 +51,7 @@ AssetInfo Serialize::DeserializeAssetInfo(const std::string& name)
 ActorInfo Serialize::DeserializeActorInfo(const std::string& name)
 {
 	std::string str = "../FuChenEngine/ExportFile/" + name;
-	std::string filePath = str.erase(str.length()-1) + ".dat";
+	std::string filePath = str + ".dat";
 	std::ifstream fin(filePath, std::ios::binary);
 	ThrowIfFailed(fin.is_open(), nullptr);
 	ActorInfo actorInfo;
