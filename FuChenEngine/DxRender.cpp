@@ -156,7 +156,7 @@ void DxRender::Draw(const GameTimer& gt)
 		ObjectConstants objConstants;
 		objConstants.WorldViewProj = transpose(worldViewProj);
 		objConstants.time = gt.TotalTime();
-		mObjectCB[mObjectCB.size()-1]->CopyData(i, objConstants);
+		mObjectCB->CopyData(i, objConstants);
 
 		auto handle = CD3DX12_GPU_DESCRIPTOR_HANDLE(mCbvHeap->GetGPUDescriptorHandleForHeapStart());
 		handle.Offset(i, mCbvSrvUavDescriptorSize);
@@ -201,7 +201,7 @@ void DxRender::Init()
 	ThrowIfFailed(GetCommandList()->Reset(GetCommandAllocator().Get(), nullptr));
 
 	BuildDescriptorHeaps();
-	BuildConstantBuffers();
+	InitConstantBuffers();
 	BuildRootSignature();
 	BuildShadersAndInputLayout();
 	BuildPSO();
@@ -215,21 +215,16 @@ void DxRender::Init()
 	FlushCommandQueue();
 }
 
-void DxRender::Build()
+void DxRender::BuildInitialMap()
 {
-	// Reset the command list to prep for initialization commands.
 	ThrowIfFailed(GetCommandList()->Reset(GetCommandAllocator().Get(), nullptr));
 
 	BuildGeometry();
-	BuildDescriptorHeaps();
-	BuildConstantBuffers();
 
-	// Execute the initialization commands.
 	ThrowIfFailed(GetCommandList()->Close());
 	ID3D12CommandList* cmdsLists[] = { GetCommandList().Get() };
 	GetCommandQueue()->ExecuteCommandLists(_countof(cmdsLists), cmdsLists);
 
-	// Wait until initialization is complete.
 	FlushCommandQueue();
 }
 
@@ -333,15 +328,7 @@ bool DxRender::InitDirect3D()
 void DxRender::BuildDescriptorHeaps()
 {
 	D3D12_DESCRIPTOR_HEAP_DESC cbvHeapDesc;
-	if (mMeshes.size())
-	{
-		cbvHeapDesc.NumDescriptors = mMeshes.size();
-	}
-	else
-	{
-		cbvHeapDesc.NumDescriptors = 1;
-	}
-	
+	cbvHeapDesc.NumDescriptors = mMeshes.size() + 1024;
 	cbvHeapDesc.Type = D3D12_DESCRIPTOR_HEAP_TYPE_CBV_SRV_UAV;
 	cbvHeapDesc.Flags = D3D12_DESCRIPTOR_HEAP_FLAG_SHADER_VISIBLE;
 	cbvHeapDesc.NodeMask = 0;
@@ -351,32 +338,23 @@ void DxRender::BuildDescriptorHeaps()
 
 void DxRender::BuildConstantBuffers()
 {
-	if (mMeshes.size())
-	{
-		mObjectCB.push_back(std::make_unique<UploadBuffer<ObjectConstants>>(md3dDevice.Get(), mMeshes.size(), true));
-	}
-	else
-	{
-		mObjectCB.push_back(std::make_unique<UploadBuffer<ObjectConstants>>(md3dDevice.Get(), 1, true));
-	}
-	for (int i = 0; i < mMeshes.size(); i++)
-	{
-		UINT objCBByteSize = d3dUtil::CalcConstantBufferByteSize(sizeof(ObjectConstants));
-
-		D3D12_GPU_VIRTUAL_ADDRESS cbAddress = mObjectCB[mObjectCB.size()-1]->Resource()->GetGPUVirtualAddress();
-		// Offset to the ith object constant buffer in the buffer.
-		//int CBufIndex = 0;
-		cbAddress += i * objCBByteSize;
-
-		auto handle = CD3DX12_CPU_DESCRIPTOR_HANDLE(mCbvHeap->GetCPUDescriptorHandleForHeapStart());
-		handle.Offset(i, mCbvSrvUavDescriptorSize);
-
-		D3D12_CONSTANT_BUFFER_VIEW_DESC cbvDesc;
-		cbvDesc.BufferLocation = cbAddress;
-		cbvDesc.SizeInBytes = d3dUtil::CalcConstantBufferByteSize(sizeof(ObjectConstants));
-
-		md3dDevice->CreateConstantBufferView(&cbvDesc, handle);
-	}
+	// 	for (int i = 0; i < mMeshes.size(); i++)
+	// 	{
+	// 		UINT objCBByteSize = d3dUtil::CalcConstantBufferByteSize(sizeof(ObjectConstants));
+	// 
+	// 		D3D12_GPU_VIRTUAL_ADDRESS cbAddress = mObjectCB->Resource()->GetGPUVirtualAddress();
+	// 		// Offset to the ith object constant buffer in the buffer.
+	// 		cbAddress += i * objCBByteSize;
+	// 
+	// 		auto handle = CD3DX12_CPU_DESCRIPTOR_HANDLE(mCbvHeap->GetCPUDescriptorHandleForHeapStart());
+	// 		handle.Offset(i, mCbvSrvUavDescriptorSize);
+	// 
+	// 		D3D12_CONSTANT_BUFFER_VIEW_DESC cbvDesc;
+	// 		cbvDesc.BufferLocation = cbAddress;
+	// 		cbvDesc.SizeInBytes = d3dUtil::CalcConstantBufferByteSize(sizeof(ObjectConstants));
+	// 
+	// 		md3dDevice->CreateConstantBufferView(&cbvDesc, handle);
+	// 	}
 }
 
 void DxRender::BuildRootSignature()
@@ -514,6 +492,8 @@ void DxRender::BuildGeometry()
 
 			mMesh->DrawArgs[mMesh->Name] = submesh;
 			mMeshes.push_back(*mMesh.get());
+
+			AddConstantBuffer();
 		}
 	}
 }
@@ -546,6 +526,126 @@ void DxRender::BuildPSO()
 	psoDesc.SampleDesc.Quality = m4xMsaaState ? (m4xMsaaQuality - 1) : 0;
 	psoDesc.DSVFormat = mDepthStencilFormat;
 	ThrowIfFailed(md3dDevice->CreateGraphicsPipelineState(&psoDesc, IID_PPV_ARGS(&mPSO)));
+}
+
+void DxRender::AddConstantBuffer()
+{
+	UINT objCBByteSize = d3dUtil::CalcConstantBufferByteSize(sizeof(ObjectConstants));
+
+	D3D12_GPU_VIRTUAL_ADDRESS cbAddress = mObjectCB->Resource()->GetGPUVirtualAddress();
+	// Offset to the ith object constant buffer in the buffer.
+	cbAddress += mMeshes.size() * objCBByteSize;
+
+	auto handle = CD3DX12_CPU_DESCRIPTOR_HANDLE(mCbvHeap->GetCPUDescriptorHandleForHeapStart());
+	handle.Offset(mMeshes.size(), mCbvSrvUavDescriptorSize);
+
+	D3D12_CONSTANT_BUFFER_VIEW_DESC cbvDesc;
+	cbvDesc.BufferLocation = cbAddress;
+	cbvDesc.SizeInBytes = d3dUtil::CalcConstantBufferByteSize(sizeof(ObjectConstants));
+
+	md3dDevice->CreateConstantBufferView(&cbvDesc, handle);
+}
+
+void DxRender::AddGeometry()
+{
+	std::vector<Vertex> vertices;
+	Vertex vertice;
+	ActorInfo actor = (--Engine::GetInstance().GetFScene()->GetAllActor().end())->second.GetActorInfo();
+
+	for (FMeshInfoStruct fMeshInfo : actor.staticMeshes)
+	{
+		vertices.clear();
+		AssetInfo meshInfo;
+		if (FAssetManager::GetInstance().AssetContrain(fMeshInfo.name))
+		{
+			meshInfo = FAssetManager::GetInstance().GetAssetByName(fMeshInfo.name);
+		}
+		else
+		{
+			throw(0);
+		}
+
+		std::unique_ptr<MeshGeometry> mMesh = std::make_unique<MeshGeometry>();
+		mMesh->Name = meshInfo.name;
+		mMesh->mMeshWorld = mWorld;
+
+		mMesh->mMeshWorld = translate(
+			mMesh->mMeshWorld,
+			vec3(fMeshInfo.transform.Translation.x,
+				fMeshInfo.transform.Translation.y,
+				fMeshInfo.transform.Translation.z
+			)) * mat4_cast(qua<float>(
+				fMeshInfo.transform.Rotation.w,
+				fMeshInfo.transform.Rotation.x,
+				fMeshInfo.transform.Rotation.y,
+				fMeshInfo.transform.Rotation.z
+				)) * scale(
+					vec3(fMeshInfo.transform.Scale3D.x,
+						fMeshInfo.transform.Scale3D.y,
+						fMeshInfo.transform.Scale3D.z));
+
+		for (int i = 0; i < meshInfo.loDs[0].numVertices; i++)
+		{
+			vertice = meshInfo.loDs[0].vertices[i];
+			vertice.SetNormal(meshInfo.loDs[0].normals[i]);
+			vertice.SetColor(meshInfo.loDs[0].normals[i]);
+			vertices.push_back(vertice);
+		}
+
+		std::vector<std::uint16_t> indices;
+		for (int i = 0; i < meshInfo.loDs[0].numIndices; i++)
+		{
+			indices.push_back(meshInfo.loDs[0].indices[i]);
+		}
+
+		const UINT vbByteSize = (UINT)vertices.size() * sizeof(Vertex);
+		const UINT ibByteSize = (UINT)indices.size() * sizeof(std::uint16_t);
+
+		ThrowIfFailed(D3DCreateBlob(vbByteSize, &mMesh->VertexBufferCPU));
+		CopyMemory(mMesh->VertexBufferCPU->GetBufferPointer(), vertices.data(), vbByteSize);
+
+		ThrowIfFailed(D3DCreateBlob(ibByteSize, &mMesh->IndexBufferCPU));
+		CopyMemory(mMesh->IndexBufferCPU->GetBufferPointer(), indices.data(), ibByteSize);
+
+		mMesh->VertexBufferGPU = d3dUtil::CreateDefaultBuffer(md3dDevice.Get(),
+			mCommandList.Get(), vertices.data(), vbByteSize, mMesh->VertexBufferUploader);
+
+		mMesh->IndexBufferGPU = d3dUtil::CreateDefaultBuffer(md3dDevice.Get(),
+			mCommandList.Get(), indices.data(), ibByteSize, mMesh->IndexBufferUploader);
+
+		mMesh->VertexByteStride = sizeof(Vertex);
+		mMesh->VertexBufferByteSize = vbByteSize;
+		mMesh->IndexFormat = DXGI_FORMAT_R16_UINT;
+		mMesh->IndexBufferByteSize = ibByteSize;
+
+		SubmeshGeometry submesh;
+		submesh.IndexCount = (UINT)indices.size();
+		submesh.StartIndexLocation = 0;
+		submesh.BaseVertexLocation = 0;
+
+		mMesh->DrawArgs[mMesh->Name] = submesh;
+		mMeshes.push_back(*mMesh.get());
+
+		AddConstantBuffer();
+	}
+}
+
+void DxRender::AddNewBuild()
+{
+	ThrowIfFailed(GetCommandList()->Reset(GetCommandAllocator().Get(), nullptr));
+
+	AddGeometry();
+
+	ThrowIfFailed(GetCommandList()->Close());
+	ID3D12CommandList* cmdsLists[] = { GetCommandList().Get() };
+	GetCommandQueue()->ExecuteCommandLists(_countof(cmdsLists), cmdsLists);
+
+	FlushCommandQueue();
+}
+
+void DxRender::InitConstantBuffers()
+{
+	mObjectCB = std::make_unique<UploadBuffer<ObjectConstants>>(md3dDevice.Get(), mMeshes.size() + 1024, true);
 }
 
 void DxRender::CreateRtvAndDsvDescriptorHeaps()

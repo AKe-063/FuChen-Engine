@@ -19,7 +19,7 @@ bool GameLogic::Init()
 		loadSystem.LoadMap("../FuChenEngine/ExportFile/AllActor.dat")))
 		return false;
 
-	Engine::GetInstance().GetDxRender()->Build();
+	Engine::GetInstance().GetDxRender()->BuildInitialMap();
 	return true;
 }
 
@@ -29,7 +29,7 @@ void GameLogic::Run()
 	cameraInputLogic.OnMouseInput();
 	if (loadSystem.OnAddActorKeyDown())
 	{
-		Engine::GetInstance().GetDxRender()->Build();
+		Engine::GetInstance().GetDxRender()->AddNewBuild();
 	}
 	
 }

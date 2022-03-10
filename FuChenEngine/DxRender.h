@@ -14,7 +14,6 @@ public:
 	void OnResize();
 	void Draw(const GameTimer& gt);
 	void Init();
-	void Build();
 	void Destroy();
 
 	//Get Instance
@@ -47,10 +46,18 @@ public:
 	void BuildShadersAndInputLayout();
 	void BuildGeometry();
 	void BuildPSO();
+	void BuildInitialMap();
+
+	void AddConstantBuffer();
+	void AddGeometry();
+	void AddNewBuild();
+
+protected:
+	void InitConstantBuffers();
 
 private:
 	ComPtr<ID3D12DescriptorHeap> mCbvHeap;
-	std::vector<std::unique_ptr<UploadBuffer<ObjectConstants>>> mObjectCB;
+	std::unique_ptr<UploadBuffer<ObjectConstants>> mObjectCB;
 	ComPtr<ID3D12RootSignature> mRootSignature = nullptr;
 	ComPtr<ID3DBlob> mvsByteCode = nullptr;
 	ComPtr<ID3DBlob> mpsByteCode = nullptr;
