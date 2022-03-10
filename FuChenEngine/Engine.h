@@ -15,9 +15,10 @@ public:
 	Engine();
 	virtual ~Engine();
 
-	void Run();
+	int Run();
 	bool Initialize();
 	void Destroy();
+	void Update();
 
 	//Get
 	DxRender* GetDxRender();
@@ -30,7 +31,6 @@ public:
 protected:
 
 private:
-	void Update();
 	bool InitWindow();
 	Window* CreateAWindow();
 	FInputBase* CreateInput();

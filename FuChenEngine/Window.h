@@ -5,6 +5,7 @@ class Window
 public:
 	Window();
 	virtual ~Window();
+	virtual bool Run();
 
 	virtual int GetWidth();
 	virtual int GetHeight();

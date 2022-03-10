@@ -38,6 +38,7 @@ bool FScene::LoadAllActors(const std::string& filePath)
 		str.resize(len);
 		fin.read((char*)str.data(), sizeof(char) * len);
 		names.push_back(str);
+		actorCount.push_back(str);
 	}
 
 	fin.close();
@@ -55,9 +56,20 @@ std::vector<std::string> FScene::GetNames()
 	return names;
 }
 
-void FScene::AddNewActor(const std::string& name, const FActor& newActor)
+void FScene::AddNewActor(const std::string& name)
 {
-	actors.insert(std::make_pair(name, newActor));
+	if (actors.find(name) != actors.end())
+	{
+		std::string newName = name;
+		int num = count(actorCount.begin(), actorCount.end(), "name");
+		newName = newName.erase(newName.length() - 1) + (char*)num;
+		FActor newActor(actors.find(name)->second);
+		newActor.GetActorInfo().actorName = newName;
+		actors.insert(std::make_pair(newName, newActor));
+		names.push_back(newName);
+		actorCount.push_back(name);
+	}
+	
 }
 
 void FScene::DelAActor(const std::string& name)
@@ -82,7 +94,5 @@ void FScene::Update()
 {
 	GetCamera()->UpdateViewMatrix();
 	GetCamera()->SetView();
-// 	Camera::GetControlCamera()->UpdateViewMatrix();
-// 	Camera::GetControlCamera()->SetView();
 }
 

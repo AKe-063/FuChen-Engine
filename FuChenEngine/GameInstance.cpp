@@ -20,24 +20,9 @@ bool GameInstance::Init()
 
 void GameInstance::Run()
 {
-	MSG msg = { 0 };
-
-	Engine::GetInstance().GetTimer()->Reset();
-
-	while (msg.message != WM_QUIT)
+	while (Engine::GetInstance().Run())
 	{
-		// If there are Window messages then process them.
-		if (PeekMessage(&msg, 0, 0, 0, PM_REMOVE))
-		{
-			TranslateMessage(&msg);
-			DispatchMessage(&msg);
-		}
-		// Otherwise, do animation/game stuff.
-		else
-		{
-			Engine::GetInstance().Run();
-			gameLogIns.Run();
-		}
+		gameLogIns.Run();
 	}
 }
 

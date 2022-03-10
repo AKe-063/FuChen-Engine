@@ -1,6 +1,7 @@
 #include "stdafx.h"
 #include "Win32Window.h"
 #include "FWin32Input.h"
+#include "Engine.h"
 
 LRESULT CALLBACK
 MainWndProc(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam)
@@ -155,6 +156,40 @@ Win32Window::Win32Window()
 Win32Window::~Win32Window()
 {
 	
+}
+
+bool Win32Window::Run()
+{
+	if(msg.message != WM_QUIT)
+	{
+		// If there are Window messages then process them.
+		if (PeekMessage(&msg, 0, 0, 0, PM_REMOVE))
+		{
+			TranslateMessage(&msg);
+			DispatchMessage(&msg);
+		}
+		// Otherwise, do animation/game stuff.
+		else
+		{
+			Engine::GetInstance().GetTimer()->Tick();
+
+			if (!Engine::GetInstance().GetmEnginePaused())
+			{
+				Engine::GetInstance().GetDxRender()->CalculateFrameStats(Engine::GetInstance().GetTimer());
+				Engine::GetInstance().Update();
+				Engine::GetInstance().GetDxRender()->Draw(*Engine::GetInstance().GetTimer());
+			}
+			else
+			{
+				Sleep(100);
+			}
+		}
+		return true;
+	}
+	else
+	{
+		return false;
+	}
 }
 
 bool Win32Window::CreateAWindow()

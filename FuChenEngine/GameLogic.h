@@ -11,7 +11,6 @@ public:
 	bool Init();
 	void Run();
 	void Destroy();
-	bool LoadMap(const std::string& filePath);
 
 private:
 	LoadingSystem loadSystem;

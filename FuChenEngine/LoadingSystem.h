@@ -6,7 +6,9 @@ public:
 	LoadingSystem();
 	~LoadingSystem();
 
-	bool Load(const std::string& filePath);
+	bool InitFAssetManager(const std::string& assetsPath);
+	bool LoadMap(const std::string& filePath);
+	bool OnAddActorKeyDown();
 
 private:
 

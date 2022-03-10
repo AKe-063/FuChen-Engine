@@ -14,20 +14,9 @@ Engine::~Engine()
 	
 }
 
-void Engine::Run()
+int Engine::Run()
 {
-	mTimer->Tick();
-
-	if (!mEnginePaused)
-	{
-		dxRender->CalculateFrameStats(mTimer.get());
-		Update();
-		dxRender->Draw(*mTimer);
-	}
-	else
-	{
-		Sleep(100);
-	}
+	return mWindow->Run();
 }
 
 bool Engine::Initialize()
@@ -42,6 +31,9 @@ bool Engine::Initialize()
 	if (!(InitWindow()))
 		return false;
 	dxRender = std::make_unique<DxRender>();
+	dxRender->Init();
+
+	mTimer->Reset();
 
 	return true;
 }

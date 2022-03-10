@@ -16,7 +16,7 @@ CameraInputLogic::~CameraInputLogic()
 void CameraInputLogic::OnKeyboardInput()
 {
 	const float dt = Engine::GetInstance().GetTimer()->DeltaTime();
-	const float speed = 1000.0f;
+	const float speed = 700.0f;
 
 	if (FWin32Input::GetInstance().IsKeyDown('W'))
 		Engine::GetInstance().GetFScene()->GetCamera()->GetControlCamera()->Walk(speed * dt);

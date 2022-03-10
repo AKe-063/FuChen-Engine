@@ -49,7 +49,7 @@ public:
 	void BuildPSO();
 
 private:
-	std::vector<ComPtr<ID3D12DescriptorHeap>> mCbvHeap;
+	ComPtr<ID3D12DescriptorHeap> mCbvHeap;
 	std::vector<std::unique_ptr<UploadBuffer<ObjectConstants>>> mObjectCB;
 	ComPtr<ID3D12RootSignature> mRootSignature = nullptr;
 	ComPtr<ID3DBlob> mvsByteCode = nullptr;

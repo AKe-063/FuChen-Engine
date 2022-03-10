@@ -7,17 +7,12 @@ using namespace std;
 
 DxRender::DxRender()
 {
-	mWindow = Engine::GetInstance().GetWindow();
-	if (!InitDirect3D())
-	{
-		throw("InitDX False!");
-	}
-	Init();
+	
 }
 
 DxRender::~DxRender()
 {
-	
+
 }
 
 void DxRender::OnResize()
@@ -147,10 +142,10 @@ void DxRender::Draw(const GameTimer& gt)
 
 	mCommandList->SetGraphicsRootSignature(mRootSignature.Get());
 
+	ID3D12DescriptorHeap* descriptorHeaps[] = { mCbvHeap.Get() };
+	mCommandList->SetDescriptorHeaps(_countof(descriptorHeaps), descriptorHeaps);
 	for (int i = 0; i < mMeshes.size(); i++)
 	{
-		ID3D12DescriptorHeap* descriptorHeaps[] = { mCbvHeap[i].Get() };
-		mCommandList->SetDescriptorHeaps(_countof(descriptorHeaps), descriptorHeaps);
 		mCommandList->IASetVertexBuffers(0, 1, &mMeshes[i].VertexBufferView());
 		mCommandList->IASetIndexBuffer(&mMeshes[i].IndexBufferView());
 		mCommandList->IASetPrimitiveTopology(D3D11_PRIMITIVE_TOPOLOGY_TRIANGLELIST);
@@ -161,9 +156,11 @@ void DxRender::Draw(const GameTimer& gt)
 		ObjectConstants objConstants;
 		objConstants.WorldViewProj = transpose(worldViewProj);
 		objConstants.time = gt.TotalTime();
-		mObjectCB[i]->CopyData(0, objConstants);
+		mObjectCB[mObjectCB.size()-1]->CopyData(i, objConstants);
 
-		mCommandList->SetGraphicsRootDescriptorTable(0, mCbvHeap[i]->GetGPUDescriptorHandleForHeapStart());
+		auto handle = CD3DX12_GPU_DESCRIPTOR_HANDLE(mCbvHeap->GetGPUDescriptorHandleForHeapStart());
+		handle.Offset(i, mCbvSrvUavDescriptorSize);
+		mCommandList->SetGraphicsRootDescriptorTable(0, handle);
 
 		mCommandList->DrawIndexedInstanced(
 			mMeshes[i].DrawArgs[mMeshes[i].Name].IndexCount,
@@ -192,23 +189,40 @@ void DxRender::Draw(const GameTimer& gt)
 
 void DxRender::Init()
 {
-	Build();
-}
-
-void DxRender::Build()
-{
+	mWindow = Engine::GetInstance().GetWindow();
+	if (!InitDirect3D())
+	{
+		throw("InitDX False!");
+	}
 	// Do the initial resize code.
 	OnResize();
 
 	// Reset the command list to prep for initialization commands.
 	ThrowIfFailed(GetCommandList()->Reset(GetCommandAllocator().Get(), nullptr));
 
-	BuildGeometry();
 	BuildDescriptorHeaps();
 	BuildConstantBuffers();
 	BuildRootSignature();
 	BuildShadersAndInputLayout();
 	BuildPSO();
+
+	// Execute the initialization commands.
+	ThrowIfFailed(GetCommandList()->Close());
+	ID3D12CommandList* cmdsLists[] = { GetCommandList().Get() };
+	GetCommandQueue()->ExecuteCommandLists(_countof(cmdsLists), cmdsLists);
+
+	// Wait until initialization is complete.
+	FlushCommandQueue();
+}
+
+void DxRender::Build()
+{
+	// Reset the command list to prep for initialization commands.
+	ThrowIfFailed(GetCommandList()->Reset(GetCommandAllocator().Get(), nullptr));
+
+	BuildGeometry();
+	BuildDescriptorHeaps();
+	BuildConstantBuffers();
 
 	// Execute the initialization commands.
 	ThrowIfFailed(GetCommandList()->Close());
@@ -318,43 +332,50 @@ bool DxRender::InitDirect3D()
 
 void DxRender::BuildDescriptorHeaps()
 {
-	for (int i = 0; i < mMeshes.size(); i++)
+	D3D12_DESCRIPTOR_HEAP_DESC cbvHeapDesc;
+	if (mMeshes.size())
 	{
-		ComPtr<ID3D12DescriptorHeap> cbvHeap = nullptr;
-		D3D12_DESCRIPTOR_HEAP_DESC cbvHeapDesc;
-		cbvHeapDesc.NumDescriptors = 1;
-		cbvHeapDesc.Type = D3D12_DESCRIPTOR_HEAP_TYPE_CBV_SRV_UAV;
-		cbvHeapDesc.Flags = D3D12_DESCRIPTOR_HEAP_FLAG_SHADER_VISIBLE;
-		cbvHeapDesc.NodeMask = 0;
-		ThrowIfFailed(md3dDevice->CreateDescriptorHeap(&cbvHeapDesc,
-			IID_PPV_ARGS(&cbvHeap)));
-		mCbvHeap.push_back(cbvHeap);
+		cbvHeapDesc.NumDescriptors = mMeshes.size();
 	}
+	else
+	{
+		cbvHeapDesc.NumDescriptors = 1;
+	}
+	
+	cbvHeapDesc.Type = D3D12_DESCRIPTOR_HEAP_TYPE_CBV_SRV_UAV;
+	cbvHeapDesc.Flags = D3D12_DESCRIPTOR_HEAP_FLAG_SHADER_VISIBLE;
+	cbvHeapDesc.NodeMask = 0;
+	ThrowIfFailed(md3dDevice->CreateDescriptorHeap(&cbvHeapDesc,
+		IID_PPV_ARGS(&mCbvHeap)));
 }
 
 void DxRender::BuildConstantBuffers()
 {
-	for (int i = 0; i < mMeshes.size(); i++)
+	if (mMeshes.size())
+	{
+		mObjectCB.push_back(std::make_unique<UploadBuffer<ObjectConstants>>(md3dDevice.Get(), mMeshes.size(), true));
+	}
+	else
 	{
 		mObjectCB.push_back(std::make_unique<UploadBuffer<ObjectConstants>>(md3dDevice.Get(), 1, true));
-
+	}
+	for (int i = 0; i < mMeshes.size(); i++)
+	{
 		UINT objCBByteSize = d3dUtil::CalcConstantBufferByteSize(sizeof(ObjectConstants));
 
-		D3D12_GPU_VIRTUAL_ADDRESS cbAddress = mObjectCB[i]->Resource()->GetGPUVirtualAddress();
+		D3D12_GPU_VIRTUAL_ADDRESS cbAddress = mObjectCB[mObjectCB.size()-1]->Resource()->GetGPUVirtualAddress();
 		// Offset to the ith object constant buffer in the buffer.
-		int CBufIndex = 0;
-		cbAddress += CBufIndex * objCBByteSize;
+		//int CBufIndex = 0;
+		cbAddress += i * objCBByteSize;
 
-		auto handle = CD3DX12_CPU_DESCRIPTOR_HANDLE(mCbvHeap[i]->GetCPUDescriptorHandleForHeapStart());
-		handle.Offset(0, mCbvSrvUavDescriptorSize);
+		auto handle = CD3DX12_CPU_DESCRIPTOR_HANDLE(mCbvHeap->GetCPUDescriptorHandleForHeapStart());
+		handle.Offset(i, mCbvSrvUavDescriptorSize);
 
 		D3D12_CONSTANT_BUFFER_VIEW_DESC cbvDesc;
 		cbvDesc.BufferLocation = cbAddress;
 		cbvDesc.SizeInBytes = d3dUtil::CalcConstantBufferByteSize(sizeof(ObjectConstants));
 
-		md3dDevice->CreateConstantBufferView(
-			&cbvDesc,
-			handle);
+		md3dDevice->CreateConstantBufferView(&cbvDesc, handle);
 	}
 }
 
@@ -414,6 +435,7 @@ void DxRender::BuildShadersAndInputLayout()
 
 void DxRender::BuildGeometry()
 {
+	mMeshes.clear();
 	std::vector<Vertex> vertices;
 	Vertex vertice;
 

@@ -11,6 +11,11 @@ Window::~Window()
 
 }
 
+bool Window::Run()
+{
+	return true;
+}
+
 int Window::GetWidth()
 {
 	return mwWidth;
