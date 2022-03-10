@@ -80,27 +80,4 @@ ActorInfo Serialize::DeserializeActorInfo(const std::string& name)
 	return actorInfo;
 }
 
-// void Serialize::LoadAllActors(const std::string& filePath)
-// {
-// 	//std::ifstream fin("../FuChenEngine/ExportFile/AllActor.dat", std::ios::binary);
-// 	std::ifstream fin(filePath, std::ios::binary);
-// 	ThrowIfFailed(fin.is_open(), nullptr);
-// 
-// 	std::string str;
-// 	int num = 0, len;
-// 	fin.read((char*)&num, sizeof(int32_t));
-// 	for (int i = 0; i<num; i++)
-// 	{
-// 		fin.read((char*)&len, sizeof(int32_t));
-// 		str.resize(len);
-// 		fin.read((char*)str.data(), sizeof(char) * len);
-// 		names.push_back(str);
-// 	}
-// 
-// 	fin.close();
-// }
-// 
-// std::vector<std::string> Serialize::GetNames()
-// {
-// 	return names;
-// }
+

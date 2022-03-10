@@ -14,6 +14,7 @@ public:
 	void OnResize();
 	void Draw(const GameTimer& gt);
 	void Init();
+	void Build();
 	void Destroy();
 
 	//Get Instance

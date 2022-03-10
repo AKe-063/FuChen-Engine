@@ -192,6 +192,11 @@ void DxRender::Draw(const GameTimer& gt)
 
 void DxRender::Init()
 {
+	Build();
+}
+
+void DxRender::Build()
+{
 	// Do the initial resize code.
 	OnResize();
 

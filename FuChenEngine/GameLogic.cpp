@@ -18,7 +18,7 @@ bool GameLogic::Init()
 	if (!LoadMap("../FuChenEngine/ExportFile/AllActor.dat"))
 		return false;
 
-	Engine::GetInstance().GetDxRender()->Init();
+	Engine::GetInstance().GetDxRender()->Build();
 	return true;
 }
 
