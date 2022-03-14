@@ -132,6 +132,9 @@
     <ClInclude Include="CameraInputLogic.h">
       <Filter>Header Files\Game</Filter>
     </ClInclude>
+    <ClInclude Include="FSemaphore.h">
+      <Filter>Header Files\Engine</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="WinMain.cpp">

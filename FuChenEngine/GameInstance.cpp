@@ -20,6 +20,12 @@ bool GameInstance::Init()
 
 void GameInstance::Run()
 {
+// 	std::thread engineThread(&Engine::Run, &Engine::GetInstance());
+// 	std::thread gameLogThread(&GameLogic::Run, &gameLogIns);
+// 
+// 	engineThread.join();
+// 	gameLogThread.join();
+
 	while (Engine::GetInstance().Run())
 	{
 		gameLogIns.Run();

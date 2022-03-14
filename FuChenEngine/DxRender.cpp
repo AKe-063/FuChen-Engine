@@ -150,11 +150,14 @@ void DxRender::Draw(const GameTimer& gt)
 		mCommandList->IASetIndexBuffer(&mMeshes[i].IndexBufferView());
 		mCommandList->IASetPrimitiveTopology(D3D11_PRIMITIVE_TOPOLOGY_TRIANGLELIST);
 
-		mat4 worldViewProj = Engine::GetInstance().GetFScene()->GetCamera()->GetProj() * Engine::GetInstance().GetFScene()->GetCamera()->GetView() * mMeshes[i].mMeshWorld;
+		//mat4 worldViewProj = Engine::GetInstance().GetFScene()->GetCamera()->GetProj() * Engine::GetInstance().GetFScene()->GetCamera()->GetView() * mMeshes[i].mMeshWorld;
 
 		// Update the constant buffer with the latest worldViewProj matrix.
 		ObjectConstants objConstants;
-		objConstants.WorldViewProj = transpose(worldViewProj);
+		objConstants.Roatation = transpose(mMeshes[i].Rotation);
+		objConstants.World = transpose(Engine::GetInstance().GetFScene()->GetCamera()->GetProj());
+		objConstants.View = transpose(Engine::GetInstance().GetFScene()->GetCamera()->GetView());
+		objConstants.Proj = transpose(mMeshes[i].mMeshWorld);
 		objConstants.time = gt.TotalTime();
 		mObjectCB->CopyData(i, objConstants);
 
@@ -436,17 +439,19 @@ void DxRender::BuildGeometry()
 			mMesh->Name = meshInfo.name;
 			mMesh->mMeshWorld = mWorld;
 
+			mMesh->Rotation = mat4_cast(qua<float>(
+				fMeshInfo.transform.Rotation.w,
+				fMeshInfo.transform.Rotation.x,
+				fMeshInfo.transform.Rotation.y,
+				fMeshInfo.transform.Rotation.z
+				));
+
 			mMesh->mMeshWorld = translate(
 				mMesh->mMeshWorld,
 				vec3(fMeshInfo.transform.Translation.x,
 					fMeshInfo.transform.Translation.y,
 					fMeshInfo.transform.Translation.z
-				)) * mat4_cast(qua<float>(
-					fMeshInfo.transform.Rotation.w,
-					fMeshInfo.transform.Rotation.x,
-					fMeshInfo.transform.Rotation.y,
-					fMeshInfo.transform.Rotation.z
-					)) * scale(
+				)) * mMesh->Rotation * scale(
 						vec3(fMeshInfo.transform.Scale3D.x,
 							fMeshInfo.transform.Scale3D.y,
 							fMeshInfo.transform.Scale3D.z));

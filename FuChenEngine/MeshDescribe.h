@@ -107,7 +107,10 @@ struct Vertex
 
 struct ObjectConstants
 {
-	mat4 WorldViewProj = MathHelper::Identity4x4();
+	mat4 Roatation = MathHelper::Identity4x4();
+	mat4 World = MathHelper::Identity4x4();
+	mat4 View = MathHelper::Identity4x4();
+	mat4 Proj = MathHelper::Identity4x4();
 	float time = 1.0f;
 };
 

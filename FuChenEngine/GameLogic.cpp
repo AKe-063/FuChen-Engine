@@ -15,7 +15,7 @@ GameLogic::~GameLogic()
 
 bool GameLogic::Init()
 {
-	if (!(loadSystem.InitFAssetManager("../FuChenEngine/ExportFile/AllAssets.dat") && 
+	if (!(loadSystem.InitFAssetManager("../FuChenEngine/ExportFile/AllAssets.dat") &&
 		loadSystem.LoadMap("../FuChenEngine/ExportFile/AllActor.dat")))
 		return false;
 
@@ -25,13 +25,21 @@ bool GameLogic::Init()
 
 void GameLogic::Run()
 {
+	// 	while (!Engine::GetInstance().GetmEngineFinished())
+	// 	{
+	// 		cameraInputLogic.OnKeyboardInput();
+	// 		cameraInputLogic.OnMouseInput();
+	// 		if (loadSystem.OnAddActorKeyDown())
+	// 		{
+	// 			Engine::GetInstance().GetDxRender()->AddNewBuild();
+	// 		}
+	// 	}
 	cameraInputLogic.OnKeyboardInput();
 	cameraInputLogic.OnMouseInput();
 	if (loadSystem.OnAddActorKeyDown())
 	{
 		Engine::GetInstance().GetDxRender()->AddNewBuild();
 	}
-	
 }
 
 void GameLogic::Destroy()

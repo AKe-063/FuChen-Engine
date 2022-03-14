@@ -27,6 +27,7 @@ public:
 	Window* GetWindow();
 	GameTimer* GetTimer();
 	bool GetmEnginePaused();
+	bool GetmEngineFinished();
 
 protected:
 
@@ -46,6 +47,7 @@ private:
 	std::unique_ptr<GameTimer> mTimer;
 
 	bool      mEnginePaused = false;  // is the application paused?
+	bool	  mEngineFinished = false;
 // 	bool      mMinimized = false;  // is the application minimized?
 // 	bool      mMaximized = false;  // is the application maximized?
 // 	bool      mResizing = false;   // are the resize bars being dragged?

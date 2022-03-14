@@ -6,7 +6,11 @@
 
 cbuffer cbPerObject : register(b0)
 {
-	float4x4 gWorldViewProj; 
+	//float4x4 gWorldViewProj; 
+	float4x4 gRotation;
+	float4x4 gWorld;
+	float4x4 gView;
+	float4x4 gProj;
 	float time;
 };
 
@@ -30,19 +34,23 @@ VertexOut VS(VertexIn vin)
 	
 	// Transform to homogeneous clip space.
 	//vout.PosH = mul(float4(vin.PosL, 1.0f), gWorldViewProj);
-	vout.PosH = mul(float4(vin.PosL, abs(sin(time))*0.5+0.5), gWorldViewProj);
+	//vout.PosH = mul(float4(vin.PosL, abs(sin(time))*0.5+0.5), gWorldViewProj);
+	float4x4 gWorldViewProj = mul(mul(gProj, gView), gWorld);
+	vout.PosH = mul(float4(vin.PosL, abs(sin(time)) * 0.5 + 0.5), gWorldViewProj);
 	
 	// Just pass vertex color into the pixel shader.
     vout.Color = vin.Color;
 
-	vout.Normal = vin.Normal;
+	vout.Normal = mul(vin.Normal, gRotation);
+	//vout.Normal = vin.Normal;
     
     return vout;
 }
 
 float4 PS(VertexOut pin) : SV_Target
 {
-	float4 RetColor = float4(pin.Normal * 0.5f + 0.5f);
+	//Gamma Correction
+	float4 RetColor = pow(pin.Normal * 0.5f + 0.5f,1/2.2f);
 	return RetColor;
 	//return pin.Color;
 }

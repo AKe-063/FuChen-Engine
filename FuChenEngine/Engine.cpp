@@ -16,6 +16,11 @@ Engine::~Engine()
 
 int Engine::Run()
 {
+// 	while (mWindow->Run())
+// 	{
+// 	}
+// 	mEngineFinished = true;
+// 	return mEngineFinished;
 	return mWindow->Run();
 }
 
@@ -74,6 +79,11 @@ GameTimer* Engine::GetTimer()
 bool Engine::GetmEnginePaused()
 {
 	return mEnginePaused;
+}
+
+bool Engine::GetmEngineFinished()
+{
+	return mEngineFinished;
 }
 
 void Engine::Update()

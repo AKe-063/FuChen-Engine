@@ -159,6 +159,7 @@
     <ClInclude Include="FAssetManager.h" />
     <ClInclude Include="FInputBase.h" />
     <ClInclude Include="FScene.h" />
+    <ClInclude Include="FSemaphore.h" />
     <ClInclude Include="FSingleton.h" />
     <ClInclude Include="FWin32Input.h" />
     <ClInclude Include="GameInstance.h" />
