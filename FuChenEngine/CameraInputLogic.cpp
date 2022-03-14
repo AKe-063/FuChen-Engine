@@ -31,10 +31,10 @@ void CameraInputLogic::OnKeyboardInput()
 		Engine::GetInstance().GetFScene()->GetCamera()->GetControlCamera()->Strafe(speed * dt);
 
 	if (FWin32Input::GetInstance().IsKeyDown('Q'))
-		Engine::GetInstance().GetFScene()->GetCamera()->GetControlCamera()->Roll(0.05f);
+		Engine::GetInstance().GetFScene()->GetCamera()->GetControlCamera()->Roll(0.01f);
 
 	if (FWin32Input::GetInstance().IsKeyDown('E'))
-		Engine::GetInstance().GetFScene()->GetCamera()->GetControlCamera()->Roll(-0.05f);
+		Engine::GetInstance().GetFScene()->GetCamera()->GetControlCamera()->Roll(-0.01f);
 
 	Engine::GetInstance().GetFScene()->GetCamera()->GetControlCamera()->UpdateViewMatrix();
 }

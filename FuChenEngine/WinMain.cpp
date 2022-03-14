@@ -1,5 +1,4 @@
 #include "stdafx.h"
-//#include "Engine.h"
 #include "GameInstance.h"
 
 int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE prevInstance,

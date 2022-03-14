@@ -5,6 +5,8 @@ VisualStudioVersion = 16.0.31515.178
 MinimumVisualStudioVersion = 10.0.40219.1
 Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "FuChenEngine", "..\FuChenEngine\FuChenEngine.vcxproj", "{0E59CCB3-51F1-4AA6-8B53-EE09C93252EB}"
 EndProject
+Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "FuChenGame", "..\FuChenGame\FuChenGame.vcxproj", "{6FF10163-16F1-4D5D-B7DB-8E7475A50A3F}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|x64 = Debug|x64
@@ -21,6 +23,14 @@ Global
 		{0E59CCB3-51F1-4AA6-8B53-EE09C93252EB}.Release|x64.Build.0 = Release|x64
 		{0E59CCB3-51F1-4AA6-8B53-EE09C93252EB}.Release|x86.ActiveCfg = Release|Win32
 		{0E59CCB3-51F1-4AA6-8B53-EE09C93252EB}.Release|x86.Build.0 = Release|Win32
+		{6FF10163-16F1-4D5D-B7DB-8E7475A50A3F}.Debug|x64.ActiveCfg = Debug|x64
+		{6FF10163-16F1-4D5D-B7DB-8E7475A50A3F}.Debug|x64.Build.0 = Debug|x64
+		{6FF10163-16F1-4D5D-B7DB-8E7475A50A3F}.Debug|x86.ActiveCfg = Debug|Win32
+		{6FF10163-16F1-4D5D-B7DB-8E7475A50A3F}.Debug|x86.Build.0 = Debug|Win32
+		{6FF10163-16F1-4D5D-B7DB-8E7475A50A3F}.Release|x64.ActiveCfg = Release|x64
+		{6FF10163-16F1-4D5D-B7DB-8E7475A50A3F}.Release|x64.Build.0 = Release|x64
+		{6FF10163-16F1-4D5D-B7DB-8E7475A50A3F}.Release|x86.ActiveCfg = Release|Win32
+		{6FF10163-16F1-4D5D-B7DB-8E7475A50A3F}.Release|x86.Build.0 = Release|Win32
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE

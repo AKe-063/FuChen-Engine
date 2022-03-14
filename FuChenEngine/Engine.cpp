@@ -31,7 +31,6 @@ bool Engine::Initialize()
 	fAssetManager.reset(&FAssetManager::GetInstance());
 	fInput.reset(CreateInput());
 	mWindow.reset(CreateAWindow());
-	mCameraInputLogic = std::make_unique<CameraInputLogic>();
 
 	if (!(InitWindow()))
 		return false;
