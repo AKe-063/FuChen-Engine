@@ -369,5 +369,4 @@ FodyWeavers.xsd
 /Reader
 /DirectX12_Code.zip
 /eigen-3.4.0.tar.bz2
-/StartupProject
 !shaders.hlsl
