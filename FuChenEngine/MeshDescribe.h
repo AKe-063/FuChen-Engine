@@ -42,6 +42,13 @@ public:
 	}
 };
 
+struct FVector2D
+{
+public:
+	float x;
+	float y;
+};
+
 class FTransform
 {
 public:
@@ -59,6 +66,7 @@ struct MeshesLODInfo
 	std::vector<int32_t> indices;
 	int numTexcoords ;
 	std::vector<FVector4> normals;
+	std::vector<FVector2D> verticeUVs;
 };
 
 struct FMeshInfoStruct
@@ -88,6 +96,7 @@ struct Vertex
 	vec3 Pos;
 	vec4 Color;
 	vec4 Normal;
+	vec2 mUVs;
 
 	void operator=(const FVector& vector)
 	{

@@ -159,6 +159,7 @@
   <ItemGroup>
     <ClInclude Include="Camera.h" />
     <ClInclude Include="d3dUtil.h" />
+    <ClInclude Include="DDSTextureLoader.h" />
     <ClInclude Include="DxRender.h" />
     <ClInclude Include="FActor.h" />
     <ClInclude Include="FAssetManager.h" />
@@ -181,6 +182,7 @@
   <ItemGroup>
     <ClCompile Include="Camera.cpp" />
     <ClCompile Include="d3dUtil.cpp" />
+    <ClCompile Include="DDSTextureLoader.cpp" />
     <ClCompile Include="DxRender.cpp" />
     <ClCompile Include="FActor.cpp" />
     <ClCompile Include="FAssetManager.cpp" />

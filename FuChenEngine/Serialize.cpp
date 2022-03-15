@@ -42,6 +42,10 @@ AssetInfo Serialize::DeserializeAssetInfo(const std::string& name)
 		meshesLODInfo.normals.resize(num);
 		fin.read((char*)meshesLODInfo.normals.data(), sizeof(FVector4) * num);
 
+		fin.read((char*)&num, sizeof(int32_t));
+		meshesLODInfo.verticeUVs.resize(num);
+		fin.read((char*)meshesLODInfo.verticeUVs.data(), sizeof(FVector2D) * num);
+
 		assetInfo.loDs.push_back(meshesLODInfo);
 	}
 	fin.close();

@@ -24,6 +24,7 @@
 #include <comdef.h>
 #include <float.h>
 #include <cmath>
+#include <assert.h>
 #include "../FuChenEngine/Common/d3dx12.h"
 
 #include "GL/glew.h"
@@ -41,3 +42,4 @@
 #include "MathHelper.h"
 #include "UploadBuffer.h"
 #include "FSingleton.h"
+#include "DDSTextureLoader.h"

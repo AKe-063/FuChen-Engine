@@ -4,6 +4,15 @@
 // Transforms and colors geometry.
 //***************************************************************************************
 
+Texture2D gDiffuseMap : register(t0);
+
+SamplerState gsamPointWrap        : register(s0);
+SamplerState gsamPointClamp       : register(s1);
+SamplerState gsamLinearWrap       : register(s2);
+SamplerState gsamLinearClamp      : register(s3);
+SamplerState gsamAnisotropicWrap  : register(s4);
+SamplerState gsamAnisotropicClamp : register(s5);
+
 cbuffer cbPerObject : register(b0)
 {
 	//float4x4 gWorldViewProj; 
@@ -19,6 +28,7 @@ struct VertexIn
 	float3 PosL  : POSITION;
     float4 Color : COLOR;
 	float4 Normal : NORMAL;
+	float2 TexC    : TEXCOORD;
 };
 
 struct VertexOut
@@ -26,6 +36,7 @@ struct VertexOut
 	float4 PosH  : SV_POSITION;
     float4 Color : COLOR;
 	float4 Normal : NORMAL;
+	float2 TexC    : TEXCOORD;
 };
 
 VertexOut VS(VertexIn vin)
@@ -43,6 +54,9 @@ VertexOut VS(VertexIn vin)
 
 	vout.Normal = mul(vin.Normal, gRotation);
 	//vout.Normal = vin.Normal;
+
+	// Output vertex attributes for interpolation across triangle.
+	vout.TexC = vin.TexC;
     
     return vout;
 }
@@ -50,8 +64,9 @@ VertexOut VS(VertexIn vin)
 float4 PS(VertexOut pin) : SV_Target
 {
 	//Gamma Correction
-	float4 RetColor = pow(pin.Normal * 0.5f + 0.5f,1/2.2f);
-	return RetColor;
+	float4 diffuseAlbedo = gDiffuseMap.Sample(gsamPointWrap  , pin.TexC);
+	//float4 RetColor = pow(pin.Normal * 0.5f + 0.5f,1/2.2f);
+	return diffuseAlbedo;
 	//return pin.Color;
 }
 

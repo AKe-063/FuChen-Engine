@@ -47,6 +47,7 @@ public:
 	void BuildGeometry();
 	void BuildPSO();
 	void BuildInitialMap();
+	void LoadTextures();
 
 	void AddConstantBuffer();
 	void AddGeometry();
@@ -57,6 +58,7 @@ protected:
 
 private:
 	ComPtr<ID3D12DescriptorHeap> mCbvHeap;
+	ComPtr<ID3D12DescriptorHeap> mSrvDescriptorHeap = nullptr;
 	std::unique_ptr<UploadBuffer<ObjectConstants>> mObjectCB;
 	ComPtr<ID3D12RootSignature> mRootSignature = nullptr;
 	ComPtr<ID3DBlob> mvsByteCode = nullptr;
@@ -91,6 +93,8 @@ private:
 	Microsoft::WRL::ComPtr<ID3D12Resource> mDepthStencilBuffer;
 	Microsoft::WRL::ComPtr<ID3D12DescriptorHeap> mRtvHeap;
 	Microsoft::WRL::ComPtr<ID3D12DescriptorHeap> mDsvHeap;
+	std::unordered_map<std::string, std::unique_ptr<Texture>> mTextures;
+	std::array<const CD3DX12_STATIC_SAMPLER_DESC, 6> GetStaticSamplers();
 	D3D12_VIEWPORT mScreenViewport;
 	D3D12_RECT mScissorRect;
 	UINT mRtvDescriptorSize = 0;

@@ -111,6 +111,9 @@
     <ClInclude Include="FSemaphore.h">
       <Filter>Header Files\Engine</Filter>
     </ClInclude>
+    <ClInclude Include="DDSTextureLoader.h">
+      <Filter>Header Files\Engine\DX</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="Camera.cpp">
@@ -160,6 +163,9 @@
     </ClCompile>
     <ClCompile Include="Window.cpp">
       <Filter>Source Files\Engine\Window</Filter>
+    </ClCompile>
+    <ClCompile Include="DDSTextureLoader.cpp">
+      <Filter>Source Files\Engine\DX</Filter>
     </ClCompile>
   </ItemGroup>
 </Project>
