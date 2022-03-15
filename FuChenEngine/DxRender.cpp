@@ -145,9 +145,8 @@ void DxRender::Draw(const GameTimer& gt)
 	//test!!!!!!!!!!!!!!!!!!!!!
 	ID3D12DescriptorHeap* descriptorHeaps1[] = { mSrvDescriptorHeap.Get() };
 	mCommandList->SetDescriptorHeaps(_countof(descriptorHeaps1), descriptorHeaps1);
-
-	//test!!!!!!!!!!!!!
 	auto handle1 = CD3DX12_GPU_DESCRIPTOR_HANDLE(mSrvDescriptorHeap->GetGPUDescriptorHandleForHeapStart());
+	handle1.Offset(2, mCbvSrvUavDescriptorSize);
 	mCommandList->SetGraphicsRootDescriptorTable(1, handle1);
 
 	ID3D12DescriptorHeap* descriptorHeaps[] = { mCbvHeap.Get() };
@@ -211,11 +210,10 @@ void DxRender::Init()
 	// Reset the command list to prep for initialization commands.
 	ThrowIfFailed(GetCommandList()->Reset(GetCommandAllocator().Get(), nullptr));
 
-	LoadTextures();
 	BuildDescriptorHeaps();
 	InitConstantBuffers();
-	BuildRootSignature();
 	BuildShadersAndInputLayout();
+	BuildRootSignature();
 	BuildPSO();
 
 	// Execute the initialization commands.
@@ -231,6 +229,8 @@ void DxRender::BuildInitialMap()
 {
 	ThrowIfFailed(GetCommandList()->Reset(GetCommandAllocator().Get(), nullptr));
 
+	BuildAllTextures();
+	BuildShaderResourceView();
 	BuildGeometry();
 
 	ThrowIfFailed(GetCommandList()->Close());
@@ -240,16 +240,31 @@ void DxRender::BuildInitialMap()
 	FlushCommandQueue();
 }
 
-void DxRender::LoadTextures()
+void DxRender::BuildNewTexture(const std::string& name, const std::wstring& textureFilePath)
 {
-	auto tex = std::make_unique<Texture>();
-	tex->Name = "tex";
-	tex->Filename = L"../FuChenEngine/Textures/bricks.dds";
+	auto tex = Texture();
+	tex.Name = name;
+	tex.Filename = textureFilePath;
 	ThrowIfFailed(DirectX::CreateDDSTextureFromFile12(md3dDevice.Get(),
-		mCommandList.Get(), tex->Filename.c_str(),
-		tex->Resource, tex->UploadHeap));
+		mCommandList.Get(), tex.Filename.c_str(),
+		tex.Resource, tex.UploadHeap));
 
-	mTextures[tex->Name] = std::move(tex);
+	mTextures[tex.Name] = tex;
+}
+
+void DxRender::BuildAllTextures()
+{
+	for (auto texture : FAssetManager::GetInstance().GetTexturesFilePath())
+	{
+		auto tex = Texture();
+		tex.Name = texture.first;
+		tex.Filename = texture.second;
+		ThrowIfFailed(DirectX::CreateDDSTextureFromFile12(md3dDevice.Get(),
+			mCommandList.Get(), tex.Filename.c_str(),
+			tex.Resource, tex.UploadHeap));
+
+		mTextures[tex.Name] = tex;
+	}
 }
 
 void DxRender::Destroy()
@@ -361,22 +376,10 @@ void DxRender::BuildDescriptorHeaps()
 
 	//Create the SRV heap
 	D3D12_DESCRIPTOR_HEAP_DESC srvHeapDesc = {};
-	srvHeapDesc.NumDescriptors = 1;
+	srvHeapDesc.NumDescriptors = mTextures.size() + 1024;
 	srvHeapDesc.Type = D3D12_DESCRIPTOR_HEAP_TYPE_CBV_SRV_UAV;
 	srvHeapDesc.Flags = D3D12_DESCRIPTOR_HEAP_FLAG_SHADER_VISIBLE;
 	ThrowIfFailed(md3dDevice->CreateDescriptorHeap(&srvHeapDesc, IID_PPV_ARGS(&mSrvDescriptorHeap)));
-
-	CD3DX12_CPU_DESCRIPTOR_HANDLE hDescriptor(mSrvDescriptorHeap->GetCPUDescriptorHandleForHeapStart());
-	auto tex = mTextures["tex"]->Resource;
-
-	D3D12_SHADER_RESOURCE_VIEW_DESC srvDesc = {};
-	srvDesc.Shader4ComponentMapping = D3D12_DEFAULT_SHADER_4_COMPONENT_MAPPING;
-	srvDesc.Format = tex->GetDesc().Format;
-	srvDesc.ViewDimension = D3D12_SRV_DIMENSION_TEXTURE2D;
-	srvDesc.Texture2D.MostDetailedMip = 0;
-	srvDesc.Texture2D.MipLevels = tex->GetDesc().MipLevels;
-	srvDesc.Texture2D.ResourceMinLODClamp = 0.0f;
-	md3dDevice->CreateShaderResourceView(tex.Get(), &srvDesc, hDescriptor);
 }
 
 void DxRender::BuildConstantBuffers()
@@ -400,42 +403,64 @@ void DxRender::BuildConstantBuffers()
 	 	}
 }
 
+void DxRender::BuildShaderResourceView()
+{
+	int index = 0;
+	for (auto texture : mTextures)
+	{
+		CD3DX12_CPU_DESCRIPTOR_HANDLE hDescriptor(mSrvDescriptorHeap->GetCPUDescriptorHandleForHeapStart());
+		hDescriptor.Offset(index++, mCbvSrvUavDescriptorSize);
+		auto tex = mTextures[texture.first].Resource;
+
+		D3D12_SHADER_RESOURCE_VIEW_DESC srvDesc = {};
+		srvDesc.Shader4ComponentMapping = D3D12_DEFAULT_SHADER_4_COMPONENT_MAPPING;
+		srvDesc.Format = tex->GetDesc().Format;
+		srvDesc.ViewDimension = D3D12_SRV_DIMENSION_TEXTURE2D;
+		srvDesc.Texture2D.MostDetailedMip = 0;
+		srvDesc.Texture2D.MipLevels = tex->GetDesc().MipLevels;
+		srvDesc.Texture2D.ResourceMinLODClamp = 0.0f;
+		md3dDevice->CreateShaderResourceView(tex.Get(), &srvDesc, hDescriptor);
+	}
+}
+
 void DxRender::BuildRootSignature()
 {
-	// Root parameter can be a table, root descriptor or root constants.
-	CD3DX12_ROOT_PARAMETER slotRootParameter[2];
-
-	// Create a single descriptor table of CBVs.
-	CD3DX12_DESCRIPTOR_RANGE cbvTable;
-	cbvTable.Init(D3D12_DESCRIPTOR_RANGE_TYPE_CBV, 1, 0);
-	slotRootParameter[0].InitAsDescriptorTable(1, &cbvTable);
-
-	CD3DX12_DESCRIPTOR_RANGE texTable;
-	texTable.Init(D3D12_DESCRIPTOR_RANGE_TYPE_SRV, 1, 0);
-	slotRootParameter[1].InitAsDescriptorTable(1, &texTable);
-
-	auto staticSamplers = GetStaticSamplers();
-
-	// A root signature is an array of root parameters.
-	CD3DX12_ROOT_SIGNATURE_DESC rootSigDesc(2, slotRootParameter, (UINT)staticSamplers.size(), staticSamplers.data(),
-		D3D12_ROOT_SIGNATURE_FLAG_ALLOW_INPUT_ASSEMBLER_INPUT_LAYOUT);
-
+// 	// Root parameter can be a table, root descriptor or root constants.
+// 	CD3DX12_ROOT_PARAMETER slotRootParameter[2];
+// 
+// 	// Create a single descriptor table of CBVs.
+// 	CD3DX12_DESCRIPTOR_RANGE cbvTable;
+// 	cbvTable.Init(D3D12_DESCRIPTOR_RANGE_TYPE_CBV, 1, 0);
+// 	slotRootParameter[0].InitAsDescriptorTable(1, &cbvTable);
+// 
+// 	CD3DX12_DESCRIPTOR_RANGE texTable;
+// 	texTable.Init(D3D12_DESCRIPTOR_RANGE_TYPE_SRV, 1, 0);
+// 	slotRootParameter[1].InitAsDescriptorTable(1, &texTable);
+// 
+// 	auto staticSamplers = GetStaticSamplers();
+// 
+// 	// A root signature is an array of root parameters.
+// 	CD3DX12_ROOT_SIGNATURE_DESC rootSigDesc(2, slotRootParameter, (UINT)staticSamplers.size(), staticSamplers.data(),
+// 		D3D12_ROOT_SIGNATURE_FLAG_ALLOW_INPUT_ASSEMBLER_INPUT_LAYOUT);
+// // 	CD3DX12_ROOT_SIGNATURE_DESC rootSigDesc(2, slotRootParameter, 0, nullptr,
+// // 		D3D12_ROOT_SIGNATURE_FLAG_ALLOW_INPUT_ASSEMBLER_INPUT_LAYOUT);
+// 
 	// create a root signature with a single slot which points to a descriptor range consisting of a single constant buffer
-	ComPtr<ID3DBlob> serializedRootSig = nullptr;
-	ComPtr<ID3DBlob> errorBlob = nullptr;
-	HRESULT hr = D3D12SerializeRootSignature(&rootSigDesc, D3D_ROOT_SIGNATURE_VERSION_1,
-		serializedRootSig.GetAddressOf(), errorBlob.GetAddressOf());
-
-	if (errorBlob != nullptr)
-	{
-		::OutputDebugStringA((char*)errorBlob->GetBufferPointer());
-	}
-	ThrowIfFailed(hr);
+// 	ComPtr<ID3DBlob> serializedRootSig = nullptr;
+// 	ComPtr<ID3DBlob> errorBlob = nullptr;
+// 	HRESULT hr = D3D12SerializeRootSignature(&rootSigDesc, D3D_ROOT_SIGNATURE_VERSION_1,
+// 		serializedRootSig.GetAddressOf(), errorBlob.GetAddressOf());
+// 
+// 	if (errorBlob != nullptr)
+// 	{
+// 		::OutputDebugStringA((char*)errorBlob->GetBufferPointer());
+// 	}
+// 	ThrowIfFailed(hr);
 
 	ThrowIfFailed(md3dDevice->CreateRootSignature(
 		0,
-		serializedRootSig->GetBufferPointer(),
-		serializedRootSig->GetBufferSize(),
+		mvsByteCode->GetBufferPointer(),
+		mvsByteCode->GetBufferSize(),
 		IID_PPV_ARGS(&mRootSignature)));
 }
 
@@ -922,61 +947,4 @@ void DxRender::LogOutputDisplayModes(IDXGIOutput* output, DXGI_FORMAT format)
 
 		::OutputDebugString(text.c_str());
 	}
-}
-
-std::array<const CD3DX12_STATIC_SAMPLER_DESC, 6> DxRender::GetStaticSamplers()
-{
-	// Applications usually only need a handful of samplers.  So just define them all up front
-	// and keep them available as part of the root signature.  
-
-	const CD3DX12_STATIC_SAMPLER_DESC pointWrap(
-		0, // shaderRegister
-		D3D12_FILTER_MIN_MAG_MIP_POINT, // filter
-		D3D12_TEXTURE_ADDRESS_MODE_WRAP,  // addressU
-		D3D12_TEXTURE_ADDRESS_MODE_WRAP,  // addressV
-		D3D12_TEXTURE_ADDRESS_MODE_WRAP); // addressW
-
-	const CD3DX12_STATIC_SAMPLER_DESC pointClamp(
-		1, // shaderRegister
-		D3D12_FILTER_MIN_MAG_MIP_POINT, // filter
-		D3D12_TEXTURE_ADDRESS_MODE_CLAMP,  // addressU
-		D3D12_TEXTURE_ADDRESS_MODE_CLAMP,  // addressV
-		D3D12_TEXTURE_ADDRESS_MODE_CLAMP); // addressW
-
-	const CD3DX12_STATIC_SAMPLER_DESC linearWrap(
-		2, // shaderRegister
-		D3D12_FILTER_MIN_MAG_MIP_LINEAR, // filter
-		D3D12_TEXTURE_ADDRESS_MODE_WRAP,  // addressU
-		D3D12_TEXTURE_ADDRESS_MODE_WRAP,  // addressV
-		D3D12_TEXTURE_ADDRESS_MODE_WRAP); // addressW
-
-	const CD3DX12_STATIC_SAMPLER_DESC linearClamp(
-		3, // shaderRegister
-		D3D12_FILTER_MIN_MAG_MIP_LINEAR, // filter
-		D3D12_TEXTURE_ADDRESS_MODE_CLAMP,  // addressU
-		D3D12_TEXTURE_ADDRESS_MODE_CLAMP,  // addressV
-		D3D12_TEXTURE_ADDRESS_MODE_CLAMP); // addressW
-
-	const CD3DX12_STATIC_SAMPLER_DESC anisotropicWrap(
-		4, // shaderRegister
-		D3D12_FILTER_ANISOTROPIC, // filter
-		D3D12_TEXTURE_ADDRESS_MODE_WRAP,  // addressU
-		D3D12_TEXTURE_ADDRESS_MODE_WRAP,  // addressV
-		D3D12_TEXTURE_ADDRESS_MODE_WRAP,  // addressW
-		0.0f,                             // mipLODBias
-		8);                               // maxAnisotropy
-
-	const CD3DX12_STATIC_SAMPLER_DESC anisotropicClamp(
-		5, // shaderRegister
-		D3D12_FILTER_ANISOTROPIC, // filter
-		D3D12_TEXTURE_ADDRESS_MODE_CLAMP,  // addressU
-		D3D12_TEXTURE_ADDRESS_MODE_CLAMP,  // addressV
-		D3D12_TEXTURE_ADDRESS_MODE_CLAMP,  // addressW
-		0.0f,                              // mipLODBias
-		8);                                // maxAnisotropy
-
-	return {
-		pointWrap, pointClamp,
-		linearWrap, linearClamp,
-		anisotropicWrap, anisotropicClamp };
 }

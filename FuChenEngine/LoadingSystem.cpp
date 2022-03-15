@@ -17,6 +17,7 @@ LoadingSystem::~LoadingSystem()
 
 bool LoadingSystem::InitFAssetManager(const std::string& assetsPath)
 {
+	FAssetManager::GetInstance().LoadTexture();
 	return FAssetManager::GetInstance().LoadAssetsLib(assetsPath);
 }
 

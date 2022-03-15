@@ -13,48 +13,42 @@
       <UniqueIdentifier>{67DA6AB6-F800-4c08-8B7A-83BB121AAD01}</UniqueIdentifier>
       <Extensions>rc;ico;cur;bmp;dlg;rc2;rct;bin;rgs;gif;jpg;jpeg;jpe;resx;tiff;tif;png;wav;mfcribbon-ms</Extensions>
     </Filter>
-    <Filter Include="Source Files\Game">
-      <UniqueIdentifier>{9d2f89ab-0fcd-4121-ade9-e97200247f76}</UniqueIdentifier>
-    </Filter>
-    <Filter Include="Source Files\Game\Launch">
+    <Filter Include="Source Files\Launch">
       <UniqueIdentifier>{f1295e52-58a7-45ee-a7cb-cfe25b0e2575}</UniqueIdentifier>
     </Filter>
-    <Filter Include="Source Files\Game\Launch\Windows">
+    <Filter Include="Source Files\Launch\Windows">
       <UniqueIdentifier>{3ec9a27c-4fa0-475a-9e0a-cf10de3d6264}</UniqueIdentifier>
     </Filter>
-    <Filter Include="Header Files\Game">
-      <UniqueIdentifier>{1d96522f-aafd-4de3-a186-50b01d416f81}</UniqueIdentifier>
-    </Filter>
   </ItemGroup>
   <ItemGroup>
+    <ClCompile Include="..\FuChenEngine\WinMain.cpp">
+      <Filter>Source Files\Launch\Windows</Filter>
+    </ClCompile>
     <ClCompile Include="..\FuChenEngine\CameraInputLogic.cpp">
-      <Filter>Source Files\Game</Filter>
+      <Filter>Source Files</Filter>
     </ClCompile>
     <ClCompile Include="..\FuChenEngine\GameInstance.cpp">
-      <Filter>Source Files\Game</Filter>
+      <Filter>Source Files</Filter>
     </ClCompile>
     <ClCompile Include="..\FuChenEngine\GameLogic.cpp">
-      <Filter>Source Files\Game</Filter>
+      <Filter>Source Files</Filter>
     </ClCompile>
     <ClCompile Include="..\FuChenEngine\LoadingSystem.cpp">
-      <Filter>Source Files\Game</Filter>
-    </ClCompile>
-    <ClCompile Include="..\FuChenEngine\WinMain.cpp">
-      <Filter>Source Files\Game\Launch\Windows</Filter>
+      <Filter>Source Files</Filter>
     </ClCompile>
   </ItemGroup>
   <ItemGroup>
+    <ClInclude Include="..\FuChenEngine\LoadingSystem.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
     <ClInclude Include="..\FuChenEngine\CameraInputLogic.h">
-      <Filter>Header Files\Game</Filter>
+      <Filter>Header Files</Filter>
     </ClInclude>
     <ClInclude Include="..\FuChenEngine\GameInstance.h">
-      <Filter>Header Files\Game</Filter>
+      <Filter>Header Files</Filter>
     </ClInclude>
     <ClInclude Include="..\FuChenEngine\GameLogic.h">
-      <Filter>Header Files\Game</Filter>
-    </ClInclude>
-    <ClInclude Include="..\FuChenEngine\LoadingSystem.h">
-      <Filter>Header Files\Game</Filter>
+      <Filter>Header Files</Filter>
     </ClInclude>
   </ItemGroup>
 </Project>

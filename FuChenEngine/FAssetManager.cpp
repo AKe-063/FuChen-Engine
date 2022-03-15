@@ -55,3 +55,22 @@ bool FAssetManager::AssetContrain(const std::string& name)
 
 	return true;
 }
+
+std::wstring FAssetManager::GetTextureFilePathFromName(const std::string& name)
+{
+	return textureFilePath[name];
+}
+
+std::unordered_map<std::string, std::wstring> FAssetManager::GetTexturesFilePath()
+{
+	return textureFilePath;
+}
+
+void FAssetManager::LoadTexture()
+{
+	textureFilePath.insert({ "bricks",L"../FuChenEngine/Textures/bricks.dds" });
+	textureFilePath.insert({ "T_Chair_M",L"../FuChenEngine/Textures/T_Chair_M.dds" });
+	textureFilePath.insert({ "T_Chair_N",L"../FuChenEngine/Textures/T_Chair_N.dds" });
+	textureFilePath.insert({ "T_RockMesh_M",L"../FuChenEngine/Textures/T_RockMesh_M.dds" });
+	textureFilePath.insert({ "T_RockMesh_N",L"../FuChenEngine/Textures/T_RockMesh_N.dds" });
+}

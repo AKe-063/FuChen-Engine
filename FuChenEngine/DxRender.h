@@ -42,12 +42,14 @@ public:
 	//Render Build
 	void BuildDescriptorHeaps();
 	void BuildConstantBuffers();
+	void BuildShaderResourceView();
 	void BuildRootSignature();
 	void BuildShadersAndInputLayout();
 	void BuildGeometry();
 	void BuildPSO();
 	void BuildInitialMap();
-	void LoadTextures();
+	void BuildNewTexture(const std::string& name, const std::wstring& textureFilePath);
+	void BuildAllTextures();
 
 	void AddConstantBuffer();
 	void AddGeometry();
@@ -93,8 +95,7 @@ private:
 	Microsoft::WRL::ComPtr<ID3D12Resource> mDepthStencilBuffer;
 	Microsoft::WRL::ComPtr<ID3D12DescriptorHeap> mRtvHeap;
 	Microsoft::WRL::ComPtr<ID3D12DescriptorHeap> mDsvHeap;
-	std::unordered_map<std::string, std::unique_ptr<Texture>> mTextures;
-	std::array<const CD3DX12_STATIC_SAMPLER_DESC, 6> GetStaticSamplers();
+	std::unordered_map<std::string, Texture> mTextures;
 	D3D12_VIEWPORT mScreenViewport;
 	D3D12_RECT mScissorRect;
 	UINT mRtvDescriptorSize = 0;
