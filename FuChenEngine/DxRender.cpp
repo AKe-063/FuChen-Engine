@@ -144,13 +144,9 @@ void DxRender::Draw(const GameTimer& gt)
 
 	//test!!!!!!!!!!!!!!!!!!!!!
 	ID3D12DescriptorHeap* descriptorHeaps1[] = { mSrvDescriptorHeap.Get() };
-	mCommandList->SetDescriptorHeaps(_countof(descriptorHeaps1), descriptorHeaps1);
-	auto handle1 = CD3DX12_GPU_DESCRIPTOR_HANDLE(mSrvDescriptorHeap->GetGPUDescriptorHandleForHeapStart());
-	handle1.Offset(2, mCbvSrvUavDescriptorSize);
-	mCommandList->SetGraphicsRootDescriptorTable(1, handle1);
 
 	ID3D12DescriptorHeap* descriptorHeaps[] = { mCbvHeap.Get() };
-	mCommandList->SetDescriptorHeaps(_countof(descriptorHeaps), descriptorHeaps);
+	
 	for (int i = 0; i < mMeshes.size(); i++)
 	{
 		mCommandList->IASetVertexBuffers(0, 1, &mMeshes[i].VertexBufferView());
@@ -162,12 +158,20 @@ void DxRender::Draw(const GameTimer& gt)
 		// Update the constant buffer with the latest worldViewProj matrix.
 		ObjectConstants objConstants;
 		objConstants.Roatation = transpose(mMeshes[i].Rotation);
-		objConstants.World = transpose(Engine::GetInstance().GetFScene()->GetCamera()->GetProj());
+		objConstants.Proj = transpose(Engine::GetInstance().GetFScene()->GetCamera()->GetProj());
 		objConstants.View = transpose(Engine::GetInstance().GetFScene()->GetCamera()->GetView());
-		objConstants.Proj = transpose(mMeshes[i].mMeshWorld);
+		objConstants.World = transpose(mMeshes[i].mMeshWorld);
 		objConstants.time = gt.TotalTime();
 		mObjectCB->CopyData(i, objConstants);
 
+		mCommandList->SetDescriptorHeaps(_countof(descriptorHeaps1), descriptorHeaps1);
+		auto handle1 = CD3DX12_GPU_DESCRIPTOR_HANDLE(mSrvDescriptorHeap->GetGPUDescriptorHandleForHeapStart());
+		handle1.Offset(2, mCbvSrvUavDescriptorSize);
+		mCommandList->SetGraphicsRootDescriptorTable(1, handle1);
+		handle1.Offset(2, mCbvSrvUavDescriptorSize);
+		mCommandList->SetGraphicsRootDescriptorTable(2, handle1);
+
+		mCommandList->SetDescriptorHeaps(_countof(descriptorHeaps), descriptorHeaps);
 		auto handle = CD3DX12_GPU_DESCRIPTOR_HANDLE(mCbvHeap->GetGPUDescriptorHandleForHeapStart());
 		handle.Offset(i, mCbvSrvUavDescriptorSize);
 		mCommandList->SetGraphicsRootDescriptorTable(0, handle);
@@ -563,9 +567,8 @@ void DxRender::BuildGeometry()
 			submesh.BaseVertexLocation = 0;
 
 			mMesh->DrawArgs[mMesh->Name] = submesh;
-			mMeshes.push_back(*mMesh.get());
-
 			AddConstantBuffer();
+			mMeshes.push_back(*mMesh.get());
 		}
 	}
 }

@@ -46,8 +46,9 @@ VertexOut VS(VertexIn vin)
 	// Transform to homogeneous clip space.
 	//vout.PosH = mul(float4(vin.PosL, 1.0f), gWorldViewProj);
 	//vout.PosH = mul(float4(vin.PosL, abs(sin(time))*0.5+0.5), gWorldViewProj);
-	float4x4 gWorldViewProj = mul(mul(gProj, gView), gWorld);
-	vout.PosH = mul(float4(vin.PosL, abs(sin(time)) * 0.5 + 0.5), gWorldViewProj);
+	float4x4 gWorldViewProj = mul(gWorld,mul(gView, gProj));
+	//vout.PosH = mul(float4(vin.PosL, abs(sin(time)) * 0.5 + 0.5), gWorldViewProj);
+	vout.PosH = mul(float4(vin.PosL, 1.0f), gWorldViewProj);
 
 	// Just pass vertex color into the pixel shader.
 	vout.Color = vin.Color;
@@ -64,9 +65,11 @@ VertexOut VS(VertexIn vin)
 float4 PS(VertexOut pin) : SV_Target
 {
 	//Gamma Correction
-	float4 diffuseAlbedo = gDiffuseMap.Sample(gsamPointWrap  , pin.TexC);
+	float4 diffuseAlbedo = gDiffuseMap.Sample(gsamPointWrap, pin.TexC);
+	float4 normalMap = gNormalMap.Sample(gsamPointWrap, pin.TexC);
+	float4 tex = diffuseAlbedo * normalMap;
 	//float4 RetColor = pow(pin.Normal * 0.5f + 0.5f,1/2.2f);
-	return diffuseAlbedo;
+	return tex;
 	//return pin.Color;
 }
 

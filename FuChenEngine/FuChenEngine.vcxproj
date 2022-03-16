@@ -164,6 +164,7 @@
     <ClInclude Include="FActor.h" />
     <ClInclude Include="FAssetManager.h" />
     <ClInclude Include="FInputBase.h" />
+    <ClInclude Include="ForwardRenderer.h" />
     <ClInclude Include="FScene.h" />
     <ClInclude Include="FSemaphore.h" />
     <ClInclude Include="FSingleton.h" />
