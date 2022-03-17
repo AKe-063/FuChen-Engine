@@ -68,7 +68,7 @@ private:
 	ComPtr<ID3DBlob> mpsByteCode = nullptr;
 	std::vector<D3D12_INPUT_ELEMENT_DESC> mInputLayout;
 	ComPtr<ID3D12PipelineState> mPSO = nullptr;
-	std::vector<MeshGeometry> mMeshes;
+	//std::vector<MeshGeometry> mMeshes;
 
 	mat4x4 mWorld = MathHelper::Identity4x4();
 

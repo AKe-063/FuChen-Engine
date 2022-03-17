@@ -147,20 +147,20 @@ void DX12RHI::Draw()
 
 	ID3D12DescriptorHeap* descriptorHeaps[] = { mCbvHeap.Get() };
 	
-	for (int i = 0; i < mMeshes.size(); i++)
+	for (int i = 0; i < mPrimitives.size(); i++)
 	{
-		mCommandList->IASetVertexBuffers(0, 1, &mMeshes[i].VertexBufferView());
-		mCommandList->IASetIndexBuffer(&mMeshes[i].IndexBufferView());
+		mCommandList->IASetVertexBuffers(0, 1, &mPrimitives[i].geo.VertexBufferView());
+		mCommandList->IASetIndexBuffer(&mPrimitives[i].geo.IndexBufferView());
 		mCommandList->IASetPrimitiveTopology(D3D11_PRIMITIVE_TOPOLOGY_TRIANGLELIST);
 
 		//mat4 worldViewProj = Engine::GetInstance().GetFScene()->GetCamera()->GetProj() * Engine::GetInstance().GetFScene()->GetCamera()->GetView() * mMeshes[i].mMeshWorld;
 
 		// Update the constant buffer with the latest worldViewProj matrix.
 		ObjectConstants objConstants;
-		objConstants.Roatation = transpose(mMeshes[i].Rotation);
+		objConstants.Roatation = transpose(mPrimitives[i].geo.Rotation);
 		objConstants.Proj = transpose(Engine::GetInstance().GetFScene()->GetCamera()->GetProj());
 		objConstants.View = transpose(Engine::GetInstance().GetFScene()->GetCamera()->GetView());
-		objConstants.World = transpose(mMeshes[i].mMeshWorld);
+		objConstants.World = transpose(mPrimitives[i].geo.mMeshWorld);
 		objConstants.time = Engine::GetInstance().GetTimer()->TotalTime();
 		mObjectCB->CopyData(i, objConstants);
 
@@ -178,7 +178,7 @@ void DX12RHI::Draw()
 		//mCommandList->SetGraphicsRootConstantBufferView(0, );
 
 		mCommandList->DrawIndexedInstanced(
-			mMeshes[i].DrawArgs[mMeshes[i].Name].IndexCount,
+			mPrimitives[i].geo.DrawArgs[mPrimitives[i].geo.Name].IndexCount,
 			1, 0, 0, 0);
 	}
 	// Indicate a state transition on the resource usage.
@@ -372,7 +372,7 @@ bool DX12RHI::InitDirect3D()
 void DX12RHI::BuildDescriptorHeaps()
 {
 	D3D12_DESCRIPTOR_HEAP_DESC cbvHeapDesc;
-	cbvHeapDesc.NumDescriptors = mMeshes.size() + 1024;
+	cbvHeapDesc.NumDescriptors = mPrimitives.size() + 1024;
 	cbvHeapDesc.Type = D3D12_DESCRIPTOR_HEAP_TYPE_CBV_SRV_UAV;
 	cbvHeapDesc.Flags = D3D12_DESCRIPTOR_HEAP_FLAG_SHADER_VISIBLE;
 	cbvHeapDesc.NodeMask = 0;
@@ -389,7 +389,7 @@ void DX12RHI::BuildDescriptorHeaps()
 
 void DX12RHI::BuildConstantBuffers()
 {
-	 	for (int i = 0; i < mMeshes.size(); i++)
+	 	for (int i = 0; i < mPrimitives.size(); i++)
 	 	{
 	 		UINT objCBByteSize = d3dUtil::CalcConstantBufferByteSize(sizeof(ObjectConstants));
 	 
@@ -487,7 +487,7 @@ void DX12RHI::BuildShadersAndInputLayout()
 
 void DX12RHI::BuildGeometry()
 {
-	mMeshes.clear();
+	mPrimitives.clear();
 	std::vector<Vertex> vertices;
 	Vertex vertice;
 
@@ -505,8 +505,8 @@ void DX12RHI::BuildGeometry()
 			{
 				assert(0);
 			}
-
-			std::unique_ptr<MeshGeometry> mMesh = std::make_unique<MeshGeometry>();
+			DXPrimitiveDesc priDesc;
+			auto mMesh = &priDesc.geo;
 			mMesh->Name = meshInfo.name;
 			mMesh->mMeshWorld = mWorld;
 
@@ -569,7 +569,7 @@ void DX12RHI::BuildGeometry()
 
 			mMesh->DrawArgs[mMesh->Name] = submesh;
 			AddConstantBuffer();
-			mMeshes.push_back(*mMesh.get());
+			mPrimitives.push_back(priDesc);
 		}
 	}
 }
@@ -610,10 +610,10 @@ void DX12RHI::AddConstantBuffer()
 
 	D3D12_GPU_VIRTUAL_ADDRESS cbAddress = mObjectCB->Resource()->GetGPUVirtualAddress();
 	// Offset to the ith object constant buffer in the buffer.
-	cbAddress += mMeshes.size() * objCBByteSize;
+	cbAddress += mPrimitives.size() * objCBByteSize;
 
 	auto handle = CD3DX12_CPU_DESCRIPTOR_HANDLE(mCbvHeap->GetCPUDescriptorHandleForHeapStart());
-	handle.Offset(mMeshes.size(), mCbvSrvUavDescriptorSize);
+	handle.Offset(mPrimitives.size(), mCbvSrvUavDescriptorSize);
 
 	D3D12_CONSTANT_BUFFER_VIEW_DESC cbvDesc;
 	cbvDesc.BufferLocation = cbAddress;
@@ -640,8 +640,9 @@ void DX12RHI::AddGeometry()
 		{
 			throw(0);
 		}
-
-		std::unique_ptr<MeshGeometry> mMesh = std::make_unique<MeshGeometry>();
+		
+		DXPrimitiveDesc priDesc;
+		auto mMesh = &priDesc.geo;
 		mMesh->Name = meshInfo.name;
 		mMesh->mMeshWorld = mWorld;
 
@@ -700,7 +701,7 @@ void DX12RHI::AddGeometry()
 		submesh.BaseVertexLocation = 0;
 
 		mMesh->DrawArgs[mMesh->Name] = submesh;
-		mMeshes.push_back(*mMesh.get());
+		mPrimitives.push_back(priDesc);
 
 		AddConstantBuffer();
 	}
@@ -721,7 +722,7 @@ void DX12RHI::AddNewBuild()
 
 void DX12RHI::InitConstantBuffers()
 {
-	mObjectCB = std::make_unique<UploadBuffer<ObjectConstants>>(md3dDevice.Get(), mMeshes.size() + 1024, true);
+	mObjectCB = std::make_unique<UploadBuffer<ObjectConstants>>(md3dDevice.Get(), mPrimitives.size() + 1024, true);
 }
 
 void DX12RHI::DrawPrimitive()
