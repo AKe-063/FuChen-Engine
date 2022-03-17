@@ -3,7 +3,7 @@
 //
 // Transforms and colors geometry.
 //***************************************************************************************
-
+/*"DescriptorTable(b0, visibility = SHADER_VISIBILITY_VERTEX), " \*/
 #define FuChenSample_RootSig \
 	"RootFlags( ALLOW_INPUT_ASSEMBLER_INPUT_LAYOUT ), " \
 	"DescriptorTable(CBV(b0, numDescriptors = 1), visibility = SHADER_VISIBILITY_VERTEX), " \

@@ -1,20 +1,21 @@
 #pragma once
-#include "MeshDescribe.h"
 #include "Camera.h"
 #include "Win32Window.h"
 #include "FScene.h"
 #include "FAssetManager.h"
+#include "RHI.h"
+#include "DXPrimitiveDesc.h"
 
-class DxRender
+class DX12RHI : public RHI
 {
 public:
-	DxRender();
-	~DxRender();
+	DX12RHI();
+	virtual ~DX12RHI();
 
 	void OnResize();
-	void Draw(const GameTimer& gt);
-	void Init();
-	void Destroy();
+	virtual void Draw()override;
+	virtual void Init()override;
+	virtual void Destroy()override;
 
 	//Get Instance
 	Microsoft::WRL::ComPtr<ID3D12Device> GetDevice();
@@ -23,6 +24,25 @@ public:
 	Microsoft::WRL::ComPtr<ID3D12CommandQueue> GetCommandQueue();
 	bool Getm4xMsaaState();
 
+	//Render Build
+	void BuildDescriptorHeaps();
+	void BuildConstantBuffers();
+	void BuildShaderResourceView();
+	void BuildRootSignature();
+	void BuildShadersAndInputLayout();
+	void BuildGeometry();
+	void BuildPSO();
+	virtual void BuildInitialMap()override;
+	void BuildNewTexture(const std::string& name, const std::wstring& textureFilePath);
+	void BuildAllTextures();
+	void InitConstantBuffers();
+	void DrawPrimitive();
+
+	void AddConstantBuffer();
+	void AddGeometry();
+	void AddNewBuild();
+
+protected:
 	//DX Init
 	bool InitDirect3D();
 	virtual void CreateRtvAndDsvDescriptorHeaps();
@@ -34,31 +54,12 @@ public:
 	ID3D12Resource* CurrentBackBuffer()const;
 	D3D12_CPU_DESCRIPTOR_HANDLE CurrentBackBufferView()const;
 	D3D12_CPU_DESCRIPTOR_HANDLE DepthStencilView()const;
-	void CalculateFrameStats(GameTimer* mTimer);
 	void LogAdapters();
 	void LogAdapterOutputs(IDXGIAdapter* adapter);
 	void LogOutputDisplayModes(IDXGIOutput* output, DXGI_FORMAT format);
 
-	//Render Build
-	void BuildDescriptorHeaps();
-	void BuildConstantBuffers();
-	void BuildShaderResourceView();
-	void BuildRootSignature();
-	void BuildShadersAndInputLayout();
-	void BuildGeometry();
-	void BuildPSO();
-	void BuildInitialMap();
-	void BuildNewTexture(const std::string& name, const std::wstring& textureFilePath);
-	void BuildAllTextures();
-
-	void AddConstantBuffer();
-	void AddGeometry();
-	void AddNewBuild();
-
-protected:
-	void InitConstantBuffers();
-
 private:
+	std::vector<DXPrimitiveDesc> mPrimitives;
 	ComPtr<ID3D12DescriptorHeap> mCbvHeap;
 	ComPtr<ID3D12DescriptorHeap> mSrvDescriptorHeap = nullptr;
 	std::unique_ptr<UploadBuffer<ObjectConstants>> mObjectCB;

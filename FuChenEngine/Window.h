@@ -14,6 +14,7 @@ public:
 	virtual bool CreateAWindow();
 	float AspectRatio()const;
 	virtual std::wstring GetMainWndCaption();
+	virtual void CalculateFrameStats();
 
 protected:
 	int mwWidth = 800;

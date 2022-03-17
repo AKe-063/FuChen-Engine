@@ -1,21 +1,21 @@
 #include "stdafx.h"
-#include "DxRender.h"
+#include "DX12RHI.h"
 #include "Engine.h"
 
 using Microsoft::WRL::ComPtr;
 using namespace std;
 
-DxRender::DxRender()
+DX12RHI::DX12RHI()
 {
 	
 }
 
-DxRender::~DxRender()
+DX12RHI::~DX12RHI()
 {
 
 }
 
-void DxRender::OnResize()
+void DX12RHI::OnResize()
 {
 	assert(md3dDevice);
 	assert(mSwapChain);
@@ -115,7 +115,7 @@ void DxRender::OnResize()
 	FScene::GetInstance().GetCamera()->SetLens(0.25f * MathHelper::Pi, mWindow->AspectRatio(), 1.0f, 20000.0f);
 }
 
-void DxRender::Draw(const GameTimer& gt)
+void DX12RHI::Draw()
 {
 	// Reuse the memory associated with command recording.
 	// We can only reset when the associated command lists have finished execution on the GPU.
@@ -161,7 +161,7 @@ void DxRender::Draw(const GameTimer& gt)
 		objConstants.Proj = transpose(Engine::GetInstance().GetFScene()->GetCamera()->GetProj());
 		objConstants.View = transpose(Engine::GetInstance().GetFScene()->GetCamera()->GetView());
 		objConstants.World = transpose(mMeshes[i].mMeshWorld);
-		objConstants.time = gt.TotalTime();
+		objConstants.time = Engine::GetInstance().GetTimer()->TotalTime();
 		mObjectCB->CopyData(i, objConstants);
 
 		mCommandList->SetDescriptorHeaps(_countof(descriptorHeaps1), descriptorHeaps1);
@@ -175,6 +175,7 @@ void DxRender::Draw(const GameTimer& gt)
 		auto handle = CD3DX12_GPU_DESCRIPTOR_HANDLE(mCbvHeap->GetGPUDescriptorHandleForHeapStart());
 		handle.Offset(i, mCbvSrvUavDescriptorSize);
 		mCommandList->SetGraphicsRootDescriptorTable(0, handle);
+		//mCommandList->SetGraphicsRootConstantBufferView(0, );
 
 		mCommandList->DrawIndexedInstanced(
 			mMeshes[i].DrawArgs[mMeshes[i].Name].IndexCount,
@@ -201,7 +202,7 @@ void DxRender::Draw(const GameTimer& gt)
 	FlushCommandQueue();
 }
 
-void DxRender::Init()
+void DX12RHI::Init()
 {
 	mWindow = Engine::GetInstance().GetWindow();
 	if (!InitDirect3D())
@@ -229,7 +230,7 @@ void DxRender::Init()
 	FlushCommandQueue();
 }
 
-void DxRender::BuildInitialMap()
+void DX12RHI::BuildInitialMap()
 {
 	ThrowIfFailed(GetCommandList()->Reset(GetCommandAllocator().Get(), nullptr));
 
@@ -244,7 +245,7 @@ void DxRender::BuildInitialMap()
 	FlushCommandQueue();
 }
 
-void DxRender::BuildNewTexture(const std::string& name, const std::wstring& textureFilePath)
+void DX12RHI::BuildNewTexture(const std::string& name, const std::wstring& textureFilePath)
 {
 	auto tex = Texture();
 	tex.Name = name;
@@ -256,7 +257,7 @@ void DxRender::BuildNewTexture(const std::string& name, const std::wstring& text
 	mTextures[tex.Name] = tex;
 }
 
-void DxRender::BuildAllTextures()
+void DX12RHI::BuildAllTextures()
 {
 	for (auto texture : FAssetManager::GetInstance().GetTexturesFilePath())
 	{
@@ -271,38 +272,38 @@ void DxRender::BuildAllTextures()
 	}
 }
 
-void DxRender::Destroy()
+void DX12RHI::Destroy()
 {
 	if (md3dDevice != nullptr)
 		FlushCommandQueue();
 }
 
-ComPtr<ID3D12Device> DxRender::GetDevice()
+ComPtr<ID3D12Device> DX12RHI::GetDevice()
 {
 	return md3dDevice;
 }
 
-Microsoft::WRL::ComPtr<ID3D12CommandAllocator> DxRender::GetCommandAllocator()
+Microsoft::WRL::ComPtr<ID3D12CommandAllocator> DX12RHI::GetCommandAllocator()
 {
 	return mDirectCmdListAlloc;
 }
 
-Microsoft::WRL::ComPtr<ID3D12GraphicsCommandList> DxRender::GetCommandList()
+Microsoft::WRL::ComPtr<ID3D12GraphicsCommandList> DX12RHI::GetCommandList()
 {
 	return mCommandList;
 }
 
-Microsoft::WRL::ComPtr<ID3D12CommandQueue> DxRender::GetCommandQueue()
+Microsoft::WRL::ComPtr<ID3D12CommandQueue> DX12RHI::GetCommandQueue()
 {
 	return mCommandQueue;
 }
 
-bool DxRender::Getm4xMsaaState()
+bool DX12RHI::Getm4xMsaaState()
 {
 	return m4xMsaaState;
 }
 
-bool DxRender::InitDirect3D()
+bool DX12RHI::InitDirect3D()
 {
 #if defined(DEBUG) || defined(_DEBUG) 
 	// Enable the D3D12 debug layer.
@@ -368,7 +369,7 @@ bool DxRender::InitDirect3D()
 	return true;
 }
 
-void DxRender::BuildDescriptorHeaps()
+void DX12RHI::BuildDescriptorHeaps()
 {
 	D3D12_DESCRIPTOR_HEAP_DESC cbvHeapDesc;
 	cbvHeapDesc.NumDescriptors = mMeshes.size() + 1024;
@@ -386,7 +387,7 @@ void DxRender::BuildDescriptorHeaps()
 	ThrowIfFailed(md3dDevice->CreateDescriptorHeap(&srvHeapDesc, IID_PPV_ARGS(&mSrvDescriptorHeap)));
 }
 
-void DxRender::BuildConstantBuffers()
+void DX12RHI::BuildConstantBuffers()
 {
 	 	for (int i = 0; i < mMeshes.size(); i++)
 	 	{
@@ -407,7 +408,7 @@ void DxRender::BuildConstantBuffers()
 	 	}
 }
 
-void DxRender::BuildShaderResourceView()
+void DX12RHI::BuildShaderResourceView()
 {
 	int index = 0;
 	for (auto texture : mTextures)
@@ -427,7 +428,7 @@ void DxRender::BuildShaderResourceView()
 	}
 }
 
-void DxRender::BuildRootSignature()
+void DX12RHI::BuildRootSignature()
 {
 // 	// Root parameter can be a table, root descriptor or root constants.
 // 	CD3DX12_ROOT_PARAMETER slotRootParameter[2];
@@ -468,7 +469,7 @@ void DxRender::BuildRootSignature()
 		IID_PPV_ARGS(&mRootSignature)));
 }
 
-void DxRender::BuildShadersAndInputLayout()
+void DX12RHI::BuildShadersAndInputLayout()
 {
 	HRESULT hr = S_OK;
 
@@ -484,7 +485,7 @@ void DxRender::BuildShadersAndInputLayout()
 	};
 }
 
-void DxRender::BuildGeometry()
+void DX12RHI::BuildGeometry()
 {
 	mMeshes.clear();
 	std::vector<Vertex> vertices;
@@ -573,7 +574,7 @@ void DxRender::BuildGeometry()
 	}
 }
 
-void DxRender::BuildPSO()
+void DX12RHI::BuildPSO()
 {
 	D3D12_GRAPHICS_PIPELINE_STATE_DESC psoDesc;
 	ZeroMemory(&psoDesc, sizeof(D3D12_GRAPHICS_PIPELINE_STATE_DESC));
@@ -603,7 +604,7 @@ void DxRender::BuildPSO()
 	ThrowIfFailed(md3dDevice->CreateGraphicsPipelineState(&psoDesc, IID_PPV_ARGS(&mPSO)));
 }
 
-void DxRender::AddConstantBuffer()
+void DX12RHI::AddConstantBuffer()
 {
 	UINT objCBByteSize = d3dUtil::CalcConstantBufferByteSize(sizeof(ObjectConstants));
 
@@ -621,7 +622,7 @@ void DxRender::AddConstantBuffer()
 	md3dDevice->CreateConstantBufferView(&cbvDesc, handle);
 }
 
-void DxRender::AddGeometry()
+void DX12RHI::AddGeometry()
 {
 	std::vector<Vertex> vertices;
 	Vertex vertice;
@@ -705,7 +706,7 @@ void DxRender::AddGeometry()
 	}
 }
 
-void DxRender::AddNewBuild()
+void DX12RHI::AddNewBuild()
 {
 	ThrowIfFailed(GetCommandList()->Reset(GetCommandAllocator().Get(), nullptr));
 
@@ -718,12 +719,17 @@ void DxRender::AddNewBuild()
 	FlushCommandQueue();
 }
 
-void DxRender::InitConstantBuffers()
+void DX12RHI::InitConstantBuffers()
 {
 	mObjectCB = std::make_unique<UploadBuffer<ObjectConstants>>(md3dDevice.Get(), mMeshes.size() + 1024, true);
 }
 
-void DxRender::CreateRtvAndDsvDescriptorHeaps()
+void DX12RHI::DrawPrimitive()
+{
+
+}
+
+void DX12RHI::CreateRtvAndDsvDescriptorHeaps()
 {
 	D3D12_DESCRIPTOR_HEAP_DESC rtvHeapDesc;
 	rtvHeapDesc.NumDescriptors = SwapChainBufferCount;
@@ -743,12 +749,12 @@ void DxRender::CreateRtvAndDsvDescriptorHeaps()
 		&dsvHeapDesc, IID_PPV_ARGS(mDsvHeap.GetAddressOf())));
 }
 
-bool DxRender::Get4xMsaaState() const
+bool DX12RHI::Get4xMsaaState() const
 {
 	return m4xMsaaState;
 }
 
-void DxRender::CreateCommandObjects()
+void DX12RHI::CreateCommandObjects()
 {
 	D3D12_COMMAND_QUEUE_DESC queueDesc = {};
 	queueDesc.Type = D3D12_COMMAND_LIST_TYPE_DIRECT;
@@ -772,7 +778,7 @@ void DxRender::CreateCommandObjects()
 	mCommandList->Close();
 }
 
-void DxRender::CreateSwapChain()
+void DX12RHI::CreateSwapChain()
 {
 	// Release the previous swapchain we will be recreating.
 	mSwapChain.Reset();
@@ -802,7 +808,7 @@ void DxRender::CreateSwapChain()
 		mSwapChain.GetAddressOf()));
 }
 
-void DxRender::FlushCommandQueue()
+void DX12RHI::FlushCommandQueue()
 {
 	// Advance the fence value to mark commands up to this fence point.
 	mCurrentFence++;
@@ -826,12 +832,12 @@ void DxRender::FlushCommandQueue()
 	}
 }
 
-ID3D12Resource* DxRender::CurrentBackBuffer()const
+ID3D12Resource* DX12RHI::CurrentBackBuffer()const
 {
 	return mSwapChainBuffer[mCurrBackBuffer].Get();
 }
 
-D3D12_CPU_DESCRIPTOR_HANDLE DxRender::CurrentBackBufferView()const
+D3D12_CPU_DESCRIPTOR_HANDLE DX12RHI::CurrentBackBufferView()const
 {
 	return CD3DX12_CPU_DESCRIPTOR_HANDLE(
 		mRtvHeap->GetCPUDescriptorHandleForHeapStart(),
@@ -839,45 +845,12 @@ D3D12_CPU_DESCRIPTOR_HANDLE DxRender::CurrentBackBufferView()const
 		mRtvDescriptorSize);
 }
 
-D3D12_CPU_DESCRIPTOR_HANDLE DxRender::DepthStencilView()const
+D3D12_CPU_DESCRIPTOR_HANDLE DX12RHI::DepthStencilView()const
 {
 	return mDsvHeap->GetCPUDescriptorHandleForHeapStart();
 }
 
-void DxRender::CalculateFrameStats(GameTimer* mTimer)
-{
-	// Code computes the average frames per second, and also the 
-	// average time it takes to render one frame.  These stats 
-	// are appended to the window caption bar.
-
-	static int frameCnt = 0;
-	static float timeElapsed = 0.0f;
-
-	frameCnt++;
-
-	// Compute averages over one second period.
-	if ((mTimer->TotalTime() - timeElapsed) >= 1.0f)
-	{
-		float fps = (float)frameCnt; // fps = frameCnt / 1
-		float mspf = 1000.0f / fps;
-
-		wstring fpsStr = to_wstring(fps);
-		wstring mspfStr = to_wstring(mspf);
-
-		wstring windowText = mWindow->GetMainWndCaption() +
-			L"    fps: " + fpsStr +
-			L"   mspf: " + mspfStr;
-
-		//SetWindowText(mhMainWnd, windowText.c_str());
-		SetWindowText(GetActiveWindow(), windowText.c_str());
-
-		// Reset for next average.
-		frameCnt = 0;
-		timeElapsed += 1.0f;
-	}
-}
-
-void DxRender::LogAdapters()
+void DX12RHI::LogAdapters()
 {
 	UINT i = 0;
 	IDXGIAdapter* adapter = nullptr;
@@ -905,7 +878,7 @@ void DxRender::LogAdapters()
 	}
 }
 
-void DxRender::LogAdapterOutputs(IDXGIAdapter* adapter)
+void DX12RHI::LogAdapterOutputs(IDXGIAdapter* adapter)
 {
 	UINT i = 0;
 	IDXGIOutput* output = nullptr;
@@ -927,7 +900,7 @@ void DxRender::LogAdapterOutputs(IDXGIAdapter* adapter)
 	}
 }
 
-void DxRender::LogOutputDisplayModes(IDXGIOutput* output, DXGI_FORMAT format)
+void DX12RHI::LogOutputDisplayModes(IDXGIOutput* output, DXGI_FORMAT format)
 {
 	UINT count = 0;
 	UINT flags = 0;

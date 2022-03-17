@@ -175,9 +175,9 @@ bool Win32Window::Run()
 
 			if (!Engine::GetInstance().GetmEnginePaused())
 			{
-				Engine::GetInstance().GetDxRender()->CalculateFrameStats(Engine::GetInstance().GetTimer());
+				CalculateFrameStats();
 				Engine::GetInstance().Update();
-				Engine::GetInstance().GetDxRender()->Draw(*Engine::GetInstance().GetTimer());
+				Engine::GetInstance().GetRenderer()->Draw();
 			}
 			else
 			{

@@ -13,9 +13,6 @@
       <UniqueIdentifier>{67DA6AB6-F800-4c08-8B7A-83BB121AAD01}</UniqueIdentifier>
       <Extensions>rc;ico;cur;bmp;dlg;rc2;rct;bin;rgs;gif;jpg;jpeg;jpe;resx;tiff;tif;png;wav;mfcribbon-ms</Extensions>
     </Filter>
-    <Filter Include="Source Files\DX">
-      <UniqueIdentifier>{c0b5e1ff-3a6d-43c5-8ee9-338576c88b9a}</UniqueIdentifier>
-    </Filter>
     <Filter Include="Source Files\Input">
       <UniqueIdentifier>{db61040e-0a40-4708-a3f0-cac6978de88a}</UniqueIdentifier>
     </Filter>
@@ -27,9 +24,6 @@
     </Filter>
     <Filter Include="Source Files\Window">
       <UniqueIdentifier>{d8de0a09-0c1d-469c-b936-5f4a414b1637}</UniqueIdentifier>
-    </Filter>
-    <Filter Include="Header Files\DX">
-      <UniqueIdentifier>{2a2a07d0-4bfb-4c74-b574-c64f84f0939e}</UniqueIdentifier>
     </Filter>
     <Filter Include="Header Files\Input">
       <UniqueIdentifier>{953813d3-54b0-4384-89ee-1cb0956ebad7}</UniqueIdentifier>
@@ -43,6 +37,18 @@
     <Filter Include="Header Files\Window">
       <UniqueIdentifier>{e6747b92-f8e2-4c02-9dd3-accf88a8cb00}</UniqueIdentifier>
     </Filter>
+    <Filter Include="Header Files\Render">
+      <UniqueIdentifier>{c6d561c8-8073-4566-a26a-0557b08a22a3}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Header Files\Render\DX">
+      <UniqueIdentifier>{2a2a07d0-4bfb-4c74-b574-c64f84f0939e}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Source Files\Render">
+      <UniqueIdentifier>{bb4f1436-2e26-41dd-9e96-b4ca6a75c430}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Source Files\Render\DX">
+      <UniqueIdentifier>{c0b5e1ff-3a6d-43c5-8ee9-338576c88b9a}</UniqueIdentifier>
+    </Filter>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="stdafx.h">
@@ -55,13 +61,13 @@
       <Filter>Header Files\Input</Filter>
     </ClInclude>
     <ClInclude Include="d3dUtil.h">
-      <Filter>Header Files\DX</Filter>
+      <Filter>Header Files\Render\DX</Filter>
     </ClInclude>
-    <ClInclude Include="DxRender.h">
-      <Filter>Header Files\DX</Filter>
+    <ClInclude Include="DX12RHI.h">
+      <Filter>Header Files\Render\DX</Filter>
     </ClInclude>
     <ClInclude Include="UploadBuffer.h">
-      <Filter>Header Files\DX</Filter>
+      <Filter>Header Files\Render\DX</Filter>
     </ClInclude>
     <ClInclude Include="FActor.h">
       <Filter>Header Files\Resource</Filter>
@@ -82,7 +88,7 @@
       <Filter>Header Files\Window</Filter>
     </ClInclude>
     <ClInclude Include="DDSTextureLoader.h">
-      <Filter>Header Files\DX</Filter>
+      <Filter>Header Files\Render\DX</Filter>
     </ClInclude>
     <ClInclude Include="Serialize.h">
       <Filter>Header Files</Filter>
@@ -109,7 +115,13 @@
       <Filter>Header Files</Filter>
     </ClInclude>
     <ClInclude Include="ForwardRenderer.h">
-      <Filter>Header Files</Filter>
+      <Filter>Header Files\Render</Filter>
+    </ClInclude>
+    <ClInclude Include="RHI.h">
+      <Filter>Header Files\Render</Filter>
+    </ClInclude>
+    <ClInclude Include="DXPrimitiveDesc.h">
+      <Filter>Header Files\Render\DX</Filter>
     </ClInclude>
   </ItemGroup>
   <ItemGroup>
@@ -122,11 +134,11 @@
     <ClCompile Include="FWin32Input.cpp">
       <Filter>Source Files\Input</Filter>
     </ClCompile>
-    <ClCompile Include="DxRender.cpp">
-      <Filter>Source Files\DX</Filter>
+    <ClCompile Include="DX12RHI.cpp">
+      <Filter>Source Files\Render\DX</Filter>
     </ClCompile>
     <ClCompile Include="d3dUtil.cpp">
-      <Filter>Source Files\DX</Filter>
+      <Filter>Source Files\Render\DX</Filter>
     </ClCompile>
     <ClCompile Include="FAssetManager.cpp">
       <Filter>Source Files\Resource</Filter>
@@ -147,7 +159,7 @@
       <Filter>Source Files\Window</Filter>
     </ClCompile>
     <ClCompile Include="DDSTextureLoader.cpp">
-      <Filter>Source Files\DX</Filter>
+      <Filter>Source Files\Render\DX</Filter>
     </ClCompile>
     <ClCompile Include="Camera.cpp">
       <Filter>Source Files</Filter>
@@ -163,6 +175,12 @@
     </ClCompile>
     <ClCompile Include="Serialize.cpp">
       <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="ForwardRenderer.cpp">
+      <Filter>Source Files\Render</Filter>
+    </ClCompile>
+    <ClCompile Include="RHI.cpp">
+      <Filter>Source Files\Render</Filter>
     </ClCompile>
   </ItemGroup>
 </Project>

@@ -34,8 +34,8 @@ bool Engine::Initialize()
 
 	if (!(InitWindow()))
 		return false;
-	dxRender = std::make_unique<DxRender>();
-	dxRender->Init();
+	fRenderer = std::make_unique<ForwardRenderer>();
+	fRenderer->Init();
 
 	mTimer->Reset();
 
@@ -44,15 +44,15 @@ bool Engine::Initialize()
 
 void Engine::Destroy()
 {
-	dxRender->Destroy();
+	fRenderer->Destroy();
 	fInput.release();
 	fScene.release();
 	fAssetManager.release();
 }
 
-DxRender* Engine::GetDxRender()
+ForwardRenderer* Engine::GetRenderer()
 {
-	return dxRender.get();
+	return fRenderer.get();
 }
 
 FScene* Engine::GetFScene()
