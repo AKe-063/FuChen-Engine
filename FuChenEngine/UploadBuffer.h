@@ -33,7 +33,7 @@ public:
         // the resource while it is in use by the GPU (so we must use synchronization techniques).
     }
 
-    UploadBuffer(const UploadBuffer& rhs) = delete;
+    UploadBuffer(const UploadBuffer& rhs);
     UploadBuffer& operator=(const UploadBuffer& rhs) = delete;
     ~UploadBuffer()
     {

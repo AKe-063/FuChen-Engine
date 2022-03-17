@@ -187,6 +187,7 @@
     <ClCompile Include="d3dUtil.cpp" />
     <ClCompile Include="DDSTextureLoader.cpp" />
     <ClCompile Include="DX12RHI.cpp" />
+    <ClCompile Include="DXPrimitiveDesc.cpp" />
     <ClCompile Include="FActor.cpp" />
     <ClCompile Include="FAssetManager.cpp" />
     <ClCompile Include="FInputBase.cpp" />

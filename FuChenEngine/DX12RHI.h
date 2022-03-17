@@ -62,7 +62,7 @@ private:
 	std::vector<DXPrimitiveDesc> mPrimitives;
 	ComPtr<ID3D12DescriptorHeap> mCbvHeap;
 	ComPtr<ID3D12DescriptorHeap> mSrvDescriptorHeap = nullptr;
-	std::unique_ptr<UploadBuffer<ObjectConstants>> mObjectCB;
+	//std::unique_ptr<UploadBuffer<ObjectConstants>> mObjectCB;
 	ComPtr<ID3D12RootSignature> mRootSignature = nullptr;
 	ComPtr<ID3DBlob> mvsByteCode = nullptr;
 	ComPtr<ID3DBlob> mpsByteCode = nullptr;

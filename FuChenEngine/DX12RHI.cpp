@@ -162,7 +162,7 @@ void DX12RHI::Draw()
 		objConstants.View = transpose(Engine::GetInstance().GetFScene()->GetCamera()->GetView());
 		objConstants.World = transpose(mPrimitives[i].geo.mMeshWorld);
 		objConstants.time = Engine::GetInstance().GetTimer()->TotalTime();
-		mObjectCB->CopyData(i, objConstants);
+		mPrimitives[i].objectCB->CopyData(0, objConstants);
 
 		mCommandList->SetDescriptorHeaps(_countof(descriptorHeaps1), descriptorHeaps1);
 		auto handle1 = CD3DX12_GPU_DESCRIPTOR_HANDLE(mSrvDescriptorHeap->GetGPUDescriptorHandleForHeapStart());
@@ -393,7 +393,7 @@ void DX12RHI::BuildConstantBuffers()
 	 	{
 	 		UINT objCBByteSize = d3dUtil::CalcConstantBufferByteSize(sizeof(ObjectConstants));
 	 
-	 		D3D12_GPU_VIRTUAL_ADDRESS cbAddress = mObjectCB->Resource()->GetGPUVirtualAddress();
+	 		D3D12_GPU_VIRTUAL_ADDRESS cbAddress = mPrimitives[i].objectCB->Resource()->GetGPUVirtualAddress();
 	 		// Offset to the ith object constant buffer in the buffer.
 	 		cbAddress += i * objCBByteSize;
 	 
@@ -505,24 +505,24 @@ void DX12RHI::BuildGeometry()
 			{
 				assert(0);
 			}
-			DXPrimitiveDesc priDesc;
-			auto mMesh = &priDesc.geo;
-			mMesh->Name = meshInfo.name;
-			mMesh->mMeshWorld = mWorld;
 
-			mMesh->Rotation = mat4_cast(qua<float>(
+			DXPrimitiveDesc priDesc(md3dDevice.Get(), 1, true);
+			priDesc.geo.Name = meshInfo.name;
+			priDesc.geo.mMeshWorld = mWorld;
+
+			priDesc.geo.Rotation = mat4_cast(qua<float>(
 				fMeshInfo.transform.Rotation.w,
 				fMeshInfo.transform.Rotation.x,
 				fMeshInfo.transform.Rotation.y,
 				fMeshInfo.transform.Rotation.z
 				));
 
-			mMesh->mMeshWorld = translate(
-				mMesh->mMeshWorld,
+			priDesc.geo.mMeshWorld = translate(
+				priDesc.geo.mMeshWorld,
 				vec3(fMeshInfo.transform.Translation.x,
 					fMeshInfo.transform.Translation.y,
 					fMeshInfo.transform.Translation.z
-				)) * mMesh->Rotation * scale(
+				)) * priDesc.geo.Rotation * scale(
 						vec3(fMeshInfo.transform.Scale3D.x,
 							fMeshInfo.transform.Scale3D.y,
 							fMeshInfo.transform.Scale3D.z));
@@ -545,31 +545,32 @@ void DX12RHI::BuildGeometry()
 			const UINT vbByteSize = (UINT)vertices.size() * sizeof(Vertex);
 			const UINT ibByteSize = (UINT)indices.size() * sizeof(std::uint16_t);
 
-			ThrowIfFailed(D3DCreateBlob(vbByteSize, &mMesh->VertexBufferCPU));
-			CopyMemory(mMesh->VertexBufferCPU->GetBufferPointer(), vertices.data(), vbByteSize);
+			ThrowIfFailed(D3DCreateBlob(vbByteSize, &priDesc.geo.VertexBufferCPU));
+			CopyMemory(priDesc.geo.VertexBufferCPU->GetBufferPointer(), vertices.data(), vbByteSize);
 
-			ThrowIfFailed(D3DCreateBlob(ibByteSize, &mMesh->IndexBufferCPU));
-			CopyMemory(mMesh->IndexBufferCPU->GetBufferPointer(), indices.data(), ibByteSize);
+			ThrowIfFailed(D3DCreateBlob(ibByteSize, &priDesc.geo.IndexBufferCPU));
+			CopyMemory(priDesc.geo.IndexBufferCPU->GetBufferPointer(), indices.data(), ibByteSize);
 
-			mMesh->VertexBufferGPU = d3dUtil::CreateDefaultBuffer(md3dDevice.Get(),
-				mCommandList.Get(), vertices.data(), vbByteSize, mMesh->VertexBufferUploader);
+			priDesc.geo.VertexBufferGPU = d3dUtil::CreateDefaultBuffer(md3dDevice.Get(),
+				mCommandList.Get(), vertices.data(), vbByteSize, priDesc.geo.VertexBufferUploader);
 
-			mMesh->IndexBufferGPU = d3dUtil::CreateDefaultBuffer(md3dDevice.Get(),
-				mCommandList.Get(), indices.data(), ibByteSize, mMesh->IndexBufferUploader);
+			priDesc.geo.IndexBufferGPU = d3dUtil::CreateDefaultBuffer(md3dDevice.Get(),
+				mCommandList.Get(), indices.data(), ibByteSize, priDesc.geo.IndexBufferUploader);
 
-			mMesh->VertexByteStride = sizeof(Vertex);
-			mMesh->VertexBufferByteSize = vbByteSize;
-			mMesh->IndexFormat = DXGI_FORMAT_R16_UINT;
-			mMesh->IndexBufferByteSize = ibByteSize;
+			priDesc.geo.VertexByteStride = sizeof(Vertex);
+			priDesc.geo.VertexBufferByteSize = vbByteSize;
+			priDesc.geo.IndexFormat = DXGI_FORMAT_R16_UINT;
+			priDesc.geo.IndexBufferByteSize = ibByteSize;
 
 			SubmeshGeometry submesh;
 			submesh.IndexCount = (UINT)indices.size();
 			submesh.StartIndexLocation = 0;
 			submesh.BaseVertexLocation = 0;
 
-			mMesh->DrawArgs[mMesh->Name] = submesh;
-			AddConstantBuffer();
+			priDesc.geo.DrawArgs[priDesc.geo.Name] = submesh;
+			
 			mPrimitives.push_back(priDesc);
+			AddConstantBuffer();
 		}
 	}
 }
@@ -608,12 +609,12 @@ void DX12RHI::AddConstantBuffer()
 {
 	UINT objCBByteSize = d3dUtil::CalcConstantBufferByteSize(sizeof(ObjectConstants));
 
-	D3D12_GPU_VIRTUAL_ADDRESS cbAddress = mObjectCB->Resource()->GetGPUVirtualAddress();
+	D3D12_GPU_VIRTUAL_ADDRESS cbAddress = mPrimitives[mPrimitives.size()-1].objectCB->Resource()->GetGPUVirtualAddress();
 	// Offset to the ith object constant buffer in the buffer.
-	cbAddress += mPrimitives.size() * objCBByteSize;
+	/*cbAddress += mPrimitives.size() * objCBByteSize;*/
 
 	auto handle = CD3DX12_CPU_DESCRIPTOR_HANDLE(mCbvHeap->GetCPUDescriptorHandleForHeapStart());
-	handle.Offset(mPrimitives.size(), mCbvSrvUavDescriptorSize);
+	handle.Offset(mPrimitives.size() - 1, mCbvSrvUavDescriptorSize);
 
 	D3D12_CONSTANT_BUFFER_VIEW_DESC cbvDesc;
 	cbvDesc.BufferLocation = cbAddress;
@@ -641,13 +642,12 @@ void DX12RHI::AddGeometry()
 			throw(0);
 		}
 		
-		DXPrimitiveDesc priDesc;
-		auto mMesh = &priDesc.geo;
-		mMesh->Name = meshInfo.name;
-		mMesh->mMeshWorld = mWorld;
+		DXPrimitiveDesc priDesc(md3dDevice.Get(), 1, true);
+		priDesc.geo.Name = meshInfo.name;
+		priDesc.geo.mMeshWorld = mWorld;
 
-		mMesh->mMeshWorld = translate(
-			mMesh->mMeshWorld,
+		priDesc.geo.mMeshWorld = translate(
+			priDesc.geo.mMeshWorld,
 			vec3(fMeshInfo.transform.Translation.x,
 				fMeshInfo.transform.Translation.y,
 				fMeshInfo.transform.Translation.z
@@ -678,29 +678,29 @@ void DX12RHI::AddGeometry()
 		const UINT vbByteSize = (UINT)vertices.size() * sizeof(Vertex);
 		const UINT ibByteSize = (UINT)indices.size() * sizeof(std::uint16_t);
 
-		ThrowIfFailed(D3DCreateBlob(vbByteSize, &mMesh->VertexBufferCPU));
-		CopyMemory(mMesh->VertexBufferCPU->GetBufferPointer(), vertices.data(), vbByteSize);
+		ThrowIfFailed(D3DCreateBlob(vbByteSize, &priDesc.geo.VertexBufferCPU));
+		CopyMemory(priDesc.geo.VertexBufferCPU->GetBufferPointer(), vertices.data(), vbByteSize);
 
-		ThrowIfFailed(D3DCreateBlob(ibByteSize, &mMesh->IndexBufferCPU));
-		CopyMemory(mMesh->IndexBufferCPU->GetBufferPointer(), indices.data(), ibByteSize);
+		ThrowIfFailed(D3DCreateBlob(ibByteSize, &priDesc.geo.IndexBufferCPU));
+		CopyMemory(priDesc.geo.IndexBufferCPU->GetBufferPointer(), indices.data(), ibByteSize);
 
-		mMesh->VertexBufferGPU = d3dUtil::CreateDefaultBuffer(md3dDevice.Get(),
-			mCommandList.Get(), vertices.data(), vbByteSize, mMesh->VertexBufferUploader);
+		priDesc.geo.VertexBufferGPU = d3dUtil::CreateDefaultBuffer(md3dDevice.Get(),
+			mCommandList.Get(), vertices.data(), vbByteSize, priDesc.geo.VertexBufferUploader);
 
-		mMesh->IndexBufferGPU = d3dUtil::CreateDefaultBuffer(md3dDevice.Get(),
-			mCommandList.Get(), indices.data(), ibByteSize, mMesh->IndexBufferUploader);
+		priDesc.geo.IndexBufferGPU = d3dUtil::CreateDefaultBuffer(md3dDevice.Get(),
+			mCommandList.Get(), indices.data(), ibByteSize, priDesc.geo.IndexBufferUploader);
 
-		mMesh->VertexByteStride = sizeof(Vertex);
-		mMesh->VertexBufferByteSize = vbByteSize;
-		mMesh->IndexFormat = DXGI_FORMAT_R16_UINT;
-		mMesh->IndexBufferByteSize = ibByteSize;
+		priDesc.geo.VertexByteStride = sizeof(Vertex);
+		priDesc.geo.VertexBufferByteSize = vbByteSize;
+		priDesc.geo.IndexFormat = DXGI_FORMAT_R16_UINT;
+		priDesc.geo.IndexBufferByteSize = ibByteSize;
 
 		SubmeshGeometry submesh;
 		submesh.IndexCount = (UINT)indices.size();
 		submesh.StartIndexLocation = 0;
 		submesh.BaseVertexLocation = 0;
 
-		mMesh->DrawArgs[mMesh->Name] = submesh;
+		priDesc.geo.DrawArgs[priDesc.geo.Name] = submesh;
 		mPrimitives.push_back(priDesc);
 
 		AddConstantBuffer();
@@ -722,7 +722,7 @@ void DX12RHI::AddNewBuild()
 
 void DX12RHI::InitConstantBuffers()
 {
-	mObjectCB = std::make_unique<UploadBuffer<ObjectConstants>>(md3dDevice.Get(), mPrimitives.size() + 1024, true);
+	//mObjectCB = std::make_unique<UploadBuffer<ObjectConstants>>(md3dDevice.Get(), mPrimitives.size() + 1024, true);
 }
 
 void DX12RHI::DrawPrimitive()

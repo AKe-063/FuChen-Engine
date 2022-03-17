@@ -182,5 +182,8 @@
     <ClCompile Include="RHI.cpp">
       <Filter>Source Files\Render</Filter>
     </ClCompile>
+    <ClCompile Include="DXPrimitiveDesc.cpp">
+      <Filter>Source Files\Render\DX</Filter>
+    </ClCompile>
   </ItemGroup>
 </Project>
