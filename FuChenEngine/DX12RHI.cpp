@@ -117,88 +117,88 @@ void DX12RHI::OnResize()
 
 void DX12RHI::Draw()
 {
-	// Reuse the memory associated with command recording.
-	// We can only reset when the associated command lists have finished execution on the GPU.
-	ThrowIfFailed(mDirectCmdListAlloc->Reset());
-
-	// A command list can be reset after it has been added to the command queue via ExecuteCommandList.
-	// Reusing the command list reuses memory.
-	ThrowIfFailed(mCommandList->Reset(mDirectCmdListAlloc.Get(), mPSO.Get()));
-
-	mCommandList->RSSetViewports(1, &mScreenViewport);
-	mCommandList->RSSetScissorRects(1, &mScissorRect);
-
-	// Indicate a state transition on the resource usage.
-	mCommandList->ResourceBarrier(1, &CD3DX12_RESOURCE_BARRIER::Transition(CurrentBackBuffer(),
-		D3D12_RESOURCE_STATE_PRESENT, D3D12_RESOURCE_STATE_RENDER_TARGET));
-
-	// Clear the back buffer and depth buffer.
-	FLOAT color[4] = { 0.0f,0.2f,0.5f,0.25f };
-	mCommandList->ClearRenderTargetView(CurrentBackBufferView(), color, 0, nullptr);
-	mCommandList->ClearDepthStencilView(DepthStencilView(), D3D12_CLEAR_FLAG_DEPTH | D3D12_CLEAR_FLAG_STENCIL, 1.0f, 0, 0, nullptr);
-
-	// Specify the buffers we are going to render to.
-	mCommandList->OMSetRenderTargets(1, &CurrentBackBufferView(), true, &DepthStencilView());
-
-	mCommandList->SetGraphicsRootSignature(mRootSignature.Get());
-
-	//Render items
-	ID3D12DescriptorHeap* descriptorHeapsSRV[] = { mSrvDescriptorHeap.Get() };
-	ID3D12DescriptorHeap* descriptorHeaps[] = { mCbvHeap.Get() };
-	for (int i = 0; i < mPrimitives.size(); i++)
-	{
-		mCommandList->IASetVertexBuffers(0, 1, &mPrimitives[i].geo.VertexBufferView());
-		mCommandList->IASetIndexBuffer(&mPrimitives[i].geo.IndexBufferView());
-		mCommandList->IASetPrimitiveTopology(D3D11_PRIMITIVE_TOPOLOGY_TRIANGLELIST);
-
-		//mat4 worldViewProj = Engine::GetInstance().GetFScene()->GetCamera()->GetProj() * Engine::GetInstance().GetFScene()->GetCamera()->GetView() * mMeshes[i].mMeshWorld;
-
-		// Update the constant buffer with the latest worldViewProj matrix.
-		ObjectConstants objConstants;
-		objConstants.Roatation = transpose(mPrimitives[i].geo.Rotation);
-		objConstants.Proj = transpose(Engine::GetInstance().GetFScene()->GetCamera()->GetProj());
-		objConstants.View = transpose(Engine::GetInstance().GetFScene()->GetCamera()->GetView());
-		objConstants.World = transpose(mPrimitives[i].geo.mMeshWorld);
-		objConstants.time = Engine::GetInstance().GetTimer()->TotalTime();
-		mPrimitives[i].objectCB->CopyData(0, objConstants);
-
-		mCommandList->SetDescriptorHeaps(_countof(descriptorHeapsSRV), descriptorHeapsSRV);
-		auto handle1 = CD3DX12_GPU_DESCRIPTOR_HANDLE(mSrvDescriptorHeap->GetGPUDescriptorHandleForHeapStart());
-		handle1.Offset(2, mCbvSrvUavDescriptorSize);
-		mCommandList->SetGraphicsRootDescriptorTable(1, handle1);
-		handle1.Offset(2, mCbvSrvUavDescriptorSize);
-		mCommandList->SetGraphicsRootDescriptorTable(2, handle1);
-
-		mCommandList->SetDescriptorHeaps(_countof(descriptorHeaps), descriptorHeaps);
-		auto handle = CD3DX12_GPU_DESCRIPTOR_HANDLE(mCbvHeap->GetGPUDescriptorHandleForHeapStart());
-		handle.Offset(i, mCbvSrvUavDescriptorSize);
-		mCommandList->SetGraphicsRootDescriptorTable(0, handle);
-		//mCommandList->SetGraphicsRootConstantBufferView(0, );
-
-		mCommandList->DrawIndexedInstanced(
-			mPrimitives[i].geo.DrawArgs[mPrimitives[i].geo.Name].IndexCount,
-			1, 0, 0, 0);
-	}
-
-	// Indicate a state transition on the resource usage.
-	mCommandList->ResourceBarrier(1, &CD3DX12_RESOURCE_BARRIER::Transition(CurrentBackBuffer(),
-		D3D12_RESOURCE_STATE_RENDER_TARGET, D3D12_RESOURCE_STATE_PRESENT));
-
-	// Done recording commands.
-	ThrowIfFailed(mCommandList->Close());
-
-	// Add the command list to the queue for execution.
-	ID3D12CommandList* cmdsLists[] = { mCommandList.Get() };
-	mCommandQueue->ExecuteCommandLists(_countof(cmdsLists), cmdsLists);
-
-	// swap the back and front buffers
-	ThrowIfFailed(mSwapChain->Present(0, 0));
-	mCurrBackBuffer = (mCurrBackBuffer + 1) % SwapChainBufferCount;
-
-	// Wait until frame commands are complete.  This waiting is inefficient and is
-	// done for simplicity.  Later we will show how to organize our rendering code
-	// so we do not have to wait per frame.
-	FlushCommandQueue();
+// 	// Reuse the memory associated with command recording.
+// 	// We can only reset when the associated command lists have finished execution on the GPU.
+// 	ThrowIfFailed(mDirectCmdListAlloc->Reset());
+// 
+// 	// A command list can be reset after it has been added to the command queue via ExecuteCommandList.
+// 	// Reusing the command list reuses memory.
+// 	ThrowIfFailed(mCommandList->Reset(mDirectCmdListAlloc.Get(), mPSO.Get()));
+// 
+// 	mCommandList->RSSetViewports(1, &mScreenViewport);
+// 	mCommandList->RSSetScissorRects(1, &mScissorRect);
+// 
+// 	// Indicate a state transition on the resource usage.
+// 	mCommandList->ResourceBarrier(1, &CD3DX12_RESOURCE_BARRIER::Transition(CurrentBackBuffer(),
+// 		D3D12_RESOURCE_STATE_PRESENT, D3D12_RESOURCE_STATE_RENDER_TARGET));
+// 
+// 	// Clear the back buffer and depth buffer.
+// 	FLOAT color[4] = { 0.0f,0.2f,0.5f,0.25f };
+// 	mCommandList->ClearRenderTargetView(CurrentBackBufferView(), color, 0, nullptr);
+// 	mCommandList->ClearDepthStencilView(DepthStencilView(), D3D12_CLEAR_FLAG_DEPTH | D3D12_CLEAR_FLAG_STENCIL, 1.0f, 0, 0, nullptr);
+// 
+// 	// Specify the buffers we are going to render to.
+// 	mCommandList->OMSetRenderTargets(1, &CurrentBackBufferView(), true, &DepthStencilView());
+// 
+// 	mCommandList->SetGraphicsRootSignature(mRootSignature.Get());
+// 
+// 	//Render items
+// 	ID3D12DescriptorHeap* descriptorHeapsSRV[] = { mSrvDescriptorHeap.Get() };
+// 	ID3D12DescriptorHeap* descriptorHeaps[] = { mCbvHeap.Get() };
+// 	for (int i = 0; i < mPrimitives.size(); i++)
+// 	{
+// 		mCommandList->IASetVertexBuffers(0, 1, &mPrimitives[i].geo.VertexBufferView());
+// 		mCommandList->IASetIndexBuffer(&mPrimitives[i].geo.IndexBufferView());
+// 		mCommandList->IASetPrimitiveTopology(D3D11_PRIMITIVE_TOPOLOGY_TRIANGLELIST);
+// 
+// 		//mat4 worldViewProj = Engine::GetInstance().GetFScene()->GetCamera()->GetProj() * Engine::GetInstance().GetFScene()->GetCamera()->GetView() * mMeshes[i].mMeshWorld;
+// 
+// 		// Update the constant buffer with the latest worldViewProj matrix.
+// 		ObjectConstants objConstants;
+// 		objConstants.Roatation = transpose(mPrimitives[i].geo.Rotation);
+// 		objConstants.Proj = transpose(Engine::GetInstance().GetFScene()->GetCamera()->GetProj());
+// 		objConstants.View = transpose(Engine::GetInstance().GetFScene()->GetCamera()->GetView());
+// 		objConstants.World = transpose(mPrimitives[i].geo.mMeshWorld);
+// 		objConstants.time = Engine::GetInstance().GetTimer()->TotalTime();
+// 		mPrimitives[i].objectCB->CopyData(0, objConstants);
+// 
+// 		mCommandList->SetDescriptorHeaps(_countof(descriptorHeapsSRV), descriptorHeapsSRV);
+// 		auto handle1 = CD3DX12_GPU_DESCRIPTOR_HANDLE(mSrvDescriptorHeap->GetGPUDescriptorHandleForHeapStart());
+// 		handle1.Offset(2, mCbvSrvUavDescriptorSize);
+// 		mCommandList->SetGraphicsRootDescriptorTable(1, handle1);
+// 		handle1.Offset(2, mCbvSrvUavDescriptorSize);
+// 		mCommandList->SetGraphicsRootDescriptorTable(2, handle1);
+// 
+// 		mCommandList->SetDescriptorHeaps(_countof(descriptorHeaps), descriptorHeaps);
+// 		auto handle = CD3DX12_GPU_DESCRIPTOR_HANDLE(mCbvHeap->GetGPUDescriptorHandleForHeapStart());
+// 		handle.Offset(i, mCbvSrvUavDescriptorSize);
+// 		mCommandList->SetGraphicsRootDescriptorTable(0, handle);
+// 		//mCommandList->SetGraphicsRootConstantBufferView(0, );
+// 
+// 		mCommandList->DrawIndexedInstanced(
+// 			mPrimitives[i].geo.DrawArgs[mPrimitives[i].geo.Name].IndexCount,
+// 			1, 0, 0, 0);
+// 	}
+// 
+// 	// Indicate a state transition on the resource usage.
+// 	mCommandList->ResourceBarrier(1, &CD3DX12_RESOURCE_BARRIER::Transition(CurrentBackBuffer(),
+// 		D3D12_RESOURCE_STATE_RENDER_TARGET, D3D12_RESOURCE_STATE_PRESENT));
+// 
+// 	// Done recording commands.
+// 	ThrowIfFailed(mCommandList->Close());
+// 
+// 	// Add the command list to the queue for execution.
+// 	ID3D12CommandList* cmdsLists[] = { mCommandList.Get() };
+// 	mCommandQueue->ExecuteCommandLists(_countof(cmdsLists), cmdsLists);
+// 
+// 	// swap the back and front buffers
+// 	ThrowIfFailed(mSwapChain->Present(0, 0));
+// 	mCurrBackBuffer = (mCurrBackBuffer + 1) % SwapChainBufferCount;
+// 
+// 	// Wait until frame commands are complete.  This waiting is inefficient and is
+// 	// done for simplicity.  Later we will show how to organize our rendering code
+// 	// so we do not have to wait per frame.
+// 	FlushCommandQueue();
 }
 
 void DX12RHI::Init()
@@ -389,23 +389,24 @@ void DX12RHI::BuildDescriptorHeaps()
 
 void DX12RHI::BuildConstantBuffers()
 {
-	 	for (int i = 0; i < mPrimitives.size(); i++)
-	 	{
-	 		UINT objCBByteSize = d3dUtil::CalcConstantBufferByteSize(sizeof(ObjectConstants));
-	 
-	 		D3D12_GPU_VIRTUAL_ADDRESS cbAddress = mPrimitives[i].objectCB->Resource()->GetGPUVirtualAddress();
-	 		// Offset to the ith object constant buffer in the buffer.
-	 		cbAddress += i * objCBByteSize;
-	 
-	 		auto handle = CD3DX12_CPU_DESCRIPTOR_HANDLE(mCbvHeap->GetCPUDescriptorHandleForHeapStart());
-	 		handle.Offset(i, mCbvSrvUavDescriptorSize);
-	 
-	 		D3D12_CONSTANT_BUFFER_VIEW_DESC cbvDesc;
-	 		cbvDesc.BufferLocation = cbAddress;
-	 		cbvDesc.SizeInBytes = d3dUtil::CalcConstantBufferByteSize(sizeof(ObjectConstants));
-	 
-	 		md3dDevice->CreateConstantBufferView(&cbvDesc, handle);
-	 	}
+// 	 	for (int i = 0; i < mPrimitives.size(); i++)
+// 	 	{
+// 	 		UINT objCBByteSize = d3dUtil::CalcConstantBufferByteSize(sizeof(ObjectConstants));
+// 
+// 			std::unique_ptr<UploadBuffer<ObjectConstants>> objConstant = std::make_unique<UploadBuffer<ObjectConstants>>(md3dDevice.Get(), 1, true);
+// 	 		D3D12_GPU_VIRTUAL_ADDRESS cbAddress = objConstant->Resource()->GetGPUVirtualAddress();
+// 	 		// Offset to the ith object constant buffer in the buffer.
+// 	 		/*cbAddress += i * objCBByteSize;*/
+// 	 
+// 	 		auto handle = CD3DX12_CPU_DESCRIPTOR_HANDLE(mCbvHeap->GetCPUDescriptorHandleForHeapStart());
+// 	 		handle.Offset(i, mCbvSrvUavDescriptorSize);
+// 	 
+// 	 		D3D12_CONSTANT_BUFFER_VIEW_DESC cbvDesc;
+// 	 		cbvDesc.BufferLocation = cbAddress;
+// 	 		cbvDesc.SizeInBytes = d3dUtil::CalcConstantBufferByteSize(sizeof(ObjectConstants));
+// 	 
+// 	 		md3dDevice->CreateConstantBufferView(&cbvDesc, handle);
+// 	 	}
 }
 
 void DX12RHI::BuildShaderResourceView()
@@ -506,7 +507,7 @@ void DX12RHI::BuildGeometry()
 				assert(0);
 			}
 
-			DXPrimitiveDesc priDesc(md3dDevice.Get(), 1, true);
+			DXPrimitiveDesc priDesc;
 			priDesc.geo.Name = meshInfo.name;
 			priDesc.geo.mMeshWorld = mWorld;
 
@@ -609,9 +610,8 @@ void DX12RHI::AddConstantBuffer()
 {
 	UINT objCBByteSize = d3dUtil::CalcConstantBufferByteSize(sizeof(ObjectConstants));
 
-	D3D12_GPU_VIRTUAL_ADDRESS cbAddress = mPrimitives[mPrimitives.size()-1].objectCB->Resource()->GetGPUVirtualAddress();
-	// Offset to the ith object constant buffer in the buffer.
-	/*cbAddress += mPrimitives.size() * objCBByteSize;*/
+	std::shared_ptr<UploadBuffer<ObjectConstants>> objConstant = std::make_shared<UploadBuffer<ObjectConstants>>(md3dDevice.Get(), 1, true);
+	D3D12_GPU_VIRTUAL_ADDRESS cbAddress = objConstant->Resource()->GetGPUVirtualAddress();
 
 	auto handle = CD3DX12_CPU_DESCRIPTOR_HANDLE(mCbvHeap->GetCPUDescriptorHandleForHeapStart());
 	handle.Offset(mPrimitives.size() - 1, mCbvSrvUavDescriptorSize);
@@ -621,6 +621,8 @@ void DX12RHI::AddConstantBuffer()
 	cbvDesc.SizeInBytes = d3dUtil::CalcConstantBufferByteSize(sizeof(ObjectConstants));
 
 	md3dDevice->CreateConstantBufferView(&cbvDesc, handle);
+	mObjectCB.push_back(objConstant);
+	mPrimitives[mPrimitives.size() - 1].objCBIndex = mObjectCB.size() - 1;
 }
 
 void DX12RHI::AddGeometry()
@@ -642,7 +644,7 @@ void DX12RHI::AddGeometry()
 			throw(0);
 		}
 		
-		DXPrimitiveDesc priDesc(md3dDevice.Get(), 1, true);
+		DXPrimitiveDesc priDesc;
 		priDesc.geo.Name = meshInfo.name;
 		priDesc.geo.mMeshWorld = mWorld;
 
@@ -809,7 +811,8 @@ void DX12RHI::DrawPrimitive()
 		objConstants.View = transpose(Engine::GetInstance().GetFScene()->GetCamera()->GetView());
 		objConstants.World = transpose(mPrimitives[i].geo.mMeshWorld);
 		objConstants.time = Engine::GetInstance().GetTimer()->TotalTime();
-		mPrimitives[i].objectCB->CopyData(0, objConstants);
+		/*mPrimitives[i].objectCB->CopyData(0, objConstants);*/
+		mObjectCB[mPrimitives[i].objCBIndex]->CopyData(0, objConstants);
 
 		mCommandList->SetDescriptorHeaps(_countof(descriptorHeapsSRV), descriptorHeapsSRV);
 		auto handle1 = CD3DX12_GPU_DESCRIPTOR_HANDLE(mSrvDescriptorHeap->GetGPUDescriptorHandleForHeapStart());

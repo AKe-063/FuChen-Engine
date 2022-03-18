@@ -4,7 +4,8 @@
 
 struct DXPrimitiveDesc
 {
-	DXPrimitiveDesc(ID3D12Device* device, UINT elementCount, bool isConstantBuffer);
-	std::shared_ptr<UploadBuffer<ObjectConstants>> objectCB = nullptr;
+// 	DXPrimitiveDesc(ID3D12Device* device, UINT elementCount, bool isConstantBuffer);
+// 	std::shared_ptr<UploadBuffer<ObjectConstants>> objectCB = nullptr;
 	MeshGeometry geo;
+	int objCBIndex = -1;
 };
