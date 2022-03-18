@@ -36,13 +36,31 @@ public:
 	void BuildNewTexture(const std::string& name, const std::wstring& textureFilePath);
 	void BuildAllTextures();
 	void InitConstantBuffers();
-	void DrawPrimitive();
 
 	void AddConstantBuffer();
 	void AddGeometry();
 	void AddNewBuild();
 
+	//Abstract RHI
+	virtual void StartDraw()override;
+	virtual void RSSetViewPorts(unsigned int numViewports, const VIEWPORT* scrernViewport)override;
+	virtual void RESetScissorRects(unsigned int numRects, const TAGRECT* rect)override;
+	virtual void ClearBackBufferAndDepthBuffer(const float* color, float depth, unsigned int stencil, unsigned int numRects)override;
+	virtual void SetRenderTargets(unsigned int numRenderTarget)override;
+	virtual void SetGraphicsRootSignature()override;
+	virtual void DrawPrimitive()override;
+	virtual void EndDraw()override;
+	virtual VIEWPORT GetViewport()override;
+	virtual TAGRECT GetTagRect()override;
+
 protected:
+	//Draw process
+	void ResetCmdListAlloc();
+	void ResetCommandList();
+	void CloseCommandList();
+	void SwapChain();
+	void TransResourBarrier(unsigned int numBarriers, D3D12_RESOURCE_STATES currentState, D3D12_RESOURCE_STATES targetState);
+
 	//DX Init
 	bool InitDirect3D();
 	virtual void CreateRtvAndDsvDescriptorHeaps();

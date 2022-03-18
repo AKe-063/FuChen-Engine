@@ -123,6 +123,24 @@
     <ClInclude Include="DXPrimitiveDesc.h">
       <Filter>Header Files\Render\DX</Filter>
     </ClInclude>
+    <ClInclude Include="FMaterial.h">
+      <Filter>Header Files\Resource</Filter>
+    </ClInclude>
+    <ClInclude Include="FTexture.h">
+      <Filter>Header Files\Resource</Filter>
+    </ClInclude>
+    <ClInclude Include="FTextureStruct.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="FMaterialDesc.h">
+      <Filter>Header Files\Resource</Filter>
+    </ClInclude>
+    <ClInclude Include="FRenderer.h">
+      <Filter>Header Files\Render</Filter>
+    </ClInclude>
+    <ClInclude Include="RHIParameterType.h">
+      <Filter>Header Files\Render</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="stdafx.cpp">
@@ -184,6 +202,15 @@
     </ClCompile>
     <ClCompile Include="DXPrimitiveDesc.cpp">
       <Filter>Source Files\Render\DX</Filter>
+    </ClCompile>
+    <ClCompile Include="FMaterial.cpp">
+      <Filter>Source Files\Resource</Filter>
+    </ClCompile>
+    <ClCompile Include="FTexture.cpp">
+      <Filter>Source Files\Resource</Filter>
+    </ClCompile>
+    <ClCompile Include="FRenderer.cpp">
+      <Filter>Source Files\Render</Filter>
     </ClCompile>
   </ItemGroup>
 </Project>

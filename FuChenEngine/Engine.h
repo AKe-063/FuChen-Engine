@@ -2,7 +2,7 @@
 #include "MeshDescribe.h"
 #include "FAssetManager.h"
 #include "FScene.h"
-#include "ForwardRenderer.h"
+#include "FRenderer.h"
 #include "Win32Window.h"
 #include "FWin32Input.h"
 
@@ -20,7 +20,7 @@ public:
 	void Update();
 
 	//Get
-	ForwardRenderer* GetRenderer();
+	FRenderer* GetRenderer();
 	FScene* GetFScene();
 	FAssetManager* GetFAssetManager();
 	Window* GetWindow();
@@ -34,10 +34,11 @@ private:
 	bool InitWindow();
 	Window* CreateAWindow();
 	FInputBase* CreateInput();
+	FRenderer* CreateRenderer();
 
 	std::unique_ptr<FAssetManager> fAssetManager;
 	std::unique_ptr<FScene> fScene;
-	std::unique_ptr<ForwardRenderer> fRenderer;
+	std::unique_ptr<FRenderer> fRenderer;
 	std::unique_ptr<FInputBase> fInput;
 	std::unique_ptr<Window> mWindow;
 

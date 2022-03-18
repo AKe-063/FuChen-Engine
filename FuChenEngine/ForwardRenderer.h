@@ -1,16 +1,18 @@
 #pragma once
 #include "RHI.h"
+#include "FRenderer.h"
 
-class ForwardRenderer
+//«∞œÓ‰÷»æ 
+class ForwardRenderer : public FRenderer
 {
 public:
 	ForwardRenderer();
-	~ForwardRenderer();
+	virtual ~ForwardRenderer();
 
-	void Init();
-	void Destroy();
-	void Draw();
-	void BuildInitialMap();
+	virtual void Init()override;
+	virtual void Destroy()override;
+	virtual void Draw()override;
+	virtual void BuildInitialMap()override;
 
 private:
 	std::unique_ptr<RHI> rhi;

@@ -58,19 +58,44 @@ bool FAssetManager::AssetContrain(const std::string& name)
 
 std::wstring FAssetManager::GetTextureFilePathFromName(const std::string& name)
 {
-	return textureFilePath[name];
+	for (auto tex : textureFileLink)
+	{
+		auto& texDec = tex.GetDesc();
+		if (texDec.name == name)
+		{
+			return texDec.textureFilePath;
+		}
+	}
+	return L"NULL";
 }
 
-std::unordered_map<std::string, std::wstring> FAssetManager::GetTexturesFilePath()
+std::vector<FTexture> FAssetManager::GetTexturesFilePath()
 {
-	return textureFilePath;
+
+	return textureFileLink;
 }
 
 void FAssetManager::LoadTexture()
 {
-	textureFilePath.insert({ "bricks",L"../FuChenEngine/Textures/bricks.dds" });
-	textureFilePath.insert({ "T_Chair_M",L"../FuChenEngine/Textures/T_Chair_M.dds" });
-	textureFilePath.insert({ "T_Chair_N",L"../FuChenEngine/Textures/T_Chair_N.dds" });
-	textureFilePath.insert({ "T_RockMesh_M",L"../FuChenEngine/Textures/T_RockMesh_M.dds" });
-	textureFilePath.insert({ "T_RockMesh_N",L"../FuChenEngine/Textures/T_RockMesh_N.dds" });
+	FTexture tex;
+	auto & texDec = tex.GetDesc();
+	texDec.name = "bricks";
+	texDec.textureFilePath = L"../FuChenEngine/Textures/bricks.dds";
+	textureFileLink.push_back(tex);
+
+	texDec.name = "T_Chair_M";
+	texDec.textureFilePath = L"../FuChenEngine/Textures/T_Chair_M.dds";
+	textureFileLink.push_back(tex);
+
+	texDec.name = "T_Chair_N";
+	texDec.textureFilePath = L"../FuChenEngine/Textures/T_Chair_N.dds";
+	textureFileLink.push_back(tex);
+
+	texDec.name = "T_RockMesh_M";
+	texDec.textureFilePath = L"../FuChenEngine/Textures/T_RockMesh_M.dds";
+	textureFileLink.push_back(tex);
+
+	texDec.name = "T_RockMesh_N";
+	texDec.textureFilePath = L"../FuChenEngine/Textures/T_RockMesh_N.dds";
+	textureFileLink.push_back(tex);
 }

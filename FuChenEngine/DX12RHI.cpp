@@ -142,11 +142,9 @@ void DX12RHI::Draw()
 
 	mCommandList->SetGraphicsRootSignature(mRootSignature.Get());
 
-	//test!!!!!!!!!!!!!!!!!!!!!
-	ID3D12DescriptorHeap* descriptorHeaps1[] = { mSrvDescriptorHeap.Get() };
-
+	//Render items
+	ID3D12DescriptorHeap* descriptorHeapsSRV[] = { mSrvDescriptorHeap.Get() };
 	ID3D12DescriptorHeap* descriptorHeaps[] = { mCbvHeap.Get() };
-	
 	for (int i = 0; i < mPrimitives.size(); i++)
 	{
 		mCommandList->IASetVertexBuffers(0, 1, &mPrimitives[i].geo.VertexBufferView());
@@ -164,7 +162,7 @@ void DX12RHI::Draw()
 		objConstants.time = Engine::GetInstance().GetTimer()->TotalTime();
 		mPrimitives[i].objectCB->CopyData(0, objConstants);
 
-		mCommandList->SetDescriptorHeaps(_countof(descriptorHeaps1), descriptorHeaps1);
+		mCommandList->SetDescriptorHeaps(_countof(descriptorHeapsSRV), descriptorHeapsSRV);
 		auto handle1 = CD3DX12_GPU_DESCRIPTOR_HANDLE(mSrvDescriptorHeap->GetGPUDescriptorHandleForHeapStart());
 		handle1.Offset(2, mCbvSrvUavDescriptorSize);
 		mCommandList->SetGraphicsRootDescriptorTable(1, handle1);
@@ -181,6 +179,7 @@ void DX12RHI::Draw()
 			mPrimitives[i].geo.DrawArgs[mPrimitives[i].geo.Name].IndexCount,
 			1, 0, 0, 0);
 	}
+
 	// Indicate a state transition on the resource usage.
 	mCommandList->ResourceBarrier(1, &CD3DX12_RESOURCE_BARRIER::Transition(CurrentBackBuffer(),
 		D3D12_RESOURCE_STATE_RENDER_TARGET, D3D12_RESOURCE_STATE_PRESENT));
@@ -261,9 +260,10 @@ void DX12RHI::BuildAllTextures()
 {
 	for (auto texture : FAssetManager::GetInstance().GetTexturesFilePath())
 	{
+		auto texDes = texture.GetDesc();
 		auto tex = Texture();
-		tex.Name = texture.first;
-		tex.Filename = texture.second;
+		tex.Name = texDes.name;
+		tex.Filename = texDes.textureFilePath;
 		ThrowIfFailed(DirectX::CreateDDSTextureFromFile12(md3dDevice.Get(),
 			mCommandList.Get(), tex.Filename.c_str(),
 			tex.Resource, tex.UploadHeap));
@@ -720,6 +720,70 @@ void DX12RHI::AddNewBuild()
 	FlushCommandQueue();
 }
 
+void DX12RHI::StartDraw()
+{
+	ResetCmdListAlloc();
+	ResetCommandList();
+	TransResourBarrier(1, D3D12_RESOURCE_STATE_PRESENT, D3D12_RESOURCE_STATE_RENDER_TARGET);
+}
+
+void DX12RHI::ResetCmdListAlloc()
+{
+	ThrowIfFailed(mDirectCmdListAlloc->Reset());
+}
+
+void DX12RHI::ResetCommandList()
+{
+	ThrowIfFailed(mCommandList->Reset(mDirectCmdListAlloc.Get(),mPSO.Get()));
+}
+
+void DX12RHI::RSSetViewPorts(unsigned int numViewports, const VIEWPORT* scrernViewport)
+{
+	D3D12_VIEWPORT viewport;
+	viewport.Height = scrernViewport->Height;
+	viewport.MaxDepth = scrernViewport->MaxDepth;
+	viewport.MinDepth = scrernViewport->MinDepth;
+	viewport.TopLeftX = scrernViewport->TopLeftX;
+	viewport.TopLeftY = scrernViewport->TopLeftY;
+	viewport.Width = scrernViewport->Width;
+	mCommandList->RSSetViewports(numViewports, &viewport);
+}
+
+void DX12RHI::RESetScissorRects(unsigned int numRects, const TAGRECT* rect)
+{
+	D3D12_RECT tagRect;
+	tagRect.bottom = rect->bottom;
+	tagRect.right = rect->right;
+	tagRect.left = rect->left;
+	tagRect.top = rect->top;
+	mCommandList->RSSetScissorRects(numRects, &tagRect);
+}
+
+void DX12RHI::TransResourBarrier(unsigned int numBarriers, D3D12_RESOURCE_STATES currentState, D3D12_RESOURCE_STATES targetState)
+{
+	// Indicate a state transition on the resource usage.
+	mCommandList->ResourceBarrier(numBarriers, &CD3DX12_RESOURCE_BARRIER::Transition(CurrentBackBuffer(),
+		currentState, targetState));
+}
+
+void DX12RHI::ClearBackBufferAndDepthBuffer(const float* color, float depth, unsigned int stencil, unsigned int numRects)
+{
+	// Clear the back buffer and depth buffer.
+	mCommandList->ClearRenderTargetView(CurrentBackBufferView(), color, 0, nullptr);
+	mCommandList->ClearDepthStencilView(DepthStencilView(), D3D12_CLEAR_FLAG_DEPTH | D3D12_CLEAR_FLAG_STENCIL, depth, stencil, numRects, nullptr);
+}
+
+void DX12RHI::SetRenderTargets(unsigned int numRenderTarget)
+{
+	// Specify the buffers we are going to render to.
+	mCommandList->OMSetRenderTargets(numRenderTarget, &CurrentBackBufferView(), true, &DepthStencilView());
+}
+
+void DX12RHI::SetGraphicsRootSignature()
+{
+	mCommandList->SetGraphicsRootSignature(mRootSignature.Get());
+}
+
 void DX12RHI::InitConstantBuffers()
 {
 	//mObjectCB = std::make_unique<UploadBuffer<ObjectConstants>>(md3dDevice.Get(), mPrimitives.size() + 1024, true);
@@ -727,7 +791,90 @@ void DX12RHI::InitConstantBuffers()
 
 void DX12RHI::DrawPrimitive()
 {
+	//Render items
+	ID3D12DescriptorHeap* descriptorHeapsSRV[] = { mSrvDescriptorHeap.Get() };
+	ID3D12DescriptorHeap* descriptorHeaps[] = { mCbvHeap.Get() };
+	for (int i = 0; i < mPrimitives.size(); i++)
+	{
+		mCommandList->IASetVertexBuffers(0, 1, &mPrimitives[i].geo.VertexBufferView());
+		mCommandList->IASetIndexBuffer(&mPrimitives[i].geo.IndexBufferView());
+		mCommandList->IASetPrimitiveTopology(D3D11_PRIMITIVE_TOPOLOGY_TRIANGLELIST);
 
+		//mat4 worldViewProj = Engine::GetInstance().GetFScene()->GetCamera()->GetProj() * Engine::GetInstance().GetFScene()->GetCamera()->GetView() * mMeshes[i].mMeshWorld;
+
+		// Update the constant buffer with the latest worldViewProj matrix.
+		ObjectConstants objConstants;
+		objConstants.Roatation = transpose(mPrimitives[i].geo.Rotation);
+		objConstants.Proj = transpose(Engine::GetInstance().GetFScene()->GetCamera()->GetProj());
+		objConstants.View = transpose(Engine::GetInstance().GetFScene()->GetCamera()->GetView());
+		objConstants.World = transpose(mPrimitives[i].geo.mMeshWorld);
+		objConstants.time = Engine::GetInstance().GetTimer()->TotalTime();
+		mPrimitives[i].objectCB->CopyData(0, objConstants);
+
+		mCommandList->SetDescriptorHeaps(_countof(descriptorHeapsSRV), descriptorHeapsSRV);
+		auto handle1 = CD3DX12_GPU_DESCRIPTOR_HANDLE(mSrvDescriptorHeap->GetGPUDescriptorHandleForHeapStart());
+		handle1.Offset(2, mCbvSrvUavDescriptorSize);
+		mCommandList->SetGraphicsRootDescriptorTable(1, handle1);
+		handle1.Offset(2, mCbvSrvUavDescriptorSize);
+		mCommandList->SetGraphicsRootDescriptorTable(2, handle1);
+
+		mCommandList->SetDescriptorHeaps(_countof(descriptorHeaps), descriptorHeaps);
+		auto handle = CD3DX12_GPU_DESCRIPTOR_HANDLE(mCbvHeap->GetGPUDescriptorHandleForHeapStart());
+		handle.Offset(i, mCbvSrvUavDescriptorSize);
+		mCommandList->SetGraphicsRootDescriptorTable(0, handle);
+		//mCommandList->SetGraphicsRootConstantBufferView(0, );
+
+		mCommandList->DrawIndexedInstanced(
+			mPrimitives[i].geo.DrawArgs[mPrimitives[i].geo.Name].IndexCount,
+			1, 0, 0, 0);
+	}
+}
+
+void DX12RHI::EndDraw()
+{
+	TransResourBarrier(1, D3D12_RESOURCE_STATE_RENDER_TARGET, D3D12_RESOURCE_STATE_PRESENT);
+	CloseCommandList();
+	SwapChain();
+	FlushCommandQueue();
+}
+
+VIEWPORT DX12RHI::GetViewport()
+{
+	VIEWPORT viewport;
+	viewport.Height = mScreenViewport.Height;
+	viewport.MaxDepth = mScreenViewport.MaxDepth;
+	viewport.MinDepth = mScreenViewport.MinDepth;
+	viewport.TopLeftX = mScreenViewport.TopLeftX;
+	viewport.TopLeftY = mScreenViewport.TopLeftY;
+	viewport.Width = mScreenViewport.Width;
+	return viewport;
+}
+
+TAGRECT DX12RHI::GetTagRect()
+{
+	TAGRECT tagRect;
+	tagRect.bottom = mScissorRect.bottom;
+	tagRect.right = mScissorRect.right;
+	tagRect.left = mScissorRect.left;
+	tagRect.top = mScissorRect.top;
+	return tagRect;
+}
+
+void DX12RHI::CloseCommandList()
+{
+	// Done recording commands.
+	ThrowIfFailed(mCommandList->Close());
+
+	// Add the command list to the queue for execution.
+	ID3D12CommandList* cmdsLists[] = { mCommandList.Get() };
+	mCommandQueue->ExecuteCommandLists(_countof(cmdsLists), cmdsLists);
+}
+
+void DX12RHI::SwapChain()
+{
+	// swap the back and front buffers
+	ThrowIfFailed(mSwapChain->Present(0, 0));
+	mCurrBackBuffer = (mCurrBackBuffer + 1) % SwapChainBufferCount;
 }
 
 void DX12RHI::CreateRtvAndDsvDescriptorHeaps()

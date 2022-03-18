@@ -1,5 +1,6 @@
 #include "stdafx.h"
 #include "Engine.h"
+#include "ForwardRenderer.h"
 
 using namespace std;
 using namespace glm;
@@ -34,7 +35,7 @@ bool Engine::Initialize()
 
 	if (!(InitWindow()))
 		return false;
-	fRenderer = std::make_unique<ForwardRenderer>();
+	fRenderer.reset(CreateRenderer());
 	fRenderer->Init();
 
 	mTimer->Reset();
@@ -50,7 +51,7 @@ void Engine::Destroy()
 	fAssetManager.release();
 }
 
-ForwardRenderer* Engine::GetRenderer()
+FRenderer* Engine::GetRenderer()
 {
 	return fRenderer.get();
 }
@@ -109,5 +110,12 @@ FInputBase* Engine::CreateInput()
 {
 #if _PLATFORM_WIN32
 	return &FWin32Input::GetInstance();
+#endif
+}
+
+FRenderer* Engine::CreateRenderer()
+{
+#if _FORWARD_RENDER
+	return new ForwardRenderer();
 #endif
 }
