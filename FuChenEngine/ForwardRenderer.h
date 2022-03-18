@@ -11,6 +11,8 @@ public:
 
 	virtual void Init()override;
 	virtual void Destroy()override;
+	virtual void Render()override;
+	virtual void BuildPrimitives()override;
 	virtual void Draw()override;
 	virtual void BuildInitialMap()override;
 

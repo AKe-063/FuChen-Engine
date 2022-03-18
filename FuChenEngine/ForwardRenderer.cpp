@@ -24,6 +24,17 @@ void ForwardRenderer::Destroy()
 	rhi->Destroy();
 }
 
+void ForwardRenderer::Render()
+{
+	BuildPrimitives();
+	Draw();
+}
+
+void ForwardRenderer::BuildPrimitives()
+{
+
+}
+
 void ForwardRenderer::Draw()
 {
 	//rhi->Draw();

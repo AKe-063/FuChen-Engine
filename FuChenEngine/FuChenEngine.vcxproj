@@ -161,6 +161,7 @@
     <ClInclude Include="d3dUtil.h" />
     <ClInclude Include="DDSTextureLoader.h" />
     <ClInclude Include="DX12RHI.h" />
+    <ClInclude Include="DXPrimitive.h" />
     <ClInclude Include="FActor.h" />
     <ClInclude Include="FAssetManager.h" />
     <ClInclude Include="FInputBase.h" />
@@ -168,7 +169,9 @@
     <ClInclude Include="FMaterialDesc.h" />
     <ClInclude Include="ForwardRenderer.h" />
     <ClInclude Include="DXPrimitiveDesc.h" />
+    <ClInclude Include="FPrimitive.h" />
     <ClInclude Include="FRenderer.h" />
+    <ClInclude Include="FRenderScene.h" />
     <ClInclude Include="FScene.h" />
     <ClInclude Include="FSemaphore.h" />
     <ClInclude Include="FSingleton.h" />
@@ -193,6 +196,7 @@
     <ClCompile Include="d3dUtil.cpp" />
     <ClCompile Include="DDSTextureLoader.cpp" />
     <ClCompile Include="DX12RHI.cpp" />
+    <ClCompile Include="DXPrimitive.cpp" />
     <ClCompile Include="DXPrimitiveDesc.cpp" />
     <ClCompile Include="FActor.cpp" />
     <ClCompile Include="FAssetManager.cpp" />

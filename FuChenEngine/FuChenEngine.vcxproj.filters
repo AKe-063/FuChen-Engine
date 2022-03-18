@@ -141,6 +141,15 @@
     <ClInclude Include="RHIParameterType.h">
       <Filter>Header Files\Render</Filter>
     </ClInclude>
+    <ClInclude Include="FPrimitive.h">
+      <Filter>Header Files\Render</Filter>
+    </ClInclude>
+    <ClInclude Include="FRenderScene.h">
+      <Filter>Header Files\Render</Filter>
+    </ClInclude>
+    <ClInclude Include="DXPrimitive.h">
+      <Filter>Header Files\Render\DX</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="stdafx.cpp">
@@ -211,6 +220,9 @@
     </ClCompile>
     <ClCompile Include="FRenderer.cpp">
       <Filter>Source Files\Render</Filter>
+    </ClCompile>
+    <ClCompile Include="DXPrimitive.cpp">
+      <Filter>Source Files\Render\DX</Filter>
     </ClCompile>
   </ItemGroup>
 </Project>

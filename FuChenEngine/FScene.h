@@ -19,11 +19,9 @@ public:
 
 	void Update();
 
-protected:
-	std::unordered_map<std::string, FActor> actors;
-
 private:
 	std::unique_ptr<Camera> mCamera;
 	std::vector<std::string> names;
 	std::vector<std::string> actorCount;
+	std::unordered_map<std::string, FActor> actors;
 };
