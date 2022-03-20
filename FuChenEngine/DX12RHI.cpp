@@ -507,23 +507,23 @@ void DX12RHI::BuildGeometry()
 				assert(0);
 			}
 
-			DXPrimitiveDesc priDesc;
-			priDesc.geo.Name = meshInfo.name;
-			priDesc.geo.mMeshWorld = mWorld;
+			std::shared_ptr<FPrimitive> priDesc = std::make_shared<DXPrimitive>();
+			priDesc->GetMeshGeometryInfo().Name = meshInfo.name;
+			priDesc->GetMeshGeometryInfo().mMeshWorld = mWorld;
 
-			priDesc.geo.Rotation = mat4_cast(qua<float>(
+			priDesc->GetMeshGeometryInfo().Rotation = mat4_cast(qua<float>(
 				fMeshInfo.transform.Rotation.w,
 				fMeshInfo.transform.Rotation.x,
 				fMeshInfo.transform.Rotation.y,
 				fMeshInfo.transform.Rotation.z
 				));
 
-			priDesc.geo.mMeshWorld = translate(
-				priDesc.geo.mMeshWorld,
+			priDesc->GetMeshGeometryInfo().mMeshWorld = translate(
+				priDesc->GetMeshGeometryInfo().mMeshWorld,
 				vec3(fMeshInfo.transform.Translation.x,
 					fMeshInfo.transform.Translation.y,
 					fMeshInfo.transform.Translation.z
-				)) * priDesc.geo.Rotation * scale(
+				)) * priDesc->GetMeshGeometryInfo().Rotation * scale(
 						vec3(fMeshInfo.transform.Scale3D.x,
 							fMeshInfo.transform.Scale3D.y,
 							fMeshInfo.transform.Scale3D.z));
@@ -546,29 +546,29 @@ void DX12RHI::BuildGeometry()
 			const UINT vbByteSize = (UINT)vertices.size() * sizeof(Vertex);
 			const UINT ibByteSize = (UINT)indices.size() * sizeof(std::uint16_t);
 
-			ThrowIfFailed(D3DCreateBlob(vbByteSize, &priDesc.geo.VertexBufferCPU));
-			CopyMemory(priDesc.geo.VertexBufferCPU->GetBufferPointer(), vertices.data(), vbByteSize);
+			ThrowIfFailed(D3DCreateBlob(vbByteSize, &priDesc->GetMeshGeometryInfo().VertexBufferCPU));
+			CopyMemory(priDesc->GetMeshGeometryInfo().VertexBufferCPU->GetBufferPointer(), vertices.data(), vbByteSize);
 
-			ThrowIfFailed(D3DCreateBlob(ibByteSize, &priDesc.geo.IndexBufferCPU));
-			CopyMemory(priDesc.geo.IndexBufferCPU->GetBufferPointer(), indices.data(), ibByteSize);
+			ThrowIfFailed(D3DCreateBlob(ibByteSize, &priDesc->GetMeshGeometryInfo().IndexBufferCPU));
+			CopyMemory(priDesc->GetMeshGeometryInfo().IndexBufferCPU->GetBufferPointer(), indices.data(), ibByteSize);
 
-			priDesc.geo.VertexBufferGPU = d3dUtil::CreateDefaultBuffer(md3dDevice.Get(),
-				mCommandList.Get(), vertices.data(), vbByteSize, priDesc.geo.VertexBufferUploader);
+			priDesc->GetMeshGeometryInfo().VertexBufferGPU = d3dUtil::CreateDefaultBuffer(md3dDevice.Get(),
+				mCommandList.Get(), vertices.data(), vbByteSize, priDesc->GetMeshGeometryInfo().VertexBufferUploader);
 
-			priDesc.geo.IndexBufferGPU = d3dUtil::CreateDefaultBuffer(md3dDevice.Get(),
-				mCommandList.Get(), indices.data(), ibByteSize, priDesc.geo.IndexBufferUploader);
+			priDesc->GetMeshGeometryInfo().IndexBufferGPU = d3dUtil::CreateDefaultBuffer(md3dDevice.Get(),
+				mCommandList.Get(), indices.data(), ibByteSize, priDesc->GetMeshGeometryInfo().IndexBufferUploader);
 
-			priDesc.geo.VertexByteStride = sizeof(Vertex);
-			priDesc.geo.VertexBufferByteSize = vbByteSize;
-			priDesc.geo.IndexFormat = DXGI_FORMAT_R16_UINT;
-			priDesc.geo.IndexBufferByteSize = ibByteSize;
+			priDesc->GetMeshGeometryInfo().VertexByteStride = sizeof(Vertex);
+			priDesc->GetMeshGeometryInfo().VertexBufferByteSize = vbByteSize;
+			priDesc->GetMeshGeometryInfo().IndexFormat = DXGI_FORMAT_R16_UINT;
+			priDesc->GetMeshGeometryInfo().IndexBufferByteSize = ibByteSize;
 
 			SubmeshGeometry submesh;
 			submesh.IndexCount = (UINT)indices.size();
 			submesh.StartIndexLocation = 0;
 			submesh.BaseVertexLocation = 0;
 
-			priDesc.geo.DrawArgs[priDesc.geo.Name] = submesh;
+			priDesc->GetMeshGeometryInfo().DrawArgs[priDesc->GetMeshGeometryInfo().Name] = submesh;
 			
 			mPrimitives.push_back(priDesc);
 			AddConstantBuffer();
@@ -622,7 +622,7 @@ void DX12RHI::AddConstantBuffer()
 
 	md3dDevice->CreateConstantBufferView(&cbvDesc, handle);
 	mObjectCB.push_back(objConstant);
-	mPrimitives[mPrimitives.size() - 1].objCBIndex = mObjectCB.size() - 1;
+	mPrimitives[mPrimitives.size() - 1]->SetIndex(mObjectCB.size() - 1);
 }
 
 void DX12RHI::AddGeometry()
@@ -644,12 +644,12 @@ void DX12RHI::AddGeometry()
 			throw(0);
 		}
 		
-		DXPrimitiveDesc priDesc;
-		priDesc.geo.Name = meshInfo.name;
-		priDesc.geo.mMeshWorld = mWorld;
+		std::shared_ptr<FPrimitive> priDesc = std::make_shared<DXPrimitive>();
+		priDesc->GetMeshGeometryInfo().Name = meshInfo.name;
+		priDesc->GetMeshGeometryInfo().mMeshWorld = mWorld;
 
-		priDesc.geo.mMeshWorld = translate(
-			priDesc.geo.mMeshWorld,
+		priDesc->GetMeshGeometryInfo().mMeshWorld = translate(
+			priDesc->GetMeshGeometryInfo().mMeshWorld,
 			vec3(fMeshInfo.transform.Translation.x,
 				fMeshInfo.transform.Translation.y,
 				fMeshInfo.transform.Translation.z
@@ -680,29 +680,29 @@ void DX12RHI::AddGeometry()
 		const UINT vbByteSize = (UINT)vertices.size() * sizeof(Vertex);
 		const UINT ibByteSize = (UINT)indices.size() * sizeof(std::uint16_t);
 
-		ThrowIfFailed(D3DCreateBlob(vbByteSize, &priDesc.geo.VertexBufferCPU));
-		CopyMemory(priDesc.geo.VertexBufferCPU->GetBufferPointer(), vertices.data(), vbByteSize);
+		ThrowIfFailed(D3DCreateBlob(vbByteSize, &priDesc->GetMeshGeometryInfo().VertexBufferCPU));
+		CopyMemory(priDesc->GetMeshGeometryInfo().VertexBufferCPU->GetBufferPointer(), vertices.data(), vbByteSize);
 
-		ThrowIfFailed(D3DCreateBlob(ibByteSize, &priDesc.geo.IndexBufferCPU));
-		CopyMemory(priDesc.geo.IndexBufferCPU->GetBufferPointer(), indices.data(), ibByteSize);
+		ThrowIfFailed(D3DCreateBlob(ibByteSize, &priDesc->GetMeshGeometryInfo().IndexBufferCPU));
+		CopyMemory(priDesc->GetMeshGeometryInfo().IndexBufferCPU->GetBufferPointer(), indices.data(), ibByteSize);
 
-		priDesc.geo.VertexBufferGPU = d3dUtil::CreateDefaultBuffer(md3dDevice.Get(),
-			mCommandList.Get(), vertices.data(), vbByteSize, priDesc.geo.VertexBufferUploader);
+		priDesc->GetMeshGeometryInfo().VertexBufferGPU = d3dUtil::CreateDefaultBuffer(md3dDevice.Get(),
+			mCommandList.Get(), vertices.data(), vbByteSize, priDesc->GetMeshGeometryInfo().VertexBufferUploader);
 
-		priDesc.geo.IndexBufferGPU = d3dUtil::CreateDefaultBuffer(md3dDevice.Get(),
-			mCommandList.Get(), indices.data(), ibByteSize, priDesc.geo.IndexBufferUploader);
+		priDesc->GetMeshGeometryInfo().IndexBufferGPU = d3dUtil::CreateDefaultBuffer(md3dDevice.Get(),
+			mCommandList.Get(), indices.data(), ibByteSize, priDesc->GetMeshGeometryInfo().IndexBufferUploader);
 
-		priDesc.geo.VertexByteStride = sizeof(Vertex);
-		priDesc.geo.VertexBufferByteSize = vbByteSize;
-		priDesc.geo.IndexFormat = DXGI_FORMAT_R16_UINT;
-		priDesc.geo.IndexBufferByteSize = ibByteSize;
+		priDesc->GetMeshGeometryInfo().VertexByteStride = sizeof(Vertex);
+		priDesc->GetMeshGeometryInfo().VertexBufferByteSize = vbByteSize;
+		priDesc->GetMeshGeometryInfo().IndexFormat = DXGI_FORMAT_R16_UINT;
+		priDesc->GetMeshGeometryInfo().IndexBufferByteSize = ibByteSize;
 
 		SubmeshGeometry submesh;
 		submesh.IndexCount = (UINT)indices.size();
 		submesh.StartIndexLocation = 0;
 		submesh.BaseVertexLocation = 0;
 
-		priDesc.geo.DrawArgs[priDesc.geo.Name] = submesh;
+		priDesc->GetMeshGeometryInfo().DrawArgs[priDesc->GetMeshGeometryInfo().Name] = submesh;
 		mPrimitives.push_back(priDesc);
 
 		AddConstantBuffer();
@@ -798,21 +798,21 @@ void DX12RHI::DrawPrimitive()
 	ID3D12DescriptorHeap* descriptorHeaps[] = { mCbvHeap.Get() };
 	for (int i = 0; i < mPrimitives.size(); i++)
 	{
-		mCommandList->IASetVertexBuffers(0, 1, &mPrimitives[i].geo.VertexBufferView());
-		mCommandList->IASetIndexBuffer(&mPrimitives[i].geo.IndexBufferView());
+		mCommandList->IASetVertexBuffers(0, 1, &mPrimitives[i]->GetMeshGeometryInfo().VertexBufferView());
+		mCommandList->IASetIndexBuffer(&mPrimitives[i]->GetMeshGeometryInfo().IndexBufferView());
 		mCommandList->IASetPrimitiveTopology(D3D11_PRIMITIVE_TOPOLOGY_TRIANGLELIST);
 
 		//mat4 worldViewProj = Engine::GetInstance().GetFScene()->GetCamera()->GetProj() * Engine::GetInstance().GetFScene()->GetCamera()->GetView() * mMeshes[i].mMeshWorld;
 
 		// Update the constant buffer with the latest worldViewProj matrix.
 		ObjectConstants objConstants;
-		objConstants.Roatation = transpose(mPrimitives[i].geo.Rotation);
+		objConstants.Roatation = transpose(mPrimitives[i]->GetMeshGeometryInfo().Rotation);
 		objConstants.Proj = transpose(Engine::GetInstance().GetFScene()->GetCamera()->GetProj());
 		objConstants.View = transpose(Engine::GetInstance().GetFScene()->GetCamera()->GetView());
-		objConstants.World = transpose(mPrimitives[i].geo.mMeshWorld);
+		objConstants.World = transpose(mPrimitives[i]->GetMeshGeometryInfo().mMeshWorld);
 		objConstants.time = Engine::GetInstance().GetTimer()->TotalTime();
 		/*mPrimitives[i].objectCB->CopyData(0, objConstants);*/
-		mObjectCB[mPrimitives[i].objCBIndex]->CopyData(0, objConstants);
+		mObjectCB[mPrimitives[i]->GetIndex()]->CopyData(0, objConstants);
 
 		mCommandList->SetDescriptorHeaps(_countof(descriptorHeapsSRV), descriptorHeapsSRV);
 		auto handle1 = CD3DX12_GPU_DESCRIPTOR_HANDLE(mSrvDescriptorHeap->GetGPUDescriptorHandleForHeapStart());
@@ -828,7 +828,7 @@ void DX12RHI::DrawPrimitive()
 		//mCommandList->SetGraphicsRootConstantBufferView(0, );
 
 		mCommandList->DrawIndexedInstanced(
-			mPrimitives[i].geo.DrawArgs[mPrimitives[i].geo.Name].IndexCount,
+			mPrimitives[i]->GetMeshGeometryInfo().DrawArgs[mPrimitives[i]->GetMeshGeometryInfo().Name].IndexCount,
 			1, 0, 0, 0);
 	}
 }
@@ -861,6 +861,11 @@ TAGRECT DX12RHI::GetTagRect()
 	tagRect.left = mScissorRect.left;
 	tagRect.top = mScissorRect.top;
 	return tagRect;
+}
+
+void DX12RHI::CreatePrimitive()
+{
+
 }
 
 void DX12RHI::CloseCommandList()

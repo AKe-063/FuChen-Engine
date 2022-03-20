@@ -168,7 +168,6 @@
     <ClInclude Include="FMaterial.h" />
     <ClInclude Include="FMaterialDesc.h" />
     <ClInclude Include="ForwardRenderer.h" />
-    <ClInclude Include="DXPrimitiveDesc.h" />
     <ClInclude Include="FPrimitive.h" />
     <ClInclude Include="FRenderer.h" />
     <ClInclude Include="FRenderScene.h" />
@@ -197,12 +196,12 @@
     <ClCompile Include="DDSTextureLoader.cpp" />
     <ClCompile Include="DX12RHI.cpp" />
     <ClCompile Include="DXPrimitive.cpp" />
-    <ClCompile Include="DXPrimitiveDesc.cpp" />
     <ClCompile Include="FActor.cpp" />
     <ClCompile Include="FAssetManager.cpp" />
     <ClCompile Include="FInputBase.cpp" />
     <ClCompile Include="FMaterial.cpp" />
     <ClCompile Include="ForwardRenderer.cpp" />
+    <ClCompile Include="FPrimitive.cpp" />
     <ClCompile Include="FRenderer.cpp" />
     <ClCompile Include="FScene.cpp" />
     <ClCompile Include="FTexture.cpp" />

@@ -120,9 +120,6 @@
     <ClInclude Include="RHI.h">
       <Filter>Header Files\Render</Filter>
     </ClInclude>
-    <ClInclude Include="DXPrimitiveDesc.h">
-      <Filter>Header Files\Render\DX</Filter>
-    </ClInclude>
     <ClInclude Include="FMaterial.h">
       <Filter>Header Files\Resource</Filter>
     </ClInclude>
@@ -209,9 +206,6 @@
     <ClCompile Include="RHI.cpp">
       <Filter>Source Files\Render</Filter>
     </ClCompile>
-    <ClCompile Include="DXPrimitiveDesc.cpp">
-      <Filter>Source Files\Render\DX</Filter>
-    </ClCompile>
     <ClCompile Include="FMaterial.cpp">
       <Filter>Source Files\Resource</Filter>
     </ClCompile>
@@ -223,6 +217,9 @@
     </ClCompile>
     <ClCompile Include="DXPrimitive.cpp">
       <Filter>Source Files\Render\DX</Filter>
+    </ClCompile>
+    <ClCompile Include="FPrimitive.cpp">
+      <Filter>Source Files\Render</Filter>
     </ClCompile>
   </ItemGroup>
 </Project>

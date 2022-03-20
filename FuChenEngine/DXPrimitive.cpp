@@ -9,7 +9,17 @@ DXPrimitive::~DXPrimitive()
 {
 }
 
-// DXPrimitiveDesc DXPrimitive::GetDesc()
-// {
-// 	return dxPriDesc;
-// }
+int DXPrimitive::GetIndex()
+{
+	return objCBIndex;
+}
+
+void DXPrimitive::SetIndex(const int& index)
+{
+	objCBIndex = index;
+}
+
+MeshGeometry& DXPrimitive::GetMeshGeometryInfo()
+{
+	return geo;
+}

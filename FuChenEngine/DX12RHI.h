@@ -4,7 +4,7 @@
 #include "FScene.h"
 #include "FAssetManager.h"
 #include "RHI.h"
-#include "DXPrimitiveDesc.h"
+#include "DXPrimitive.h"
 
 class DX12RHI : public RHI
 {
@@ -52,6 +52,7 @@ public:
 	virtual void EndDraw()override;
 	virtual VIEWPORT GetViewport()override;
 	virtual TAGRECT GetTagRect()override;
+	virtual void CreatePrimitive()override;
 
 protected:
 	//Draw process
@@ -77,7 +78,7 @@ protected:
 	void LogOutputDisplayModes(IDXGIOutput* output, DXGI_FORMAT format);
 
 private:
-	std::vector<DXPrimitiveDesc> mPrimitives;
+	std::vector<std::shared_ptr<FPrimitive>> mPrimitives;
 	ComPtr<ID3D12DescriptorHeap> mCbvHeap;
 	ComPtr<ID3D12DescriptorHeap> mSrvDescriptorHeap = nullptr;
 	std::vector<std::shared_ptr<UploadBuffer<ObjectConstants>>> mObjectCB;

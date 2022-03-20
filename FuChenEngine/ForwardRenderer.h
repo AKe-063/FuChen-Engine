@@ -2,7 +2,6 @@
 #include "RHI.h"
 #include "FRenderer.h"
 
-//Ç°ÏîäÖÈ¾ 
 class ForwardRenderer : public FRenderer
 {
 public:

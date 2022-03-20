@@ -21,9 +21,5 @@ public:
 	virtual void SetGraphicsRootSignature() = 0;
 	virtual void DrawPrimitive() = 0;
 	virtual void EndDraw() = 0;
-// 
-// protected:
-// 	VIEWPORT viewport;
-// 	TAGRECT tagRect;
-
+	virtual void CreatePrimitive() = 0;
 };

@@ -1,14 +1,17 @@
 #pragma once
-#include "DXPrimitiveDesc.h"
+#include "FPrimitive.h"
 
-class DXPrimitive
+class DXPrimitive : public FPrimitive
 {
 public:
 	DXPrimitive();
-	~DXPrimitive();
+	virtual ~DXPrimitive();
 
-	//DXPrimitiveDesc GetDesc();
+	virtual int GetIndex()override;
+	virtual void SetIndex(const int& index)override;
+	virtual MeshGeometry& GetMeshGeometryInfo()override;
 
 private:
-	//DXPrimitiveDesc dxPriDesc;
+	MeshGeometry geo;
+	int objCBIndex = -1;
 };
