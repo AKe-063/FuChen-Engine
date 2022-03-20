@@ -1,4 +1,6 @@
 #pragma once
+#include "FRenderScene.h"
+#include "FActor.h"
 
 class FRenderer
 {
@@ -9,10 +11,7 @@ public:
 	virtual void Init() = 0;
 	virtual void Destroy() = 0;
 	virtual void Render() = 0;
-	virtual void BuildPrimitives() = 0;
+	virtual void BuildPrimitive(FActor& actor) = 0;
 	virtual void Draw() = 0;
 	virtual void BuildInitialMap() = 0;
-
-private:
-
 };

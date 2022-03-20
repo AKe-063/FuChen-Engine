@@ -203,6 +203,7 @@
     <ClCompile Include="ForwardRenderer.cpp" />
     <ClCompile Include="FPrimitive.cpp" />
     <ClCompile Include="FRenderer.cpp" />
+    <ClCompile Include="FRenderScene.cpp" />
     <ClCompile Include="FScene.cpp" />
     <ClCompile Include="FTexture.cpp" />
     <ClCompile Include="FWin32Input.cpp" />

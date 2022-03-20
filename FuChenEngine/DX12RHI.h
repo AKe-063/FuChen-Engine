@@ -30,16 +30,12 @@ public:
 	void BuildShaderResourceView();
 	void BuildRootSignature();
 	void BuildShadersAndInputLayout();
-	void BuildGeometry();
 	void BuildPSO();
 	virtual void BuildInitialMap()override;
 	void BuildNewTexture(const std::string& name, const std::wstring& textureFilePath);
 	void BuildAllTextures();
 	void InitConstantBuffers();
-
-	void AddConstantBuffer();
-	void AddGeometry();
-	void AddNewBuild();
+	void AddConstantBuffer(FPrimitive& fPrimitive);
 
 	//Abstract RHI
 	virtual void StartDraw()override;
@@ -48,11 +44,11 @@ public:
 	virtual void ClearBackBufferAndDepthBuffer(const float* color, float depth, unsigned int stencil, unsigned int numRects)override;
 	virtual void SetRenderTargets(unsigned int numRenderTarget)override;
 	virtual void SetGraphicsRootSignature()override;
-	virtual void DrawPrimitive()override;
+	virtual void DrawFRenderScene(FRenderScene& fRenderScene)override;
 	virtual void EndDraw()override;
 	virtual VIEWPORT GetViewport()override;
 	virtual TAGRECT GetTagRect()override;
-	virtual void CreatePrimitive()override;
+	virtual FPrimitive* CreatePrimitive(FActor& actor)override;
 
 protected:
 	//Draw process
@@ -78,7 +74,6 @@ protected:
 	void LogOutputDisplayModes(IDXGIOutput* output, DXGI_FORMAT format);
 
 private:
-	std::vector<std::shared_ptr<FPrimitive>> mPrimitives;
 	ComPtr<ID3D12DescriptorHeap> mCbvHeap;
 	ComPtr<ID3D12DescriptorHeap> mSrvDescriptorHeap = nullptr;
 	std::vector<std::shared_ptr<UploadBuffer<ObjectConstants>>> mObjectCB;
@@ -87,7 +82,6 @@ private:
 	ComPtr<ID3DBlob> mpsByteCode = nullptr;
 	std::vector<D3D12_INPUT_ELEMENT_DESC> mInputLayout;
 	ComPtr<ID3D12PipelineState> mPSO = nullptr;
-	//std::vector<MeshGeometry> mMeshes;
 
 	mat4x4 mWorld = MathHelper::Identity4x4();
 
@@ -121,6 +115,9 @@ private:
 	UINT mRtvDescriptorSize = 0;
 	UINT mDsvDescriptorSize = 0;
 	UINT mCbvSrvUavDescriptorSize = 0;
+
+	//ConstantBufferIndexCount
+	int mCbvCount = 0;
 
 	Window* mWindow;
 };

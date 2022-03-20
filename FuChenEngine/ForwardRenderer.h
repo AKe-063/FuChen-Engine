@@ -11,10 +11,12 @@ public:
 	virtual void Init()override;
 	virtual void Destroy()override;
 	virtual void Render()override;
-	virtual void BuildPrimitives()override;
+	virtual void BuildPrimitive(FActor& actor)override;
 	virtual void Draw()override;
 	virtual void BuildInitialMap()override;
 
 private:
 	std::unique_ptr<RHI> rhi;
+	FRenderScene fRenderScene;
+	int flagOfTest = 0;
 };

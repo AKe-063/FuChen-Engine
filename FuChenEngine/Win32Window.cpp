@@ -177,7 +177,8 @@ bool Win32Window::Run()
 			{
 				CalculateFrameStats();
 				Engine::GetInstance().Update();
-				Engine::GetInstance().GetRenderer()->Draw();
+				//Engine::GetInstance().GetRenderer()->Draw();
+				Engine::GetInstance().GetRenderer()->Render();
 			}
 			else
 			{

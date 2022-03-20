@@ -221,5 +221,8 @@
     <ClCompile Include="FPrimitive.cpp">
       <Filter>Source Files\Render</Filter>
     </ClCompile>
+    <ClCompile Include="FRenderScene.cpp">
+      <Filter>Source Files\Render</Filter>
+    </ClCompile>
   </ItemGroup>
 </Project>

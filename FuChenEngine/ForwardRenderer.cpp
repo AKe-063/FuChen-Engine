@@ -1,6 +1,7 @@
 #include "stdafx.h"
 #include "ForwardRenderer.h"
 #include "DX12RHI.h"
+#include "Engine.h"
 
 ForwardRenderer::ForwardRenderer()
 {
@@ -26,18 +27,24 @@ void ForwardRenderer::Destroy()
 
 void ForwardRenderer::Render()
 {
-	BuildPrimitives();
+	if (flagOfTest == 0)
+	{
+		for (auto actor : Engine::GetInstance().GetFScene()->GetAllActor())
+		{
+			BuildPrimitive(actor.second);
+		}
+		flagOfTest++;
+	}
 	Draw();
 }
 
-void ForwardRenderer::BuildPrimitives()
+void ForwardRenderer::BuildPrimitive(FActor& actor)
 {
-
+		fRenderScene.AddPrimitive(rhi->CreatePrimitive(actor));
 }
 
 void ForwardRenderer::Draw()
 {
-	//rhi->Draw();
 	rhi->StartDraw();
 	rhi->RSSetViewPorts(1, &rhi->GetViewport());
 	rhi->RESetScissorRects(1, &rhi->GetTagRect());
@@ -45,7 +52,7 @@ void ForwardRenderer::Draw()
 	rhi->ClearBackBufferAndDepthBuffer(color, 1.0f, 0, 0);
 	rhi->SetRenderTargets(1);
 	rhi->SetGraphicsRootSignature();
-	rhi->DrawPrimitive();
+	rhi->DrawFRenderScene(fRenderScene);
 	rhi->EndDraw();
 }
 
