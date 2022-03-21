@@ -48,7 +48,7 @@ public:
 	virtual void EndDraw()override;
 	virtual VIEWPORT GetViewport()override;
 	virtual TAGRECT GetTagRect()override;
-	virtual FPrimitive* CreatePrimitive(FActor& actor)override;
+	virtual void CreatePrimitive(FActor& actor, FRenderScene& fRenderScene)override;
 
 protected:
 	//Draw process
@@ -74,7 +74,7 @@ protected:
 	void LogOutputDisplayModes(IDXGIOutput* output, DXGI_FORMAT format);
 
 private:
-	ComPtr<ID3D12DescriptorHeap> mCbvHeap;
+	ComPtr<ID3D12DescriptorHeap> mCbvHeap = nullptr;
 	ComPtr<ID3D12DescriptorHeap> mSrvDescriptorHeap = nullptr;
 	std::vector<std::shared_ptr<UploadBuffer<ObjectConstants>>> mObjectCB;
 	ComPtr<ID3D12RootSignature> mRootSignature = nullptr;

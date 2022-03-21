@@ -40,7 +40,7 @@ void ForwardRenderer::Render()
 
 void ForwardRenderer::BuildPrimitive(FActor& actor)
 {
-		fRenderScene.AddPrimitive(rhi->CreatePrimitive(actor));
+	rhi->CreatePrimitive(actor, fRenderScene);
 }
 
 void ForwardRenderer::Draw()

@@ -24,5 +24,5 @@ public:
 	virtual void SetGraphicsRootSignature() = 0;
 	virtual void DrawFRenderScene(FRenderScene& fRenderScene) = 0;
 	virtual void EndDraw() = 0;
-	virtual FPrimitive* CreatePrimitive(FActor& actor) = 0;
+	virtual void CreatePrimitive(FActor& actor, FRenderScene& fRenderScene) = 0;
 };

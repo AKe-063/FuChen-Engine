@@ -12,7 +12,12 @@ DX12RHI::DX12RHI()
 
 DX12RHI::~DX12RHI()
 {
+/*	OutputDebugStringA(std::to_string(mObjectCB[0].use_count()).c_str());*/
 
+// 	ComPtr<ID3D12DebugDevice> mDebugDevice;
+// 	md3dDevice->QueryInterface(mDebugDevice.GetAddressOf());
+// 	HRESULT hr = md3dDevice->QueryInterface(__uuidof(ID3D12DebugDevice), reinterpret_cast<void**>(mDebugDevice.GetAddressOf()));
+// 	mDebugDevice->ReportLiveDeviceObjects(D3D12_RLDO_DETAIL);
 }
 
 void DX12RHI::OnResize()
@@ -430,38 +435,6 @@ void DX12RHI::BuildShaderResourceView()
 
 void DX12RHI::BuildRootSignature()
 {
-	// 	// Root parameter can be a table, root descriptor or root constants.
-	// 	CD3DX12_ROOT_PARAMETER slotRootParameter[2];
-	// 
-	// 	// Create a single descriptor table of CBVs.
-	// 	CD3DX12_DESCRIPTOR_RANGE cbvTable;
-	// 	cbvTable.Init(D3D12_DESCRIPTOR_RANGE_TYPE_CBV, 1, 0);
-	// 	slotRootParameter[0].InitAsDescriptorTable(1, &cbvTable);
-	// 
-	// 	CD3DX12_DESCRIPTOR_RANGE texTable;
-	// 	texTable.Init(D3D12_DESCRIPTOR_RANGE_TYPE_SRV, 1, 0);
-	// 	slotRootParameter[1].InitAsDescriptorTable(1, &texTable);
-	// 
-	// 	auto staticSamplers = GetStaticSamplers();
-	// 
-	// 	// A root signature is an array of root parameters.
-	// 	CD3DX12_ROOT_SIGNATURE_DESC rootSigDesc(2, slotRootParameter, (UINT)staticSamplers.size(), staticSamplers.data(),
-	// 		D3D12_ROOT_SIGNATURE_FLAG_ALLOW_INPUT_ASSEMBLER_INPUT_LAYOUT);
-	// // 	CD3DX12_ROOT_SIGNATURE_DESC rootSigDesc(2, slotRootParameter, 0, nullptr,
-	// // 		D3D12_ROOT_SIGNATURE_FLAG_ALLOW_INPUT_ASSEMBLER_INPUT_LAYOUT);
-	// 
-		// create a root signature with a single slot which points to a descriptor range consisting of a single constant buffer
-	// 	ComPtr<ID3DBlob> serializedRootSig = nullptr;
-	// 	ComPtr<ID3DBlob> errorBlob = nullptr;
-	// 	HRESULT hr = D3D12SerializeRootSignature(&rootSigDesc, D3D_ROOT_SIGNATURE_VERSION_1,
-	// 		serializedRootSig.GetAddressOf(), errorBlob.GetAddressOf());
-	// 
-	// 	if (errorBlob != nullptr)
-	// 	{
-	// 		::OutputDebugStringA((char*)errorBlob->GetBufferPointer());
-	// 	}
-	// 	ThrowIfFailed(hr);
-
 	ThrowIfFailed(md3dDevice->CreateRootSignature(
 		0,
 		mvsByteCode->GetBufferPointer(),
@@ -673,12 +646,11 @@ TAGRECT DX12RHI::GetTagRect()
 	return tagRect;
 }
 
-FPrimitive* DX12RHI::CreatePrimitive(FActor& actor)
+void DX12RHI::CreatePrimitive(FActor& actor, FRenderScene& fRenderScene)
 {
 	std::vector<Vertex> vertices;
 	Vertex vertice;
 	ActorInfo actorInfo = actor.GetActorInfo();
-	DXPrimitive* priDesc = new DXPrimitive();
 
 	for (FMeshInfoStruct fMeshInfo : actorInfo.staticMeshes)
 	{
@@ -693,6 +665,7 @@ FPrimitive* DX12RHI::CreatePrimitive(FActor& actor)
 			throw(0);
 		}
 
+		DXPrimitive* priDesc = new DXPrimitive();
 		priDesc->GetMeshGeometryInfo().Name = meshInfo.name;
 		priDesc->GetMeshGeometryInfo().mMeshWorld = mWorld;
 
@@ -757,8 +730,8 @@ FPrimitive* DX12RHI::CreatePrimitive(FActor& actor)
 		priDesc->GetMeshGeometryInfo().DrawArgs[priDesc->GetMeshGeometryInfo().Name] = submesh;
 
 		AddConstantBuffer(*priDesc);
+		fRenderScene.AddPrimitive(priDesc);
 	}
-	return priDesc;
 }
 
 void DX12RHI::CloseCommandList()
