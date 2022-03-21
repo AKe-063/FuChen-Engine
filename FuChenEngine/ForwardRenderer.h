@@ -18,5 +18,4 @@ public:
 private:
 	std::unique_ptr<RHI> rhi;
 	FRenderScene fRenderScene;
-	int flagOfTest = 0;
 };
