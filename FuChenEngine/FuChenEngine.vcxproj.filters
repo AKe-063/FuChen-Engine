@@ -126,9 +126,6 @@
     <ClInclude Include="FTexture.h">
       <Filter>Header Files\Resource</Filter>
     </ClInclude>
-    <ClInclude Include="FTextureStruct.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
     <ClInclude Include="FMaterialDesc.h">
       <Filter>Header Files\Resource</Filter>
     </ClInclude>
@@ -146,6 +143,9 @@
     </ClInclude>
     <ClInclude Include="DXPrimitive.h">
       <Filter>Header Files\Render\DX</Filter>
+    </ClInclude>
+    <ClInclude Include="FTextureStruct.h">
+      <Filter>Header Files\Resource</Filter>
     </ClInclude>
   </ItemGroup>
   <ItemGroup>

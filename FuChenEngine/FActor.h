@@ -4,6 +4,7 @@
 class FActor
 {
 public:
+	FActor() = default;
 	FActor(const ActorInfo actorIn);
 	FActor(const std::string& name, std::vector<FMeshInfoStruct>);
 	~FActor();

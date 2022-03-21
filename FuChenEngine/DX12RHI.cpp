@@ -665,7 +665,7 @@ void DX12RHI::CreatePrimitive(FActor& actor, FRenderScene& fRenderScene)
 			throw(0);
 		}
 
-		DXPrimitive* priDesc = new DXPrimitive();
+		std::shared_ptr<DXPrimitive> priDesc = std::make_shared<DXPrimitive>();
 		priDesc->GetMeshGeometryInfo().Name = meshInfo.name;
 		priDesc->GetMeshGeometryInfo().mMeshWorld = mWorld;
 

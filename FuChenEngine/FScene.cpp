@@ -47,6 +47,7 @@ bool FScene::LoadAllActors(const std::string& filePath)
 	for (std::string name : names)
 	{
 		actors.insert({ name, Ar->DeserializeActorInfo(name) });
+		dirtyActor.push_back(name);
 	}
 	return true;
 }
@@ -95,6 +96,16 @@ void FScene::DelAActor(const std::string& name)
 std::unordered_map<std::string, FActor>& FScene::GetAllActor()
 {
 	return actors;
+}
+
+std::vector<std::string> FScene::GetDirtyActor()
+{
+	return dirtyActor;
+}
+
+void FScene::EraseDirtyActorByIndex(const int& index)
+{
+	dirtyActor.erase(dirtyActor.begin() + index);
 }
 
 void FScene::Update()

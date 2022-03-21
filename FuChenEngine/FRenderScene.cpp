@@ -11,10 +11,9 @@ FRenderScene::~FRenderScene()
 	
 }
 
-void FRenderScene::AddPrimitive(FPrimitive* primitive)
+void FRenderScene::AddPrimitive(std::shared_ptr<FPrimitive> primitive)
 {
-	std::shared_ptr<FPrimitive> pri(primitive);
-	fPrimitives.push_back(std::move(pri));
+	fPrimitives.push_back(primitive);
 }
 
 FPrimitive& FRenderScene::GetPrimitive(const int& index)

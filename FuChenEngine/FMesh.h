@@ -1,5 +1,6 @@
 #pragma once
 #include "MeshDescribe.h"
+#include "FMaterial.h"
 
 class FMesh
 {
@@ -7,9 +8,7 @@ public:
 	FMesh();
 	virtual ~FMesh();
 
-protected:
-	AssetInfo asset;
-
 private:
-
+	AssetInfo asset;
+	FMaterial material;
 };

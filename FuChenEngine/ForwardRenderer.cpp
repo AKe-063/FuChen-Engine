@@ -27,13 +27,11 @@ void ForwardRenderer::Destroy()
 
 void ForwardRenderer::Render()
 {
-	if (flagOfTest == 0)
+	std::unordered_map<std::string, FActor> allActorMap = Engine::GetInstance().GetFScene()->GetAllActor();
+	for (std::string renderActorName : Engine::GetInstance().GetFScene()->GetDirtyActor())
 	{
-		for (auto actor : Engine::GetInstance().GetFScene()->GetAllActor())
-		{
-			BuildPrimitive(actor.second);
-		}
-		flagOfTest++;
+		BuildPrimitive(allActorMap[renderActorName]);
+		Engine::GetInstance().GetFScene()->EraseDirtyActorByIndex(0);
 	}
 	Draw();
 }

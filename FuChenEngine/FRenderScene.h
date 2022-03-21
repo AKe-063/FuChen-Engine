@@ -7,7 +7,7 @@ public:
 	FRenderScene();
 	~FRenderScene();
 
-	void AddPrimitive(FPrimitive* primitive);
+	void AddPrimitive(std::shared_ptr<FPrimitive> primitive);
 	FPrimitive& GetPrimitive(const int& index);
 	int GetNumPrimitive();
 
