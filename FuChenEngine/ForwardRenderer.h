@@ -1,6 +1,6 @@
 #pragma once
-#include "RHI.h"
 #include "FRenderer.h"
+#include "RHI.h"
 
 class ForwardRenderer : public FRenderer
 {
@@ -16,6 +16,6 @@ public:
 	virtual void BuildInitialMap()override;
 
 private:
-	std::unique_ptr<RHI> rhi;
+	RHI* rhi;
 	FRenderScene fRenderScene;
 };

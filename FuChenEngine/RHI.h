@@ -8,6 +8,11 @@ class RHI
 {
 public:
 	virtual ~RHI();
+
+	static RHI* Get();
+	static void CreateRHI();
+	static void ReleaseRHI();
+
 	virtual void Init() = 0;
 	virtual void Destroy() = 0;
 	virtual void Draw() = 0;
@@ -25,4 +30,7 @@ public:
 	virtual void DrawFRenderScene(FRenderScene& fRenderScene) = 0;
 	virtual void EndDraw() = 0;
 	virtual void CreatePrimitive(FActor& actor, FRenderScene& fRenderScene) = 0;
+
+protected:
+	static RHI* rhi;
 };

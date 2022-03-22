@@ -1,13 +1,11 @@
 #include "stdafx.h"
 #include "ForwardRenderer.h"
-#include "DX12RHI.h"
 #include "Engine.h"
 
 ForwardRenderer::ForwardRenderer()
+	:rhi(nullptr)
 {
-#if _DX12_START_UP
-	rhi = std::make_unique<DX12RHI>();
-#endif
+	rhi->CreateRHI();
 }
 
 ForwardRenderer::~ForwardRenderer()
@@ -17,12 +15,14 @@ ForwardRenderer::~ForwardRenderer()
 
 void ForwardRenderer::Init()
 {
+	rhi = RHI::Get();
 	rhi->Init();
 }
 
 void ForwardRenderer::Destroy()
 {
 	rhi->Destroy();
+	rhi->ReleaseRHI();
 }
 
 void ForwardRenderer::Render()
