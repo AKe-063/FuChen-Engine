@@ -81,16 +81,6 @@ void DX12RHI::OnResize()
 		&optClear,
 		IID_PPV_ARGS(mDepthStencilBuffer.GetAddressOf())));
 
-	D3D12_SHADER_RESOURCE_VIEW_DESC srvDesc = {};
-	srvDesc.Shader4ComponentMapping = D3D12_DEFAULT_SHADER_4_COMPONENT_MAPPING;
-	srvDesc.Format = DXGI_FORMAT_R24_UNORM_X8_TYPELESS;
-	srvDesc.ViewDimension = D3D12_SRV_DIMENSION_TEXTURE2D;
-	srvDesc.Texture2D.MostDetailedMip = 0;
-	srvDesc.Texture2D.MipLevels = 1;
-	srvDesc.Texture2D.ResourceMinLODClamp = 0.0f;
-	srvDesc.Texture2D.PlaneSlice = 0;
-	md3dDevice->CreateShaderResourceView(mShadowMap->Resource(), &srvDesc, mSrvDescriptorHeap->GetCPUDescriptorHandleForHeapStart());
-
 	// Create descriptor to mip level 0 of entire resource using the format of the resource.
 	D3D12_DEPTH_STENCIL_VIEW_DESC dsvDesc;
 	dsvDesc.Flags = D3D12_DSV_FLAG_NONE;
@@ -329,10 +319,10 @@ void DX12RHI::BuildConstantBuffers()
 
 void DX12RHI::BuildShaderResourceView()
 {
-	int index = 1;
+	int index = 0;
+	CD3DX12_CPU_DESCRIPTOR_HANDLE hDescriptor(mSrvDescriptorHeap->GetCPUDescriptorHandleForHeapStart());
 	for (auto texture : mTextures)
 	{
-		CD3DX12_CPU_DESCRIPTOR_HANDLE hDescriptor(mSrvDescriptorHeap->GetCPUDescriptorHandleForHeapStart());
 		hDescriptor.Offset(index++, mCbvSrvUavDescriptorSize);
 		auto tex = mTextures[texture.first].Resource;
 
@@ -345,6 +335,15 @@ void DX12RHI::BuildShaderResourceView()
 		srvDesc.Texture2D.ResourceMinLODClamp = 0.0f;
 		md3dDevice->CreateShaderResourceView(tex.Get(), &srvDesc, hDescriptor);
 	}
+
+	auto srvCpuStart = mSrvDescriptorHeap->GetCPUDescriptorHandleForHeapStart();
+	auto srvGpuStart = mSrvDescriptorHeap->GetGPUDescriptorHandleForHeapStart();
+	auto dsvCpuStart = mDsvHeap->GetCPUDescriptorHandleForHeapStart();
+	hDescriptor.Offset(index++, mCbvSrvUavDescriptorSize);
+	mShadowMap->BuildDescriptors(
+		CD3DX12_CPU_DESCRIPTOR_HANDLE(srvCpuStart, mTextures.size()+1, mCbvSrvUavDescriptorSize),
+		CD3DX12_GPU_DESCRIPTOR_HANDLE(srvGpuStart, mTextures.size()+1, mCbvSrvUavDescriptorSize),
+		CD3DX12_CPU_DESCRIPTOR_HANDLE(dsvCpuStart, 1, mDsvDescriptorSize));
 }
 
 void DX12RHI::BuildRootSignature()
@@ -534,46 +533,55 @@ void DX12RHI::TransResourBarrier(unsigned int numBarriers, D3D12_RESOURCE_STATES
 		currentState, targetState));
 }
 
-void DX12RHI::DrawSceneToShadowMap()
+void DX12RHI::DrawSceneToShadowMap(FRenderScene& fRenderScene)
 {
-// 	ResetCmdListAlloc();
-// 	ThrowIfFailed(mCommandList->Reset(mDirectCmdListAlloc.Get(), mPSOs["shadow_pso"].Get()));
-// 
-// 	ID3D12DescriptorHeap* descriptorHeaps[] = { mSrvDescriptorHeap.Get() };
-// 	mCommandList->SetDescriptorHeaps(_countof(descriptorHeaps), descriptorHeaps);
-// 
-// 	mCommandList->SetGraphicsRootSignature(mShadowSignature.Get());
-// 
-// 	mCommandList->RSSetViewports(1, &mScreenViewport);
-// 	mCommandList->RSSetScissorRects(1, &mScissorRect);
-// 
-// 	// Change to DEPTH_WRITE.
-// 	mCommandList->ResourceBarrier(1, &CD3DX12_RESOURCE_BARRIER::Transition(mShadowMap->Resource(),
-// 		D3D12_RESOURCE_STATE_GENERIC_READ, D3D12_RESOURCE_STATE_DEPTH_WRITE));
-// 
-// 	UINT passCBByteSize = d3dUtil::CalcConstantBufferByteSize(sizeof(PassConstants));
-// 
-// 	// Clear the back buffer and depth buffer.
-// 	mCommandList->ClearDepthStencilView(mShadowMap->Dsv(),
-// 		D3D12_CLEAR_FLAG_DEPTH | D3D12_CLEAR_FLAG_STENCIL, 1.0f, 0, 0, nullptr);
-// 
-// 	// Set null render target because we are only going to draw to
-// 	// depth buffer.  Setting a null render target will disable color writes.
-// 	// Note the active PSO also must specify a render target count of 0.
-// 	mCommandList->OMSetRenderTargets(0, nullptr, false, &mShadowMap->Dsv());
-// 
-// 	// Bind the pass constant buffer for the shadow map pass.
-// 	auto passCB = mCurrFrameResource->PassCB->Resource();
-// 	D3D12_GPU_VIRTUAL_ADDRESS passCBAddress = passCB->GetGPUVirtualAddress() + 1 * passCBByteSize;
-// 	mCommandList->SetGraphicsRootConstantBufferView(1, passCBAddress);
-// 
-// 	mCommandList->SetPipelineState(mPSOs["shadow_opaque"].Get());
-// 
-// 	DrawRenderItems(mCommandList.Get(), mRitemLayer[(int)RenderLayer::Opaque]);
-// 
-// 	// Change back to GENERIC_READ so we can read the texture in a shader.
-// 	mCommandList->ResourceBarrier(1, &CD3DX12_RESOURCE_BARRIER::Transition(mShadowMap->Resource(),
-// 		D3D12_RESOURCE_STATE_DEPTH_WRITE, D3D12_RESOURCE_STATE_GENERIC_READ));
+	ThrowIfFailed(mDirectCmdListAlloc->Reset());
+	ThrowIfFailed(mCommandList->Reset(mDirectCmdListAlloc.Get(), mPSOs["shadow_pso"].Get()));
+	mCommandList->ResourceBarrier(1, &CD3DX12_RESOURCE_BARRIER::Transition(mShadowMap->Resource(), D3D12_RESOURCE_STATE_GENERIC_READ, D3D12_RESOURCE_STATE_DEPTH_WRITE));
+	mCommandList->RSSetViewports(1, &mScreenViewport);
+	mCommandList->RSSetScissorRects(1, &mScissorRect);
+	float color[4] = { 1.0f,1.0f,1.0f,1.0f };
+	//mCommandList->ClearRenderTargetView(CurrentBackBufferView(), color, 0, nullptr);
+	mCommandList->ClearDepthStencilView(mShadowMap->Dsv(), D3D12_CLEAR_FLAG_DEPTH | D3D12_CLEAR_FLAG_STENCIL, 1.0f, 0, 0, nullptr);
+	mCommandList->OMSetRenderTargets(0, nullptr, false, &mShadowMap->Dsv());
+	mCommandList->SetGraphicsRootSignature(mShadowSignature.Get());
+	mCommandList->SetPipelineState(mPSOs["shadow_pso"].Get());
+	ID3D12DescriptorHeap* descriptorHeapsSRV[] = { mSrvDescriptorHeap.Get() };
+	ID3D12DescriptorHeap* descriptorHeaps[] = { mCbvHeap.Get() };
+	for (int i = 0; i < fRenderScene.GetNumPrimitive(); i++)
+	{
+		mCommandList->IASetVertexBuffers(0, 1, &fRenderScene.GetPrimitive(i).GetMeshGeometryInfo().VertexBufferView());
+		mCommandList->IASetIndexBuffer(&fRenderScene.GetPrimitive(i).GetMeshGeometryInfo().IndexBufferView());
+		mCommandList->IASetPrimitiveTopology(D3D11_PRIMITIVE_TOPOLOGY_TRIANGLELIST);
+
+		//mat4 worldViewProj = Engine::GetInstance().GetFScene()->GetCamera()->GetProj() * Engine::GetInstance().GetFScene()->GetCamera()->GetView() * mMeshes[i].mMeshWorld;
+
+		// Update the constant buffer with the latest worldViewProj matrix.
+		ObjectConstants objConstants;
+		objConstants.Roatation = transpose(fRenderScene.GetPrimitive(i).GetMeshGeometryInfo().Rotation);
+		objConstants.Proj = transpose(Engine::GetInstance().GetFScene()->GetLight(0)->GetFlightDesc()->lightProj);
+		objConstants.View = transpose(Engine::GetInstance().GetFScene()->GetLight(0)->GetFlightDesc()->lightView);
+		objConstants.World = transpose(fRenderScene.GetPrimitive(i).GetMeshGeometryInfo().mMeshWorld);
+		objConstants.time = Engine::GetInstance().GetTimer()->TotalTime();
+		mObjectCB[fRenderScene.GetPrimitive(i).GetIndex()]->CopyData(0, objConstants);
+
+		mCommandList->SetDescriptorHeaps(_countof(descriptorHeapsSRV), descriptorHeapsSRV);
+		auto handle1 = CD3DX12_GPU_DESCRIPTOR_HANDLE(mSrvDescriptorHeap->GetGPUDescriptorHandleForHeapStart());
+		mCommandList->SetGraphicsRootDescriptorTable(1, handle1);
+
+		mCommandList->SetDescriptorHeaps(_countof(descriptorHeaps), descriptorHeaps);
+		auto handle = CD3DX12_GPU_DESCRIPTOR_HANDLE(mCbvHeap->GetGPUDescriptorHandleForHeapStart());
+		handle.Offset(i, mCbvSrvUavDescriptorSize);
+		mCommandList->SetGraphicsRootDescriptorTable(0, handle);
+
+		mCommandList->DrawIndexedInstanced(
+			fRenderScene.GetPrimitive(i).GetMeshGeometryInfo().DrawArgs[fRenderScene.GetPrimitive(i).GetMeshGeometryInfo().Name].IndexCount,
+			1, 0, 0, 0);
+	}
+	mCommandList->ResourceBarrier(1, &CD3DX12_RESOURCE_BARRIER::Transition(mShadowMap->Resource(), D3D12_RESOURCE_STATE_DEPTH_WRITE, D3D12_RESOURCE_STATE_GENERIC_READ));
+	CloseCommandList();
+	SwapChain();
+	FlushCommandQueue();
 }
 
 void DX12RHI::ClearBackBufferAndDepthBuffer(const float* color, float depth, unsigned int stencil, unsigned int numRects)
@@ -623,7 +631,7 @@ void DX12RHI::DrawFRenderScene(FRenderScene& fRenderScene)
 
 		mCommandList->SetDescriptorHeaps(_countof(descriptorHeapsSRV), descriptorHeapsSRV);
 		auto handle1 = CD3DX12_GPU_DESCRIPTOR_HANDLE(mSrvDescriptorHeap->GetGPUDescriptorHandleForHeapStart());
-		handle1.Offset(3, mCbvSrvUavDescriptorSize);
+		handle1.Offset(2, mCbvSrvUavDescriptorSize);
 		mCommandList->SetGraphicsRootDescriptorTable(1, handle1);
 		handle1.Offset(2, mCbvSrvUavDescriptorSize);
 		mCommandList->SetGraphicsRootDescriptorTable(2, handle1);
@@ -786,7 +794,7 @@ void DX12RHI::CreateRtvAndDsvDescriptorHeaps()
 
 
 	D3D12_DESCRIPTOR_HEAP_DESC dsvHeapDesc;
-	dsvHeapDesc.NumDescriptors = 1;
+	dsvHeapDesc.NumDescriptors = 2;
 	dsvHeapDesc.Type = D3D12_DESCRIPTOR_HEAP_TYPE_DSV;
 	dsvHeapDesc.Flags = D3D12_DESCRIPTOR_HEAP_FLAG_NONE;
 	dsvHeapDesc.NodeMask = 0;

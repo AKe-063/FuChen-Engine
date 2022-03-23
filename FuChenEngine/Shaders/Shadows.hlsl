@@ -3,6 +3,27 @@
 //***************************************************************************************
 #include <ShadowsHead.hlsli>
 
+Texture2D gShadowMap : register(t0);
+
+SamplerState gsamPointWrap        : register(s0);
+/*SamplerState gsamPointClamp       : register(s1);
+SamplerState gsamLinearWrap       : register(s2);
+SamplerState gsamLinearClamp      : register(s3);
+SamplerState gsamAnisotropicWrap  : register(s4);
+SamplerState gsamAnisotropicClamp : register(s5);*/
+
+cbuffer cbPerObject : register(b0)
+{
+	//float4x4 gWorldViewProj; 
+	float4x4 gRotation;
+	float4x4 gWorld;
+	float4x4 gView;
+	float4x4 gProj;
+	float time;
+};
+
+float4 CameraLoc : register(b1);
+
 struct VertexIn
 {
 	float3 PosL  : POSITION;
@@ -24,18 +45,20 @@ VertexOut VS(VertexIn vin)
 {
 	VertexOut vout;
 
-	vout.PosH = float4(vin.PosL, 1.0f);
+	float4x4 gWorldViewProj = mul(gWorld, mul(gView, gProj));
+	vout.PosH = mul(float4(vin.PosL, 1.0f), gWorldViewProj);
 	vout.Color = vin.Color;
-	vout.Normal = vin.Normal;
+	vout.Normal = mul(vin.Normal, gRotation);
 	vout.TexC = vin.TexC;
 
-    return vout;
+	return vout;
 }
 
-float PS(VertexOut pin) : SV_Target
+float4 PS(VertexOut pin) : SV_Target
 {
-	float a = 1.0;
-	return a;
+	//Gamma Correction
+	float4 diffuseAlbedo = gShadowMap.Sample(gsamPointWrap, pin.TexC);
+	return diffuseAlbedo;
 }
 
 

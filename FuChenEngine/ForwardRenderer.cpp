@@ -43,6 +43,7 @@ void ForwardRenderer::BuildPrimitive(FActor& actor)
 
 void ForwardRenderer::Draw()
 {
+	rhi->DrawSceneToShadowMap(fRenderScene);
 	rhi->StartDraw();
 	rhi->RSSetViewPorts(1, &rhi->GetViewport());
 	rhi->RESetScissorRects(1, &rhi->GetTagRect());

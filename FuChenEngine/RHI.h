@@ -29,6 +29,7 @@ public:
 	virtual void DrawFRenderScene(FRenderScene& fRenderScene) = 0;
 	virtual void EndDraw() = 0;
 	virtual void CreatePrimitive(FActor& actor, FRenderScene& fRenderScene) = 0;
+	virtual void DrawSceneToShadowMap(FRenderScene& fRenderScene) = 0;
 
 protected:
 	static RHI* rhi;

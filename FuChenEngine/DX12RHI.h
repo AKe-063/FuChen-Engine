@@ -51,6 +51,7 @@ public:
 	virtual VIEWPORT GetViewport()override;
 	virtual TAGRECT GetTagRect()override;
 	virtual void CreatePrimitive(FActor& actor, FRenderScene& fRenderScene)override;
+	virtual void DrawSceneToShadowMap(FRenderScene& fRenderScene)override;
 
 protected:
 	//Draw process
@@ -59,7 +60,6 @@ protected:
 	void CloseCommandList();
 	void SwapChain();
 	void TransResourBarrier(unsigned int numBarriers, D3D12_RESOURCE_STATES currentState, D3D12_RESOURCE_STATES targetState);
-	void DrawSceneToShadowMap();
 
 	//DX Init
 	bool InitDirect3D();
