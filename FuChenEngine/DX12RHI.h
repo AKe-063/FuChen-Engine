@@ -5,6 +5,7 @@
 #include "FAssetManager.h"
 #include "RHI.h"
 #include "DXPrimitive.h"
+#include "ShadowMap.h"
 
 class DX12RHI : public RHI
 {
@@ -58,6 +59,7 @@ protected:
 	void CloseCommandList();
 	void SwapChain();
 	void TransResourBarrier(unsigned int numBarriers, D3D12_RESOURCE_STATES currentState, D3D12_RESOURCE_STATES targetState);
+	void DrawSceneToShadowMap();
 
 	//DX Init
 	bool InitDirect3D();
@@ -79,10 +81,13 @@ private:
 	ComPtr<ID3D12DescriptorHeap> mSrvDescriptorHeap = nullptr;
 	std::vector<std::shared_ptr<UploadBuffer<ObjectConstants>>> mObjectCB;
 	ComPtr<ID3D12RootSignature> mRootSignature = nullptr;
+	ComPtr<ID3D12RootSignature> mShadowSignature = nullptr;
 	ComPtr<ID3DBlob> mvsByteCode = nullptr;
 	ComPtr<ID3DBlob> mpsByteCode = nullptr;
+	ComPtr<ID3DBlob> mvsShadowShader = nullptr;
+	ComPtr<ID3DBlob> mpsShadowShader = nullptr;
 	std::vector<D3D12_INPUT_ELEMENT_DESC> mInputLayout;
-	ComPtr<ID3D12PipelineState> mPSO = nullptr;
+	std::unordered_map<std::string, ComPtr<ID3D12PipelineState>> mPSOs;
 
 	mat4x4 mWorld = MathHelper::Identity4x4();
 
@@ -122,4 +127,5 @@ private:
 
 	Window* mWindow;
 	BoundingSphere mSceneBound;
+	std::unique_ptr<ShadowMap> mShadowMap;
 };

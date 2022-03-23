@@ -63,14 +63,7 @@ void DX12RHI::OnResize()
 	depthStencilDesc.Height = mWindow->GetHeight();
 	depthStencilDesc.DepthOrArraySize = 1;
 	depthStencilDesc.MipLevels = 1;
-
-	// Correction 11/12/2016: SSAO chapter requires an SRV to the depth buffer to read from 
-	// the depth buffer.  Therefore, because we need to create two views to the same resource:
-	//   1. SRV format: DXGI_FORMAT_R24_UNORM_X8_TYPELESS
-	//   2. DSV Format: DXGI_FORMAT_D24_UNORM_S8_UINT
-	// we need to create the depth buffer resource with a typeless format.  
 	depthStencilDesc.Format = DXGI_FORMAT_R24G8_TYPELESS;
-
 	depthStencilDesc.SampleDesc.Count = m4xMsaaState ? 4 : 1;
 	depthStencilDesc.SampleDesc.Quality = m4xMsaaState ? (m4xMsaaQuality - 1) : 0;
 	depthStencilDesc.Layout = D3D12_TEXTURE_LAYOUT_UNKNOWN;
@@ -87,6 +80,16 @@ void DX12RHI::OnResize()
 		D3D12_RESOURCE_STATE_COMMON,
 		&optClear,
 		IID_PPV_ARGS(mDepthStencilBuffer.GetAddressOf())));
+
+	D3D12_SHADER_RESOURCE_VIEW_DESC srvDesc = {};
+	srvDesc.Shader4ComponentMapping = D3D12_DEFAULT_SHADER_4_COMPONENT_MAPPING;
+	srvDesc.Format = DXGI_FORMAT_R24_UNORM_X8_TYPELESS;
+	srvDesc.ViewDimension = D3D12_SRV_DIMENSION_TEXTURE2D;
+	srvDesc.Texture2D.MostDetailedMip = 0;
+	srvDesc.Texture2D.MipLevels = 1;
+	srvDesc.Texture2D.ResourceMinLODClamp = 0.0f;
+	srvDesc.Texture2D.PlaneSlice = 0;
+	md3dDevice->CreateShaderResourceView(mShadowMap->Resource(), &srvDesc, mSrvDescriptorHeap->GetCPUDescriptorHandleForHeapStart());
 
 	// Create descriptor to mip level 0 of entire resource using the format of the resource.
 	D3D12_DEPTH_STENCIL_VIEW_DESC dsvDesc;
@@ -129,6 +132,8 @@ void DX12RHI::Init()
 	{
 		throw("InitDX False!");
 	}
+	mShadowMap = std::make_unique<ShadowMap>(md3dDevice.Get(), 800, 600);
+
 	// Do the initial resize code.
 	OnResize();
 
@@ -298,13 +303,6 @@ void DX12RHI::BuildDescriptorHeaps()
 	cbvHeapDesc.NodeMask = 0;
 	ThrowIfFailed(md3dDevice->CreateDescriptorHeap(&cbvHeapDesc,
 		IID_PPV_ARGS(&mCbvHeap)));
-
-	//Create the SRV heap
-	D3D12_DESCRIPTOR_HEAP_DESC srvHeapDesc = {};
-	srvHeapDesc.NumDescriptors = mTextures.size() + 1024;
-	srvHeapDesc.Type = D3D12_DESCRIPTOR_HEAP_TYPE_CBV_SRV_UAV;
-	srvHeapDesc.Flags = D3D12_DESCRIPTOR_HEAP_FLAG_SHADER_VISIBLE;
-	ThrowIfFailed(md3dDevice->CreateDescriptorHeap(&srvHeapDesc, IID_PPV_ARGS(&mSrvDescriptorHeap)));
 }
 
 void DX12RHI::BuildConstantBuffers()
@@ -331,7 +329,7 @@ void DX12RHI::BuildConstantBuffers()
 
 void DX12RHI::BuildShaderResourceView()
 {
-	int index = 0;
+	int index = 1;
 	for (auto texture : mTextures)
 	{
 		CD3DX12_CPU_DESCRIPTOR_HANDLE hDescriptor(mSrvDescriptorHeap->GetCPUDescriptorHandleForHeapStart());
@@ -356,6 +354,12 @@ void DX12RHI::BuildRootSignature()
 		mvsByteCode->GetBufferPointer(),
 		mvsByteCode->GetBufferSize(),
 		IID_PPV_ARGS(&mRootSignature)));
+
+	ThrowIfFailed(md3dDevice->CreateRootSignature(
+		0,
+		mvsShadowShader->GetBufferPointer(),
+		mvsShadowShader->GetBufferSize(),
+		IID_PPV_ARGS(&mShadowSignature)));
 }
 
 void DX12RHI::BuildShadersAndInputLayout()
@@ -364,6 +368,8 @@ void DX12RHI::BuildShadersAndInputLayout()
 
 	mvsByteCode = d3dUtil::CompileShader(L"..\\FuChenEngine\\Shaders\\color.hlsl", nullptr, "VS", "vs_5_0");
 	mpsByteCode = d3dUtil::CompileShader(L"..\\FuChenEngine\\Shaders\\color.hlsl", nullptr, "PS", "ps_5_0");
+	mvsShadowShader = d3dUtil::CompileShader(L"..\\FuChenEngine\\Shaders\\Shadows.hlsl", nullptr, "VS", "vs_5_0");
+	mpsShadowShader = d3dUtil::CompileShader(L"..\\FuChenEngine\\Shaders\\Shadows.hlsl", nullptr, "PS", "ps_5_0");
 
 	mInputLayout =
 	{
@@ -401,7 +407,31 @@ void DX12RHI::BuildPSO()
 	psoDesc.SampleDesc.Count = m4xMsaaState ? 4 : 1;
 	psoDesc.SampleDesc.Quality = m4xMsaaState ? (m4xMsaaQuality - 1) : 0;
 	psoDesc.DSVFormat = mDepthStencilFormat;
-	ThrowIfFailed(md3dDevice->CreateGraphicsPipelineState(&psoDesc, IID_PPV_ARGS(&mPSO)));
+	ThrowIfFailed(md3dDevice->CreateGraphicsPipelineState(&psoDesc, IID_PPV_ARGS(&mPSOs["psoDesc"])));
+
+	//
+   // PSO for shadow map pass.
+   //
+	D3D12_GRAPHICS_PIPELINE_STATE_DESC smapPsoDesc = psoDesc;
+	smapPsoDesc.RasterizerState.DepthBias = 100000;
+	smapPsoDesc.RasterizerState.DepthBiasClamp = 0.0f;
+	smapPsoDesc.RasterizerState.SlopeScaledDepthBias = 1.0f;
+	smapPsoDesc.pRootSignature = mShadowSignature.Get();
+	smapPsoDesc.VS =
+	{
+		reinterpret_cast<BYTE*>(mvsShadowShader->GetBufferPointer()),
+		mvsShadowShader->GetBufferSize()
+	};
+	smapPsoDesc.PS =
+	{
+		reinterpret_cast<BYTE*>(mpsShadowShader->GetBufferPointer()),
+		mpsShadowShader->GetBufferSize()
+	};
+
+	// Shadow map pass does not have a render target.
+	smapPsoDesc.RTVFormats[0] = DXGI_FORMAT_UNKNOWN;
+	smapPsoDesc.NumRenderTargets = 0;
+	ThrowIfFailed(md3dDevice->CreateGraphicsPipelineState(&smapPsoDesc, IID_PPV_ARGS(&mPSOs["shadow_pso"])));
 }
 
 void DX12RHI::AddConstantBuffer(FPrimitive& fPrimitive)
@@ -472,7 +502,7 @@ void DX12RHI::ResetCmdListAlloc()
 
 void DX12RHI::ResetCommandList()
 {
-	ThrowIfFailed(mCommandList->Reset(mDirectCmdListAlloc.Get(), mPSO.Get()));
+	ThrowIfFailed(mCommandList->Reset(mDirectCmdListAlloc.Get(), mPSOs["psoDesc"].Get()));
 }
 
 void DX12RHI::RSSetViewPorts(unsigned int numViewports, const VIEWPORT* scrernViewport)
@@ -502,6 +532,48 @@ void DX12RHI::TransResourBarrier(unsigned int numBarriers, D3D12_RESOURCE_STATES
 	// Indicate a state transition on the resource usage.
 	mCommandList->ResourceBarrier(numBarriers, &CD3DX12_RESOURCE_BARRIER::Transition(CurrentBackBuffer(),
 		currentState, targetState));
+}
+
+void DX12RHI::DrawSceneToShadowMap()
+{
+// 	ResetCmdListAlloc();
+// 	ThrowIfFailed(mCommandList->Reset(mDirectCmdListAlloc.Get(), mPSOs["shadow_pso"].Get()));
+// 
+// 	ID3D12DescriptorHeap* descriptorHeaps[] = { mSrvDescriptorHeap.Get() };
+// 	mCommandList->SetDescriptorHeaps(_countof(descriptorHeaps), descriptorHeaps);
+// 
+// 	mCommandList->SetGraphicsRootSignature(mShadowSignature.Get());
+// 
+// 	mCommandList->RSSetViewports(1, &mScreenViewport);
+// 	mCommandList->RSSetScissorRects(1, &mScissorRect);
+// 
+// 	// Change to DEPTH_WRITE.
+// 	mCommandList->ResourceBarrier(1, &CD3DX12_RESOURCE_BARRIER::Transition(mShadowMap->Resource(),
+// 		D3D12_RESOURCE_STATE_GENERIC_READ, D3D12_RESOURCE_STATE_DEPTH_WRITE));
+// 
+// 	UINT passCBByteSize = d3dUtil::CalcConstantBufferByteSize(sizeof(PassConstants));
+// 
+// 	// Clear the back buffer and depth buffer.
+// 	mCommandList->ClearDepthStencilView(mShadowMap->Dsv(),
+// 		D3D12_CLEAR_FLAG_DEPTH | D3D12_CLEAR_FLAG_STENCIL, 1.0f, 0, 0, nullptr);
+// 
+// 	// Set null render target because we are only going to draw to
+// 	// depth buffer.  Setting a null render target will disable color writes.
+// 	// Note the active PSO also must specify a render target count of 0.
+// 	mCommandList->OMSetRenderTargets(0, nullptr, false, &mShadowMap->Dsv());
+// 
+// 	// Bind the pass constant buffer for the shadow map pass.
+// 	auto passCB = mCurrFrameResource->PassCB->Resource();
+// 	D3D12_GPU_VIRTUAL_ADDRESS passCBAddress = passCB->GetGPUVirtualAddress() + 1 * passCBByteSize;
+// 	mCommandList->SetGraphicsRootConstantBufferView(1, passCBAddress);
+// 
+// 	mCommandList->SetPipelineState(mPSOs["shadow_opaque"].Get());
+// 
+// 	DrawRenderItems(mCommandList.Get(), mRitemLayer[(int)RenderLayer::Opaque]);
+// 
+// 	// Change back to GENERIC_READ so we can read the texture in a shader.
+// 	mCommandList->ResourceBarrier(1, &CD3DX12_RESOURCE_BARRIER::Transition(mShadowMap->Resource(),
+// 		D3D12_RESOURCE_STATE_DEPTH_WRITE, D3D12_RESOURCE_STATE_GENERIC_READ));
 }
 
 void DX12RHI::ClearBackBufferAndDepthBuffer(const float* color, float depth, unsigned int stencil, unsigned int numRects)
@@ -551,7 +623,7 @@ void DX12RHI::DrawFRenderScene(FRenderScene& fRenderScene)
 
 		mCommandList->SetDescriptorHeaps(_countof(descriptorHeapsSRV), descriptorHeapsSRV);
 		auto handle1 = CD3DX12_GPU_DESCRIPTOR_HANDLE(mSrvDescriptorHeap->GetGPUDescriptorHandleForHeapStart());
-		handle1.Offset(2, mCbvSrvUavDescriptorSize);
+		handle1.Offset(3, mCbvSrvUavDescriptorSize);
 		mCommandList->SetGraphicsRootDescriptorTable(1, handle1);
 		handle1.Offset(2, mCbvSrvUavDescriptorSize);
 		mCommandList->SetGraphicsRootDescriptorTable(2, handle1);
@@ -720,6 +792,13 @@ void DX12RHI::CreateRtvAndDsvDescriptorHeaps()
 	dsvHeapDesc.NodeMask = 0;
 	ThrowIfFailed(md3dDevice->CreateDescriptorHeap(
 		&dsvHeapDesc, IID_PPV_ARGS(mDsvHeap.GetAddressOf())));
+
+	//Create the SRV heap
+	D3D12_DESCRIPTOR_HEAP_DESC srvHeapDesc = {};
+	srvHeapDesc.NumDescriptors = 1024;
+	srvHeapDesc.Type = D3D12_DESCRIPTOR_HEAP_TYPE_CBV_SRV_UAV;
+	srvHeapDesc.Flags = D3D12_DESCRIPTOR_HEAP_FLAG_SHADER_VISIBLE;
+	ThrowIfFailed(md3dDevice->CreateDescriptorHeap(&srvHeapDesc, IID_PPV_ARGS(&mSrvDescriptorHeap)));
 }
 
 bool DX12RHI::Get4xMsaaState() const
