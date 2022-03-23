@@ -148,3 +148,9 @@ struct PassConstants
 	// are spot lights for a maximum of MaxLights per object.
 	Light Lights[MaxLights];
 };
+
+struct BoundingSphere 
+{
+	glm::vec3 center;
+	float radius;
+};

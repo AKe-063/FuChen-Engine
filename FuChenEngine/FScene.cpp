@@ -1,11 +1,13 @@
 #include "stdafx.h"
 #include "FScene.h"
 #include "Serialize.h"
+#include "FAssetManager.h"
 
 FScene::FScene()
 {
 	mCamera = std::make_unique<Camera>();
 	mCamera->SetControlCamera();
+	AddLight();
 }
 
 FScene::FScene(const std::unordered_map<std::string, FActor>& actors)
@@ -106,6 +108,16 @@ std::vector<std::string> FScene::GetDirtyActor()
 void FScene::EraseDirtyActorByIndex(const int& index)
 {
 	dirtyActor.erase(dirtyActor.begin() + index);
+}
+
+void FScene::AddLight()
+{
+	fLights.push_back(FAssetManager::GetInstance().LoadLight("LightSource_0"));
+}
+
+FLight* FScene::GetLight(const int& index)
+{
+	return &fLights[index];
 }
 
 void FScene::Update()

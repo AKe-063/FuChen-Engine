@@ -13,7 +13,6 @@ public:
 	virtual ~DX12RHI();
 
 	void OnResize();
-	virtual void Draw()override;
 	virtual void Init()override;
 	virtual void Destroy()override;
 
@@ -36,6 +35,8 @@ public:
 	void BuildAllTextures();
 	void InitConstantBuffers();
 	void AddConstantBuffer(FPrimitive& fPrimitive);
+
+	void UpdateShadowTransform();
 
 	//Abstract RHI
 	virtual void StartDraw()override;
@@ -120,4 +121,5 @@ private:
 	int mCbvCount = 0;
 
 	Window* mWindow;
+	BoundingSphere mSceneBound;
 };

@@ -1,6 +1,7 @@
 #pragma once
 #include "FActor.h"
 #include "Camera.h"
+#include "FLight.h"
 
 class FScene : public FSingleton<FScene>
 {
@@ -18,7 +19,8 @@ public:
 	std::unordered_map<std::string, FActor>& GetAllActor();
 	std::vector<std::string> GetDirtyActor();
 	void EraseDirtyActorByIndex(const int& index);
-
+	void AddLight();
+	FLight* GetLight(const int& index);
 	void Update();
 
 private:
@@ -27,4 +29,5 @@ private:
 	std::vector<std::string> actorCount;
 	std::unordered_map<std::string, FActor> actors;
 	std::vector<std::string> dirtyActor;
+	std::vector<FLight> fLights;
 };

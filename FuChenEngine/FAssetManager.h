@@ -3,6 +3,7 @@
 #include "FMesh.h"
 #include "Serialize.h"
 #include "FTexture.h"
+#include "FLight.h"
 
 class FAssetManager : public FSingleton<FAssetManager>
 {
@@ -17,6 +18,7 @@ public:
 	std::wstring GetTextureFilePathFromName(const std::string& name);
 	std::vector<FTexture> GetTexturesFilePath();
 	void LoadTexture();
+	FLight LoadLight(const std::string& name);
 
 protected:
 	std::unordered_map<std::string, AssetInfo> assets;

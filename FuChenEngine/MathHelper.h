@@ -47,38 +47,6 @@ public:
 	// Returns the polar angle of the point (x,y) in [0, 2*PI).
 	static float AngleFromXY(float x, float y);
 
-// 	static DirectX::XMVECTOR SphericalToCartesian(float radius, float theta, float phi)
-// 	{
-// 		return DirectX::XMVectorSet(
-// 			radius*sinf(phi)*cosf(theta),
-// 			radius*cosf(phi),
-// 			radius*sinf(phi)*sinf(theta),
-// 			1.0f);
-// 	}
-
-//     static DirectX::XMMATRIX InverseTranspose(DirectX::CXMMATRIX M)
-// 	{
-// 		// Inverse-transpose is just applied to normals.  So zero out 
-// 		// translation row so that it doesn't get into our inverse-transpose
-// 		// calculation--we don't want the inverse-transpose of the translation.
-//         DirectX::XMMATRIX A = M;
-//         A.r[3] = DirectX::XMVectorSet(0.0f, 0.0f, 0.0f, 1.0f);
-// 
-//         DirectX::XMVECTOR det = DirectX::XMMatrixDeterminant(A);
-//         return DirectX::XMMatrixTranspose(DirectX::XMMatrixInverse(&det, A));
-// 	}
-
-//     static DirectX::XMFLOAT4X4 Identity4x4()
-//     {
-//         static DirectX::XMFLOAT4X4 I(
-//             1.0f, 0.0f, 0.0f, 0.0f,
-//             0.0f, 1.0f, 0.0f, 0.0f,
-//             0.0f, 0.0f, 1.0f, 0.0f,
-//             0.0f, 0.0f, 0.0f, 1.0f);
-// 
-//         return I;
-//     }
-
 	static glm::mat4 Identity4x4()
 	{
 		static glm::mat4 I(
@@ -90,8 +58,19 @@ public:
 		return I;
 	}
 
-//     static DirectX::XMVECTOR RandUnitVec3();
-//     static DirectX::XMVECTOR RandHemisphereUnitVec3(DirectX::XMVECTOR n);
+	static glm::vec4 Vector3TransformCoord(glm::vec3 V, glm::mat4 M)
+	{
+		glm::vec4 z(V.z);
+		glm::vec4 y(V.y);
+		glm::vec4 x(V.x);
+
+		glm::vec4 fResult = z * M[2] + M[3];
+		fResult = y * M[1] + fResult;
+		fResult = x * M[0] + fResult;
+
+		glm::vec4 w(fResult.w);
+		return fResult / w;
+	}
 
 	static glm::vec4 RandUnitVec3();
 	static glm::vec4 RandHemisphereUnitVec3(glm::vec4 n);

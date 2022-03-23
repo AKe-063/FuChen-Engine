@@ -99,3 +99,9 @@ void FAssetManager::LoadTexture()
 	texDec.textureFilePath = L"../FuChenEngine/Textures/T_RockMesh_N.dds";
 	textureFileLink.push_back(tex);
 }
+
+FLight FAssetManager::LoadLight(const std::string& name)
+{
+	std::unique_ptr<Serialize> sr = std::make_unique<Serialize>();
+	return sr->DeserialzeLightInfo(name);
+}

@@ -84,4 +84,26 @@ ActorInfo Serialize::DeserializeActorInfo(const std::string& name)
 	return actorInfo;
 }
 
+FLight Serialize::DeserialzeLightInfo(const std::string& name)
+{
+	std::string str = "../FuChenEngine/ExportFile/" + name;
+	std::string filePath = str + ".dat";
+	std::ifstream fin(filePath, std::ios::binary);
+	ThrowIfFailed(fin.is_open(), nullptr);
+	FLight lightInfo;
+	int num;
+
+	fin.read((char*)&num, sizeof(int32_t));
+	lightInfo.GetFlightDesc()->name.resize(num);
+	fin.read((char*)lightInfo.GetFlightDesc()->name.data(), sizeof(char) * num);
+	FVector temp;
+	fin.read((char*)&temp, sizeof(FVector));
+	fin.read((char*)&temp, sizeof(FVector));
+	lightInfo.GetFlightDesc()->lightDir = glm::vec3(temp.x, temp.y, temp.z);
+	fin.read((char*)&lightInfo.GetFlightDesc()->lightDensity, sizeof(float));
+
+	fin.close();
+
+	return lightInfo;
+}
 

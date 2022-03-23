@@ -19,7 +19,6 @@ bool GameLogic::Init()
 		loadSystem.LoadMap("../FuChenEngine/ExportFile/AllActor.dat")))
 		return false;
 
-	Engine::GetInstance().GetRenderer()->BuildInitialMap();
 	return true;
 }
 

@@ -165,6 +165,8 @@
     <ClInclude Include="FActor.h" />
     <ClInclude Include="FAssetManager.h" />
     <ClInclude Include="FInputBase.h" />
+    <ClInclude Include="FLight.h" />
+    <ClInclude Include="FLightDesc.h" />
     <ClInclude Include="FMaterial.h" />
     <ClInclude Include="FMaterialDesc.h" />
     <ClInclude Include="ForwardRenderer.h" />
@@ -199,6 +201,7 @@
     <ClCompile Include="FActor.cpp" />
     <ClCompile Include="FAssetManager.cpp" />
     <ClCompile Include="FInputBase.cpp" />
+    <ClCompile Include="FLight.cpp" />
     <ClCompile Include="FMaterial.cpp" />
     <ClCompile Include="ForwardRenderer.cpp" />
     <ClCompile Include="FPrimitive.cpp" />

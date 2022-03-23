@@ -147,6 +147,12 @@
     <ClInclude Include="FTextureStruct.h">
       <Filter>Header Files\Resource</Filter>
     </ClInclude>
+    <ClInclude Include="FLight.h">
+      <Filter>Header Files\Resource</Filter>
+    </ClInclude>
+    <ClInclude Include="FLightDesc.h">
+      <Filter>Header Files\Resource</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="stdafx.cpp">
@@ -223,6 +229,9 @@
     </ClCompile>
     <ClCompile Include="FRenderScene.cpp">
       <Filter>Source Files\Render</Filter>
+    </ClCompile>
+    <ClCompile Include="FLight.cpp">
+      <Filter>Source Files\Resource</Filter>
     </ClCompile>
   </ItemGroup>
 </Project>
