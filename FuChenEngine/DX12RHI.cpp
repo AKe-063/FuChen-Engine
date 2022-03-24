@@ -122,7 +122,7 @@ void DX12RHI::Init()
 	{
 		throw("InitDX False!");
 	}
-	mShadowMap = std::make_unique<ShadowMap>(md3dDevice.Get(), 800, 600);
+	mShadowMap = std::make_unique<ShadowMap>(md3dDevice.Get(), mWindow->GetWidth(), mWindow->GetHeight());
 
 	// Do the initial resize code.
 	OnResize();
@@ -295,31 +295,9 @@ void DX12RHI::BuildDescriptorHeaps()
 		IID_PPV_ARGS(&mCbvHeap)));
 }
 
-void DX12RHI::BuildConstantBuffers()
-{
-	// 	 	for (int i = 0; i < mPrimitives.size(); i++)
-	// 	 	{
-	// 	 		UINT objCBByteSize = d3dUtil::CalcConstantBufferByteSize(sizeof(ObjectConstants));
-	// 
-	// 			std::unique_ptr<UploadBuffer<ObjectConstants>> objConstant = std::make_unique<UploadBuffer<ObjectConstants>>(md3dDevice.Get(), 1, true);
-	// 	 		D3D12_GPU_VIRTUAL_ADDRESS cbAddress = objConstant->Resource()->GetGPUVirtualAddress();
-	// 	 		// Offset to the ith object constant buffer in the buffer.
-	// 	 		/*cbAddress += i * objCBByteSize;*/
-	// 	 
-	// 	 		auto handle = CD3DX12_CPU_DESCRIPTOR_HANDLE(mCbvHeap->GetCPUDescriptorHandleForHeapStart());
-	// 	 		handle.Offset(i, mCbvSrvUavDescriptorSize);
-	// 	 
-	// 	 		D3D12_CONSTANT_BUFFER_VIEW_DESC cbvDesc;
-	// 	 		cbvDesc.BufferLocation = cbAddress;
-	// 	 		cbvDesc.SizeInBytes = d3dUtil::CalcConstantBufferByteSize(sizeof(ObjectConstants));
-	// 	 
-	// 	 		md3dDevice->CreateConstantBufferView(&cbvDesc, handle);
-	// 	 	}
-}
-
 void DX12RHI::BuildShaderResourceView()
 {
-	int index = 1;
+	int index = 0;
 	for (auto texture : mTextures)
 	{
 		CD3DX12_CPU_DESCRIPTOR_HANDLE hDescriptor(mSrvDescriptorHeap->GetCPUDescriptorHandleForHeapStart());
@@ -544,7 +522,6 @@ void DX12RHI::DrawSceneToShadowMap(FRenderScene& fRenderScene)
 	mCommandList->SetPipelineState(mPSOs["shadow_pso"].Get());
 	mCommandList->OMSetRenderTargets(0, nullptr, false, &mShadowMap->Dsv());
 	//mCommandList->OMSetRenderTargets(0, nullptr, false, &DepthStencilView());
-	ID3D12DescriptorHeap* descriptorHeapsSRV[] = { mSrvDescriptorHeap.Get() };
 	ID3D12DescriptorHeap* descriptorHeaps[] = { mCbvHeap.Get() };
 	mCommandList->SetGraphicsRootSignature(mShadowSignature.Get());
 	for (int i = 0; i < fRenderScene.GetNumPrimitive(); i++)
@@ -564,9 +541,6 @@ void DX12RHI::DrawSceneToShadowMap(FRenderScene& fRenderScene)
 		objConstants.World = glm::transpose(fRenderScene.GetPrimitive(i).GetMeshGeometryInfo().mMeshWorld);
 		objConstants.time = Engine::GetInstance().GetTimer()->TotalTime();
 		mObjectCB[fRenderScene.GetPrimitive(i).GetIndex()]->CopyData(0, objConstants);
-
-// 		mCommandList->SetDescriptorHeaps(_countof(descriptorHeapsSRV), descriptorHeapsSRV);
-// 		mCommandList->SetGraphicsRootDescriptorTable(1, mShadowMap->Srv());
 
 		mCommandList->SetDescriptorHeaps(_countof(descriptorHeaps), descriptorHeaps);
 		auto handle = CD3DX12_GPU_DESCRIPTOR_HANDLE(mCbvHeap->GetGPUDescriptorHandleForHeapStart());
@@ -629,6 +603,7 @@ void DX12RHI::DrawFRenderScene(FRenderScene& fRenderScene)
 		mCommandList->SetGraphicsRootDescriptorTable(1, handle1);
 		handle1.Offset(2, mCbvSrvUavDescriptorSize);
 		mCommandList->SetGraphicsRootDescriptorTable(2, handle1);
+		mCommandList->SetGraphicsRootDescriptorTable(3, mShadowMap->Srv());
 
 		mCommandList->SetDescriptorHeaps(_countof(descriptorHeaps), descriptorHeaps);
 		auto handle = CD3DX12_GPU_DESCRIPTOR_HANDLE(mCbvHeap->GetGPUDescriptorHandleForHeapStart());

@@ -26,7 +26,6 @@ public:
 
 	//Render Build
 	void BuildDescriptorHeaps();
-	void BuildConstantBuffers();
 	void BuildShaderResourceView();
 	void BuildRootSignature();
 	void BuildShadersAndInputLayout();

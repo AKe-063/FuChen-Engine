@@ -9,6 +9,7 @@
 	"DescriptorTable(CBV(b0, numDescriptors = 1), visibility = SHADER_VISIBILITY_VERTEX), " \
 	"DescriptorTable(SRV(t0, numDescriptors = 1), visibility = SHADER_VISIBILITY_PIXEL), " \
 	"DescriptorTable(SRV(t1, numDescriptors = 1), visibility = SHADER_VISIBILITY_PIXEL), " \
+	"DescriptorTable(SRV(t2, numDescriptors = 1), visibility = SHADER_VISIBILITY_PIXEL), " \
 	"RootConstants(b1, num32BitConstants = 4), " \
 	"StaticSampler(s0," \
 		"addressU = TEXTURE_ADDRESS_WRAP," \
