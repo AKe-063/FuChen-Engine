@@ -54,11 +54,9 @@ VertexOut VS(VertexIn vin)
 	return vout;
 }
 
-float4 PS(VertexOut pin) : SV_Target
+void PS(VertexOut pin)
 {
-	//Gamma Correction
-	float4 diffuseAlbedo = gShadowMap.Sample(gsamPointWrap, pin.TexC);
-	return diffuseAlbedo;
+
 }
 
 

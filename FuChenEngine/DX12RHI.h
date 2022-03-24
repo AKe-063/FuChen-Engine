@@ -34,7 +34,6 @@ public:
 	virtual void BuildInitialMap()override;
 	void BuildNewTexture(const std::string& name, const std::wstring& textureFilePath);
 	void BuildAllTextures();
-	void InitConstantBuffers();
 	void AddConstantBuffer(FPrimitive& fPrimitive);
 
 	void UpdateShadowTransform();

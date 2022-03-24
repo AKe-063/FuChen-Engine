@@ -131,7 +131,6 @@ void DX12RHI::Init()
 	ThrowIfFailed(GetCommandList()->Reset(GetCommandAllocator().Get(), nullptr));
 
 	BuildDescriptorHeaps();
-	InitConstantBuffers();
 	BuildShadersAndInputLayout();
 	BuildRootSignature();
 	BuildPSO();
@@ -151,6 +150,7 @@ void DX12RHI::BuildInitialMap()
 
 	BuildAllTextures();
 	BuildShaderResourceView();
+	UpdateShadowTransform();
 
 	ThrowIfFailed(GetCommandList()->Close());
 	ID3D12CommandList* cmdsLists[] = { GetCommandList().Get() };
@@ -339,10 +339,9 @@ void DX12RHI::BuildShaderResourceView()
 	auto srvCpuStart = mSrvDescriptorHeap->GetCPUDescriptorHandleForHeapStart();
 	auto srvGpuStart = mSrvDescriptorHeap->GetGPUDescriptorHandleForHeapStart();
 	auto dsvCpuStart = mDsvHeap->GetCPUDescriptorHandleForHeapStart();
-	hDescriptor.Offset(index++, mCbvSrvUavDescriptorSize);
 	mShadowMap->BuildDescriptors(
-		CD3DX12_CPU_DESCRIPTOR_HANDLE(srvCpuStart, mTextures.size()+1, mCbvSrvUavDescriptorSize),
-		CD3DX12_GPU_DESCRIPTOR_HANDLE(srvGpuStart, mTextures.size()+1, mCbvSrvUavDescriptorSize),
+		CD3DX12_CPU_DESCRIPTOR_HANDLE(srvCpuStart, mTextures.size(), mCbvSrvUavDescriptorSize),
+		CD3DX12_GPU_DESCRIPTOR_HANDLE(srvGpuStart, mTextures.size(), mCbvSrvUavDescriptorSize),
 		CD3DX12_CPU_DESCRIPTOR_HANDLE(dsvCpuStart, 1, mDsvDescriptorSize));
 }
 
@@ -406,7 +405,7 @@ void DX12RHI::BuildPSO()
 	psoDesc.SampleDesc.Count = m4xMsaaState ? 4 : 1;
 	psoDesc.SampleDesc.Quality = m4xMsaaState ? (m4xMsaaQuality - 1) : 0;
 	psoDesc.DSVFormat = mDepthStencilFormat;
-	ThrowIfFailed(md3dDevice->CreateGraphicsPipelineState(&psoDesc, IID_PPV_ARGS(&mPSOs["psoDesc"])));
+	ThrowIfFailed(md3dDevice->CreateGraphicsPipelineState(&psoDesc, IID_PPV_ARGS(&mPSOs["geo_pso"])));
 
 	//
    // PSO for shadow map pass.
@@ -454,7 +453,7 @@ void DX12RHI::AddConstantBuffer(FPrimitive& fPrimitive)
 
 void DX12RHI::UpdateShadowTransform()
 {
-	std::shared_ptr<FLight> light(Engine::GetInstance().GetFScene()->GetLight(0));
+	FLight* light = Engine::GetInstance().GetFScene()->GetLight(0);
 	// Only the first "main" light casts a shadow.
 	light->GetFlightDesc()->lightPos = -2.0f * mSceneBound.radius * light->GetFlightDesc()->lightDir;
 	light->GetFlightDesc()->targetPos = mSceneBound.center;
@@ -476,15 +475,16 @@ void DX12RHI::UpdateShadowTransform()
 	light->GetFlightDesc()->lightFarZ = f;
 	mat4 lightProj = glm::orthoLH(l, r, b, t, n, f);
 
-	// Transform NDC space [-1,+1]^2 to texture space [0,1]^2
-	mat4 T(
-		0.5f, 0.0f, 0.0f, 0.0f,
-		0.0f, -0.5f, 0.0f, 0.0f,
-		0.0f, 0.0f, 1.0f, 0.0f,
-		0.5f, 0.5f, 0.0f, 1.0f);
+// 	// Transform NDC space [-1,+1]^2 to texture space [0,1]^2
+// 	mat4 T(
+// 		0.5f, 0.0f, 0.0f, 0.0f,
+// 		0.0f, -0.5f, 0.0f, 0.0f,
+// 		0.0f, 0.0f, 1.0f, 0.0f,
+// 		0.5f, 0.5f, 0.0f, 1.0f);
 
-	mat4 S = light->GetFlightDesc()->lightView * light->GetFlightDesc()->lightProj * T;
+	mat4 S = light->GetFlightDesc()->lightView * light->GetFlightDesc()->lightProj;//* T;
 	light->GetFlightDesc()->shadowTransform = S;
+	light = nullptr;
 }
 
 void DX12RHI::StartDraw()
@@ -536,18 +536,17 @@ void DX12RHI::TransResourBarrier(unsigned int numBarriers, D3D12_RESOURCE_STATES
 void DX12RHI::DrawSceneToShadowMap(FRenderScene& fRenderScene)
 {
 	ThrowIfFailed(mDirectCmdListAlloc->Reset());
-	ThrowIfFailed(mCommandList->Reset(mDirectCmdListAlloc.Get(), mPSOs["shadow_pso"].Get()));
-	mCommandList->ResourceBarrier(1, &CD3DX12_RESOURCE_BARRIER::Transition(mShadowMap->Resource(), D3D12_RESOURCE_STATE_GENERIC_READ, D3D12_RESOURCE_STATE_DEPTH_WRITE));
+	ThrowIfFailed(mCommandList->Reset(mDirectCmdListAlloc.Get(), mPSOs["geo_pso"].Get()));
 	mCommandList->RSSetViewports(1, &mScreenViewport);
 	mCommandList->RSSetScissorRects(1, &mScissorRect);
-	float color[4] = { 1.0f,1.0f,1.0f,1.0f };
-	//mCommandList->ClearRenderTargetView(CurrentBackBufferView(), color, 0, nullptr);
+	mCommandList->ResourceBarrier(1, &CD3DX12_RESOURCE_BARRIER::Transition(mShadowMap->Resource(), D3D12_RESOURCE_STATE_GENERIC_READ, D3D12_RESOURCE_STATE_DEPTH_WRITE));
 	mCommandList->ClearDepthStencilView(mShadowMap->Dsv(), D3D12_CLEAR_FLAG_DEPTH | D3D12_CLEAR_FLAG_STENCIL, 1.0f, 0, 0, nullptr);
-	mCommandList->OMSetRenderTargets(0, nullptr, false, &mShadowMap->Dsv());
-	mCommandList->SetGraphicsRootSignature(mShadowSignature.Get());
 	mCommandList->SetPipelineState(mPSOs["shadow_pso"].Get());
+	//mCommandList->OMSetRenderTargets(0, nullptr, false, &mShadowMap->Dsv());
+	mCommandList->OMSetRenderTargets(0, nullptr, false, &DepthStencilView());
 	ID3D12DescriptorHeap* descriptorHeapsSRV[] = { mSrvDescriptorHeap.Get() };
 	ID3D12DescriptorHeap* descriptorHeaps[] = { mCbvHeap.Get() };
+	mCommandList->SetGraphicsRootSignature(mShadowSignature.Get());
 	for (int i = 0; i < fRenderScene.GetNumPrimitive(); i++)
 	{
 		mCommandList->IASetVertexBuffers(0, 1, &fRenderScene.GetPrimitive(i).GetMeshGeometryInfo().VertexBufferView());
@@ -555,19 +554,19 @@ void DX12RHI::DrawSceneToShadowMap(FRenderScene& fRenderScene)
 		mCommandList->IASetPrimitiveTopology(D3D11_PRIMITIVE_TOPOLOGY_TRIANGLELIST);
 
 		//mat4 worldViewProj = Engine::GetInstance().GetFScene()->GetCamera()->GetProj() * Engine::GetInstance().GetFScene()->GetCamera()->GetView() * mMeshes[i].mMeshWorld;
-
 		// Update the constant buffer with the latest worldViewProj matrix.
 		ObjectConstants objConstants;
-		objConstants.Roatation = transpose(fRenderScene.GetPrimitive(i).GetMeshGeometryInfo().Rotation);
-		objConstants.Proj = transpose(Engine::GetInstance().GetFScene()->GetLight(0)->GetFlightDesc()->lightProj);
-		objConstants.View = transpose(Engine::GetInstance().GetFScene()->GetLight(0)->GetFlightDesc()->lightView);
-		objConstants.World = transpose(fRenderScene.GetPrimitive(i).GetMeshGeometryInfo().mMeshWorld);
+		objConstants.Roatation = glm::transpose(fRenderScene.GetPrimitive(i).GetMeshGeometryInfo().Rotation);
+// 		objConstants.Proj = glm::transpose(Engine::GetInstance().GetFScene()->GetLight(0)->GetFlightDesc()->lightProj);
+// 		objConstants.View = glm::transpose(Engine::GetInstance().GetFScene()->GetLight(0)->GetFlightDesc()->lightView);
+		objConstants.Proj = transpose(Engine::GetInstance().GetFScene()->GetCamera()->GetProj());
+		objConstants.View = transpose(Engine::GetInstance().GetFScene()->GetCamera()->GetView());
+		objConstants.World = glm::transpose(fRenderScene.GetPrimitive(i).GetMeshGeometryInfo().mMeshWorld);
 		objConstants.time = Engine::GetInstance().GetTimer()->TotalTime();
 		mObjectCB[fRenderScene.GetPrimitive(i).GetIndex()]->CopyData(0, objConstants);
 
 		mCommandList->SetDescriptorHeaps(_countof(descriptorHeapsSRV), descriptorHeapsSRV);
-		auto handle1 = CD3DX12_GPU_DESCRIPTOR_HANDLE(mSrvDescriptorHeap->GetGPUDescriptorHandleForHeapStart());
-		mCommandList->SetGraphicsRootDescriptorTable(1, handle1);
+		//mCommandList->SetGraphicsRootDescriptorTable(1, mShadowMap->Srv());
 
 		mCommandList->SetDescriptorHeaps(_countof(descriptorHeaps), descriptorHeaps);
 		auto handle = CD3DX12_GPU_DESCRIPTOR_HANDLE(mCbvHeap->GetGPUDescriptorHandleForHeapStart());
@@ -579,9 +578,8 @@ void DX12RHI::DrawSceneToShadowMap(FRenderScene& fRenderScene)
 			1, 0, 0, 0);
 	}
 	mCommandList->ResourceBarrier(1, &CD3DX12_RESOURCE_BARRIER::Transition(mShadowMap->Resource(), D3D12_RESOURCE_STATE_DEPTH_WRITE, D3D12_RESOURCE_STATE_GENERIC_READ));
-	CloseCommandList();
-	SwapChain();
-	FlushCommandQueue();
+	mCommandList->ResourceBarrier(1, &CD3DX12_RESOURCE_BARRIER::Transition(CurrentBackBuffer(), D3D12_RESOURCE_STATE_PRESENT, D3D12_RESOURCE_STATE_RENDER_TARGET));
+
 }
 
 void DX12RHI::ClearBackBufferAndDepthBuffer(const float* color, float depth, unsigned int stencil, unsigned int numRects)
@@ -602,14 +600,10 @@ void DX12RHI::SetGraphicsRootSignature()
 	mCommandList->SetGraphicsRootSignature(mRootSignature.Get());
 }
 
-void DX12RHI::InitConstantBuffers()
-{
-	//mObjectCB = std::make_unique<UploadBuffer<ObjectConstants>>(md3dDevice.Get(), mPrimitives.size() + 1024, true);
-}
-
 void DX12RHI::DrawFRenderScene(FRenderScene& fRenderScene)
 {
 	//Render items
+	mCommandList->SetPipelineState(mPSOs["geo_pso"].Get());
 	ID3D12DescriptorHeap* descriptorHeapsSRV[] = { mSrvDescriptorHeap.Get() };
 	ID3D12DescriptorHeap* descriptorHeaps[] = { mCbvHeap.Get() };
 	for (int i = 0; i < fRenderScene.GetNumPrimitive(); i++)

@@ -44,10 +44,10 @@ void ForwardRenderer::BuildPrimitive(FActor& actor)
 void ForwardRenderer::Draw()
 {
 	rhi->DrawSceneToShadowMap(fRenderScene);
-	rhi->StartDraw();
+	//rhi->StartDraw();
 	rhi->RSSetViewPorts(1, &rhi->GetViewport());
 	rhi->RESetScissorRects(1, &rhi->GetTagRect());
-	float color[4] = { 0.0f,0.2f,0.5f,0.25f };
+	float color[4] = { 1.0f,1.0f,1.0f,1.0f };
 	rhi->ClearBackBufferAndDepthBuffer(color, 1.0f, 0, 0);
 	rhi->SetRenderTargets(1);
 	rhi->SetGraphicsRootSignature();
