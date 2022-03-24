@@ -319,10 +319,10 @@ void DX12RHI::BuildConstantBuffers()
 
 void DX12RHI::BuildShaderResourceView()
 {
-	int index = 0;
-	CD3DX12_CPU_DESCRIPTOR_HANDLE hDescriptor(mSrvDescriptorHeap->GetCPUDescriptorHandleForHeapStart());
+	int index = 1;
 	for (auto texture : mTextures)
 	{
+		CD3DX12_CPU_DESCRIPTOR_HANDLE hDescriptor(mSrvDescriptorHeap->GetCPUDescriptorHandleForHeapStart());
 		hDescriptor.Offset(index++, mCbvSrvUavDescriptorSize);
 		auto tex = mTextures[texture.first].Resource;
 
@@ -501,7 +501,7 @@ void DX12RHI::ResetCmdListAlloc()
 
 void DX12RHI::ResetCommandList()
 {
-	ThrowIfFailed(mCommandList->Reset(mDirectCmdListAlloc.Get(), mPSOs["psoDesc"].Get()));
+	ThrowIfFailed(mCommandList->Reset(mDirectCmdListAlloc.Get(), mPSOs["geo_pso"].Get()));
 }
 
 void DX12RHI::RSSetViewPorts(unsigned int numViewports, const VIEWPORT* scrernViewport)
@@ -542,8 +542,8 @@ void DX12RHI::DrawSceneToShadowMap(FRenderScene& fRenderScene)
 	mCommandList->ResourceBarrier(1, &CD3DX12_RESOURCE_BARRIER::Transition(mShadowMap->Resource(), D3D12_RESOURCE_STATE_GENERIC_READ, D3D12_RESOURCE_STATE_DEPTH_WRITE));
 	mCommandList->ClearDepthStencilView(mShadowMap->Dsv(), D3D12_CLEAR_FLAG_DEPTH | D3D12_CLEAR_FLAG_STENCIL, 1.0f, 0, 0, nullptr);
 	mCommandList->SetPipelineState(mPSOs["shadow_pso"].Get());
-	//mCommandList->OMSetRenderTargets(0, nullptr, false, &mShadowMap->Dsv());
-	mCommandList->OMSetRenderTargets(0, nullptr, false, &DepthStencilView());
+	mCommandList->OMSetRenderTargets(0, nullptr, false, &mShadowMap->Dsv());
+	//mCommandList->OMSetRenderTargets(0, nullptr, false, &DepthStencilView());
 	ID3D12DescriptorHeap* descriptorHeapsSRV[] = { mSrvDescriptorHeap.Get() };
 	ID3D12DescriptorHeap* descriptorHeaps[] = { mCbvHeap.Get() };
 	mCommandList->SetGraphicsRootSignature(mShadowSignature.Get());
@@ -565,8 +565,8 @@ void DX12RHI::DrawSceneToShadowMap(FRenderScene& fRenderScene)
 		objConstants.time = Engine::GetInstance().GetTimer()->TotalTime();
 		mObjectCB[fRenderScene.GetPrimitive(i).GetIndex()]->CopyData(0, objConstants);
 
-		mCommandList->SetDescriptorHeaps(_countof(descriptorHeapsSRV), descriptorHeapsSRV);
-		//mCommandList->SetGraphicsRootDescriptorTable(1, mShadowMap->Srv());
+// 		mCommandList->SetDescriptorHeaps(_countof(descriptorHeapsSRV), descriptorHeapsSRV);
+// 		mCommandList->SetGraphicsRootDescriptorTable(1, mShadowMap->Srv());
 
 		mCommandList->SetDescriptorHeaps(_countof(descriptorHeaps), descriptorHeaps);
 		auto handle = CD3DX12_GPU_DESCRIPTOR_HANDLE(mCbvHeap->GetGPUDescriptorHandleForHeapStart());
