@@ -35,8 +35,8 @@ void ForwardRenderer::Render()
 	}
 	rhi->ResetCmdListAlloc();
 	rhi->ResetCommandList("geo_pso");
-	rhi->RSSetViewPorts(1, &rhi->GetViewport());
-	rhi->RESetScissorRects(1, &rhi->GetTagRect());
+	rhi->RSSetViewPorts(1, &rhi->GetShadowMapViewport());
+	rhi->RESetScissorRects(1, &rhi->GetShadowMapTagRect());
 	rhi->TransShadowMapResourBarrier(1, RESOURCE_STATE_GENERIC_READ, RESOURCE_STATE_DEPTH_WRITE);
 	rhi->ClearDepthBuffer(rhi->GetShadowMapCUPHandle());
 	rhi->SetPipelineState("shadow_pso");

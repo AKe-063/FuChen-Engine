@@ -8,8 +8,8 @@ ShadowMap::ShadowMap(ID3D12Device* device, UINT width, UINT height)
 	mWidth = width;
 	mHeight = height;
 
-	mViewport = { 0.0f, 0.0f, (float)width, (float)height, 0.0f, 1.0f };
-	mScissorRect = { 0, 0, (int)width, (int)height };
+	mViewport = { 0.0f, 0.0f, 2048.0f, 2048.0f, 0.0f, 1.0f };
+	mScissorRect = { 0, 0, 2048, 2048 };
 
 	BuildResource();
 }

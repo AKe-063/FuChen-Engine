@@ -17,6 +17,6 @@ public:
 	virtual void CalculateFrameStats();
 
 protected:
-	int mwWidth = 800;
-	int mwHeight = 600;
+	int mwWidth = 1440;
+	int mwHeight = 900;
 };

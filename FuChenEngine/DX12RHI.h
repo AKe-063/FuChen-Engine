@@ -59,6 +59,8 @@ public:
 	virtual unsigned __int64 GetCurrentBackBufferViewHandle()override;
 	virtual unsigned __int64 GetDepthStencilViewHandle()override;
 	virtual void FlushCommandQueue()override;
+	virtual VIEWPORT GetShadowMapViewport()override;
+	virtual TAGRECT GetShadowMapTagRect()override;
 
 protected:
 	//DX Init
@@ -128,4 +130,6 @@ private:
 	std::unique_ptr<ShadowMap> mShadowMap;
 
 	int flag = 0;
+	int rota = 0;
+	bool rotaFlag = true;
 };

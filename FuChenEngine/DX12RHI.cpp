@@ -121,7 +121,7 @@ void DX12RHI::Init()
 	{
 		throw("InitDX False!");
 	}
-	mShadowMap = std::make_unique<ShadowMap>(md3dDevice.Get(), mWindow->GetWidth(), mWindow->GetHeight());
+	mShadowMap = std::make_unique<ShadowMap>(md3dDevice.Get(), 2048, 2048);
 
 	// Do the initial resize code.
 	OnResize();
@@ -394,9 +394,9 @@ void DX12RHI::BuildPSO()
    // PSO for shadow map pass.
    //
 	D3D12_GRAPHICS_PIPELINE_STATE_DESC smapPsoDesc = psoDesc;
-	smapPsoDesc.RasterizerState.DepthBias = 100000;
+	smapPsoDesc.RasterizerState.DepthBias = 10000;
 	smapPsoDesc.RasterizerState.DepthBiasClamp = 0.0f;
-	smapPsoDesc.RasterizerState.SlopeScaledDepthBias = 1.0f;
+	smapPsoDesc.RasterizerState.SlopeScaledDepthBias = 0.50f;
 	smapPsoDesc.pRootSignature = mShadowSignature.Get();
 	smapPsoDesc.VS =
 	{
@@ -438,8 +438,23 @@ void DX12RHI::UpdateShadowTransform()
 {
 	FLight* light = Engine::GetInstance().GetFScene()->GetLight(0);
 	float radius = 2500.0f;
+	int speed = 100;
 	// Only the first "main" light casts a shadow.
-	light->GetFlightDesc()->lightPos = Engine::GetInstance().GetFScene()->GetCamera()->GetPosition();
+	//light->GetFlightDesc()->lightPos = Engine::GetInstance().GetFScene()->GetCamera()->GetPosition();
+	if (flag)
+	{
+		light->GetFlightDesc()->lightPos = glm::vec3(1200 - rota, rota, 2000.0f);
+		rota += speed;
+		if (rota == 1200)
+			flag = !flag;
+	}
+	else
+	{
+		light->GetFlightDesc()->lightPos = glm::vec3(1200 - rota, rota, 2000.0f);
+		rota -= speed;
+		if (rota == -1200)
+			flag = !flag;
+	}
 	light->GetFlightDesc()->targetPos = glm::vec3(0.0f, 0.0f, 0.0f);
 	light->GetFlightDesc()->lightView = glm::lookAtLH(light->GetFlightDesc()->lightPos, light->GetFlightDesc()->targetPos, light->GetFlightDesc()->lightUp);
 
@@ -536,12 +551,12 @@ unsigned __int64 DX12RHI::GetDepthStencilViewHandle()
 
 void DX12RHI::DrawSceneToShadowMap(FRenderScene& fRenderScene)
 {
-	if (flag != 100)
-	{
-		UpdateShadowTransform();
-		flag++;
-	}
-	//UpdateShadowTransform();
+// 	if (flag != 100)
+// 	{
+// 		UpdateShadowTransform();
+// 		flag++;
+// 	}
+	UpdateShadowTransform();
 	mCommandList->SetGraphicsRootSignature(mShadowSignature.Get());
 	ID3D12DescriptorHeap* descriptorHeaps[] = { mCbvHeap.Get() };
 	for (int i = 0; i < fRenderScene.GetNumPrimitive(); i++)
@@ -651,6 +666,28 @@ TAGRECT DX12RHI::GetTagRect()
 	tagRect.right = mScissorRect.right;
 	tagRect.left = mScissorRect.left;
 	tagRect.top = mScissorRect.top;
+	return tagRect;
+}
+
+VIEWPORT DX12RHI::GetShadowMapViewport()
+{
+	VIEWPORT viewport;
+	viewport.Height = mShadowMap->Viewport().Height;
+	viewport.MaxDepth = mShadowMap->Viewport().MaxDepth;
+	viewport.MinDepth = mShadowMap->Viewport().MinDepth;
+	viewport.TopLeftX = mShadowMap->Viewport().TopLeftX;
+	viewport.TopLeftY = mShadowMap->Viewport().TopLeftY;
+	viewport.Width = mShadowMap->Viewport().Width;
+	return viewport;
+}
+
+TAGRECT DX12RHI::GetShadowMapTagRect()
+{
+	TAGRECT tagRect;
+	tagRect.bottom = mShadowMap->ScissorRect().bottom;
+	tagRect.right = mShadowMap->ScissorRect().right;
+	tagRect.left = mShadowMap->ScissorRect().left;
+	tagRect.top = mShadowMap->ScissorRect().top;
 	return tagRect;
 }
 

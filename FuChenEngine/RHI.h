@@ -40,6 +40,8 @@ public:
 	virtual unsigned __int64 GetCurrentBackBufferViewHandle() = 0;
 	virtual unsigned __int64 GetDepthStencilViewHandle() = 0;
 	virtual void FlushCommandQueue() {};
+	virtual VIEWPORT GetShadowMapViewport() = 0;
+	virtual TAGRECT GetShadowMapTagRect() = 0;
 
 protected:
 	static RHI* rhi;
