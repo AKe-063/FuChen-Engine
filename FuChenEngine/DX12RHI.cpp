@@ -284,13 +284,20 @@ bool DX12RHI::InitDirect3D()
 
 void DX12RHI::BuildDescriptorHeaps()
 {
-	D3D12_DESCRIPTOR_HEAP_DESC cbvHeapDesc;
-	cbvHeapDesc.NumDescriptors = 1024;
-	cbvHeapDesc.Type = D3D12_DESCRIPTOR_HEAP_TYPE_CBV_SRV_UAV;
-	cbvHeapDesc.Flags = D3D12_DESCRIPTOR_HEAP_FLAG_SHADER_VISIBLE;
-	cbvHeapDesc.NodeMask = 0;
-	ThrowIfFailed(md3dDevice->CreateDescriptorHeap(&cbvHeapDesc,
+	D3D12_DESCRIPTOR_HEAP_DESC managedHeapDesc;
+	managedHeapDesc.NumDescriptors = 1024;
+	managedHeapDesc.Type = D3D12_DESCRIPTOR_HEAP_TYPE_CBV_SRV_UAV;
+	managedHeapDesc.Flags = D3D12_DESCRIPTOR_HEAP_FLAG_SHADER_VISIBLE;
+	managedHeapDesc.NodeMask = 0;
+	ThrowIfFailed(md3dDevice->CreateDescriptorHeap(&managedHeapDesc,
 		IID_PPV_ARGS(&mCbvHeap)));
+
+	//Create the SRV heap
+	D3D12_DESCRIPTOR_HEAP_DESC srvHeapDesc = {};
+	srvHeapDesc.NumDescriptors = 1024;
+	srvHeapDesc.Type = D3D12_DESCRIPTOR_HEAP_TYPE_CBV_SRV_UAV;
+	srvHeapDesc.Flags = D3D12_DESCRIPTOR_HEAP_FLAG_SHADER_VISIBLE;
+	ThrowIfFailed(md3dDevice->CreateDescriptorHeap(&srvHeapDesc, IID_PPV_ARGS(&mSrvDescriptorHeap)));
 }
 
 void DX12RHI::BuildShaderResourceView()
@@ -433,7 +440,6 @@ void DX12RHI::UpdateShadowTransform()
 	float radius = 2500.0f;
 	// Only the first "main" light casts a shadow.
 	light->GetFlightDesc()->lightPos = Engine::GetInstance().GetFScene()->GetCamera()->GetPosition();
-	//light->GetFlightDesc()->lightPos = glm::vec3(1870.0f, -200.0f, 1610.0f);
 	light->GetFlightDesc()->targetPos = glm::vec3(0.0f, 0.0f, 0.0f);
 	light->GetFlightDesc()->lightView = glm::lookAtLH(light->GetFlightDesc()->lightPos, light->GetFlightDesc()->targetPos, light->GetFlightDesc()->lightUp);
 
@@ -456,7 +462,6 @@ void DX12RHI::UpdateShadowTransform()
 		0.0f, 0.0f, 1.0f, 0.0f,
 		0.5f, 0.5f, 0.0f, 1.0f);
 
-	//mat4 S = T * light->GetFlightDesc()->lightProj * light->GetFlightDesc()->lightView;
 	mat4 S = T * light->GetFlightDesc()->lightProj * light->GetFlightDesc()->lightView;
 	light->GetFlightDesc()->shadowTransform = S;
 	light = nullptr;
@@ -536,7 +541,7 @@ void DX12RHI::DrawSceneToShadowMap(FRenderScene& fRenderScene)
 		UpdateShadowTransform();
 		flag++;
 	}
-	
+	//UpdateShadowTransform();
 	mCommandList->SetGraphicsRootSignature(mShadowSignature.Get());
 	ID3D12DescriptorHeap* descriptorHeaps[] = { mCbvHeap.Get() };
 	for (int i = 0; i < fRenderScene.GetNumPrimitive(); i++)
@@ -607,18 +612,6 @@ void DX12RHI::DrawFRenderScene(FRenderScene& fRenderScene)
 		mCommandList->IASetVertexBuffers(0, 1, &fRenderScene.GetPrimitive(i).GetMeshGeometryInfo().VertexBufferView());
 		mCommandList->IASetIndexBuffer(&fRenderScene.GetPrimitive(i).GetMeshGeometryInfo().IndexBufferView());
 		mCommandList->IASetPrimitiveTopology(D3D11_PRIMITIVE_TOPOLOGY_TRIANGLELIST);
-
-		//mat4 worldViewProj = Engine::GetInstance().GetFScene()->GetCamera()->GetProj() * Engine::GetInstance().GetFScene()->GetCamera()->GetView() * mMeshes[i].mMeshWorld;
-
-		// Update the constant buffer with the latest worldViewProj matrix.
-// 		ObjectConstants objConstants;
-// 		objConstants.Roatation = transpose(fRenderScene.GetPrimitive(i).GetMeshGeometryInfo().Rotation);
-// 		objConstants.ViewProj = glm::transpose(Engine::GetInstance().GetFScene()->GetCamera()->GetProj() * Engine::GetInstance().GetFScene()->GetCamera()->GetView());
-// // 		objConstants.Proj = transpose(Engine::GetInstance().GetFScene()->GetCamera()->GetProj());
-// // 		objConstants.View = transpose(Engine::GetInstance().GetFScene()->GetCamera()->GetView());
-// 		objConstants.World = transpose(fRenderScene.GetPrimitive(i).GetMeshGeometryInfo().mMeshWorld);
-// 		objConstants.time = Engine::GetInstance().GetTimer()->TotalTime();
-// 		mObjectCB[fRenderScene.GetPrimitive(i).GetIndex()]->CopyData(0, objConstants);
 
 		mCommandList->SetDescriptorHeaps(_countof(descriptorHeapsSRV), descriptorHeapsSRV);
 		auto handle1 = CD3DX12_GPU_DESCRIPTOR_HANDLE(mSrvDescriptorHeap->GetGPUDescriptorHandleForHeapStart());
@@ -784,13 +777,6 @@ void DX12RHI::CreateRtvAndDsvDescriptorHeaps()
 	dsvHeapDesc.NodeMask = 0;
 	ThrowIfFailed(md3dDevice->CreateDescriptorHeap(
 		&dsvHeapDesc, IID_PPV_ARGS(mDsvHeap.GetAddressOf())));
-
-	//Create the SRV heap
-	D3D12_DESCRIPTOR_HEAP_DESC srvHeapDesc = {};
-	srvHeapDesc.NumDescriptors = 1024;
-	srvHeapDesc.Type = D3D12_DESCRIPTOR_HEAP_TYPE_CBV_SRV_UAV;
-	srvHeapDesc.Flags = D3D12_DESCRIPTOR_HEAP_FLAG_SHADER_VISIBLE;
-	ThrowIfFailed(md3dDevice->CreateDescriptorHeap(&srvHeapDesc, IID_PPV_ARGS(&mSrvDescriptorHeap)));
 }
 
 bool DX12RHI::Get4xMsaaState() const

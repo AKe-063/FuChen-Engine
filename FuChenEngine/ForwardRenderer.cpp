@@ -63,7 +63,7 @@ void ForwardRenderer::Draw()
 	float color[4] = { 1.0f,1.0f,1.0f,1.0f };
 	rhi->ClearBackBuffer(color);
 	rhi->ClearDepthBuffer(rhi->GetDepthStencilViewHandle());
-	rhi->SetRenderTargets(1, rhi->GetCurrentBackBufferViewHandle(), true, rhi->GetDepthStencilViewHandle());
+	rhi->SetRenderTargets(1, rhi->GetCurrentBackBufferViewHandle(), false, rhi->GetDepthStencilViewHandle());
 	rhi->SetGraphicsRootSignature();
 	rhi->SetPipelineState("geo_pso");
 	rhi->DrawFRenderScene(fRenderScene);
