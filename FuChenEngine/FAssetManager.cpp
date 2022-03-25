@@ -84,7 +84,7 @@ void FAssetManager::LoadTexture()
 	textureFileLink.push_back(tex);
 
 	texDec.name = "T_Chair_M";
-	texDec.textureFilePath = L"../FuChenEngine/Textures/T_Chair_M.dds";
+	texDec.textureFilePath = L"../FuChenEngine/Textures/jacket_diff.dds";
 	textureFileLink.push_back(tex);
 
 	texDec.name = "T_Chair_N";

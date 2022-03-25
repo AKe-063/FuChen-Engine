@@ -22,6 +22,7 @@ public:
 	void SetControlCamera();
 	static Camera* GetControlCamera();
 
+	vec4 GetPosition();
 	mat4 GetProj();
 	mat4 GetView();
 	mat4x4 GetProj4x4();

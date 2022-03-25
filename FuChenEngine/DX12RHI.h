@@ -34,31 +34,33 @@ public:
 	void BuildNewTexture(const std::string& name, const std::wstring& textureFilePath);
 	void BuildAllTextures();
 	void AddConstantBuffer(FPrimitive& fPrimitive);
-
 	void UpdateShadowTransform();
 
 	//Abstract RHI
-	virtual void StartDraw()override;
 	virtual void RSSetViewPorts(unsigned int numViewports, const VIEWPORT* scrernViewport)override;
 	virtual void RESetScissorRects(unsigned int numRects, const TAGRECT* rect)override;
-	virtual void ClearBackBufferAndDepthBuffer(const float* color, float depth, unsigned int stencil, unsigned int numRects)override;
-	virtual void SetRenderTargets(unsigned int numRenderTarget)override;
+	virtual void ClearBackBuffer(const float* color)override;
+	virtual void ClearDepthBuffer(unsigned __int64 handle)override;
+	virtual void SetRenderTargets(unsigned int numRenderTarget, unsigned __int64 renderTargetDescriptor, bool RTsSingleHandleToDescriptorRange, unsigned __int64 DepthDescriptor)override;
 	virtual void SetGraphicsRootSignature()override;
 	virtual void DrawFRenderScene(FRenderScene& fRenderScene)override;
-	virtual void EndDraw()override;
 	virtual VIEWPORT GetViewport()override;
 	virtual TAGRECT GetTagRect()override;
 	virtual void CreatePrimitive(FActor& actor, FRenderScene& fRenderScene)override;
 	virtual void DrawSceneToShadowMap(FRenderScene& fRenderScene)override;
+	virtual void ResetCmdListAlloc()override;
+	virtual void ResetCommandList(std::string pso)override;
+	virtual void CloseCommandList()override;
+	virtual void SwapChain()override;
+	virtual void TransCurrentBackBufferResourBarrier(unsigned int numBarriers, RESOURCE_STATES currentState, RESOURCE_STATES targetState)override;
+	virtual void TransShadowMapResourBarrier(unsigned int numBarriers, RESOURCE_STATES currentState, RESOURCE_STATES targetState)override;
+	virtual unsigned __int64 GetShadowMapCUPHandle()override;
+	virtual void SetPipelineState(std::string pso)override;
+	virtual unsigned __int64 GetCurrentBackBufferViewHandle()override;
+	virtual unsigned __int64 GetDepthStencilViewHandle()override;
+	virtual void FlushCommandQueue()override;
 
 protected:
-	//Draw process
-	void ResetCmdListAlloc();
-	void ResetCommandList();
-	void CloseCommandList();
-	void SwapChain();
-	void TransResourBarrier(unsigned int numBarriers, D3D12_RESOURCE_STATES currentState, D3D12_RESOURCE_STATES targetState);
-
 	//DX Init
 	bool InitDirect3D();
 	virtual void CreateRtvAndDsvDescriptorHeaps();
@@ -66,7 +68,6 @@ protected:
 	//void Set4xMsaaState(bool value);
 	void CreateCommandObjects();
 	void CreateSwapChain();
-	void FlushCommandQueue();
 	ID3D12Resource* CurrentBackBuffer()const;
 	D3D12_CPU_DESCRIPTOR_HANDLE CurrentBackBufferView()const;
 	D3D12_CPU_DESCRIPTOR_HANDLE DepthStencilView()const;
@@ -124,6 +125,7 @@ private:
 	int mCbvCount = 0;
 
 	Window* mWindow;
-	BoundingSphere mSceneBound;
 	std::unique_ptr<ShadowMap> mShadowMap;
+
+	int flag = 0;
 };

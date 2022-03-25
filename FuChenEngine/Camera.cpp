@@ -180,6 +180,11 @@ Camera* Camera::GetControlCamera()
 	return controlCamera;
 }
 
+glm::vec4 Camera::GetPosition()
+{
+	return mPosition;
+}
+
 mat4 Camera::GetProj()
 {
 	return mProj;

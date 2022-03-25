@@ -15,5 +15,14 @@
 		"addressU = TEXTURE_ADDRESS_WRAP," \
 		"addressV = TEXTURE_ADDRESS_WRAP," \
 		"addressW = TEXTURE_ADDRESS_WRAP," \
-		"filter = FILTER_MIN_MAG_MIP_POINT)"
+		"filter = FILTER_MIN_MAG_MIP_POINT),"\
+	"StaticSampler(s1," \
+		"addressU = TEXTURE_ADDRESS_BORDER," \
+		"addressV = TEXTURE_ADDRESS_BORDER," \
+		"addressW = TEXTURE_ADDRESS_BORDER," \
+		"filter = FILTER_COMPARISON_MIN_MAG_LINEAR_MIP_POINT,"\
+        "mipLODBias =0 ,"\
+        "maxAnisotropy = 16,"\
+        "comparisonFunc = COMPARISON_LESS_EQUAL,"\
+        "borderColor = STATIC_BORDER_COLOR_OPAQUE_BLACK)"
 

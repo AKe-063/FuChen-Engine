@@ -14,11 +14,14 @@ SamplerState gsamAnisotropicClamp : register(s5);*/
 
 cbuffer cbPerObject : register(b0)
 {
+	float4x4 glightPrpj;
+	float4x4 glightVPj;
+	float4x4 gLightVP;
 	//float4x4 gWorldViewProj; 
 	float4x4 gRotation;
 	float4x4 gWorld;
-	float4x4 gView;
-	float4x4 gProj;
+	float4x4 gViewProj;
+	//float4x4 gProj;
 	float time;
 };
 
@@ -40,12 +43,12 @@ struct VertexOut
 	float2 TexC    : TEXCOORD;
 };
 
-[RootSignature(FuChenSample_RootSig)]
+[RootSignature(FuChenSample_ShadowSig)]
 VertexOut VS(VertexIn vin)
 {
 	VertexOut vout;
 
-	float4x4 gWorldViewProj = mul(gWorld, mul(gView, gProj));
+	float4x4 gWorldViewProj = mul(gWorld, glightVPj);
 	vout.PosH = mul(float4(vin.PosL, 1.0f), gWorldViewProj);
 	vout.Color = vin.Color;
 	vout.Normal = mul(vin.Normal, gRotation);

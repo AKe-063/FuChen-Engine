@@ -116,10 +116,14 @@ struct Vertex
 
 struct ObjectConstants
 {
+	mat4 lightProj = MathHelper::Identity4x4();
+	mat4 lightVPl = MathHelper::Identity4x4();
+	mat4 LightVP = MathHelper::Identity4x4();
 	mat4 Roatation = MathHelper::Identity4x4();
 	mat4 World = MathHelper::Identity4x4();
-	mat4 View = MathHelper::Identity4x4();
-	mat4 Proj = MathHelper::Identity4x4();
+// 	mat4 View = MathHelper::Identity4x4();
+// 	mat4 Proj = MathHelper::Identity4x4();
+	mat4 ViewProj = MathHelper::Identity4x4();
 	float time = 1.0f;
 };
 

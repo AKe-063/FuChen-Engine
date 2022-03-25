@@ -33,7 +33,21 @@ void ForwardRenderer::Render()
 		BuildPrimitive(allActorMap[renderActorName]);
 		Engine::GetInstance().GetFScene()->EraseDirtyActorByIndex(0);
 	}
+	rhi->ResetCmdListAlloc();
+	rhi->ResetCommandList("geo_pso");
+	rhi->RSSetViewPorts(1, &rhi->GetViewport());
+	rhi->RESetScissorRects(1, &rhi->GetTagRect());
+	rhi->TransShadowMapResourBarrier(1, RESOURCE_STATE_GENERIC_READ, RESOURCE_STATE_DEPTH_WRITE);
+	rhi->ClearDepthBuffer(rhi->GetShadowMapCUPHandle());
+	rhi->SetPipelineState("shadow_pso");
+	rhi->SetRenderTargets(0, 0, false, rhi->GetShadowMapCUPHandle());
+	rhi->DrawSceneToShadowMap(fRenderScene);
+	rhi->TransShadowMapResourBarrier(1, RESOURCE_STATE_DEPTH_WRITE, RESOURCE_STATE_GENERIC_READ);
 	Draw();
+	rhi->TransCurrentBackBufferResourBarrier(1, RESOURCE_STATE_RENDER_TARGET, RESOURCE_STATE_PRESENT);
+	rhi->CloseCommandList();
+	rhi->SwapChain();
+	rhi->FlushCommandQueue();
 }
 
 void ForwardRenderer::BuildPrimitive(FActor& actor)
@@ -43,16 +57,16 @@ void ForwardRenderer::BuildPrimitive(FActor& actor)
 
 void ForwardRenderer::Draw()
 {
-	rhi->DrawSceneToShadowMap(fRenderScene);
-	//rhi->StartDraw();
 	rhi->RSSetViewPorts(1, &rhi->GetViewport());
 	rhi->RESetScissorRects(1, &rhi->GetTagRect());
+	rhi->TransCurrentBackBufferResourBarrier(1, RESOURCE_STATE_PRESENT, RESOURCE_STATE_RENDER_TARGET);
 	float color[4] = { 1.0f,1.0f,1.0f,1.0f };
-	rhi->ClearBackBufferAndDepthBuffer(color, 1.0f, 0, 0);
-	rhi->SetRenderTargets(1);
+	rhi->ClearBackBuffer(color);
+	rhi->ClearDepthBuffer(rhi->GetDepthStencilViewHandle());
+	rhi->SetRenderTargets(1, rhi->GetCurrentBackBufferViewHandle(), true, rhi->GetDepthStencilViewHandle());
 	rhi->SetGraphicsRootSignature();
+	rhi->SetPipelineState("geo_pso");
 	rhi->DrawFRenderScene(fRenderScene);
-	rhi->EndDraw();
 }
 
 void ForwardRenderer::BuildInitialMap()

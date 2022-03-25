@@ -8,8 +8,7 @@ using namespace std;
 
 DX12RHI::DX12RHI()
 {
-	mSceneBound.center = glm::vec3(0.0f, 0.0f, 0.0f);
-	mSceneBound.radius = sqrtf(1.0f * 1.0f + 15.0f + 15.0f);
+	
 }
 
 DX12RHI::~DX12RHI()
@@ -150,7 +149,6 @@ void DX12RHI::BuildInitialMap()
 
 	BuildAllTextures();
 	BuildShaderResourceView();
-	UpdateShadowTransform();
 
 	ThrowIfFailed(GetCommandList()->Close());
 	ID3D12CommandList* cmdsLists[] = { GetCommandList().Get() };
@@ -389,9 +387,9 @@ void DX12RHI::BuildPSO()
    // PSO for shadow map pass.
    //
 	D3D12_GRAPHICS_PIPELINE_STATE_DESC smapPsoDesc = psoDesc;
-	smapPsoDesc.RasterizerState.DepthBias = 100000;
-	smapPsoDesc.RasterizerState.DepthBiasClamp = 0.0f;
-	smapPsoDesc.RasterizerState.SlopeScaledDepthBias = 1.0f;
+// 	smapPsoDesc.RasterizerState.DepthBias = 100000;
+// 	smapPsoDesc.RasterizerState.DepthBiasClamp = 0.0f;
+// 	smapPsoDesc.RasterizerState.SlopeScaledDepthBias = 1.0f;
 	smapPsoDesc.pRootSignature = mShadowSignature.Get();
 	smapPsoDesc.VS =
 	{
@@ -432,44 +430,36 @@ void DX12RHI::AddConstantBuffer(FPrimitive& fPrimitive)
 void DX12RHI::UpdateShadowTransform()
 {
 	FLight* light = Engine::GetInstance().GetFScene()->GetLight(0);
+	float radius = 2500.0f;
 	// Only the first "main" light casts a shadow.
-	light->GetFlightDesc()->lightPos = -2.0f * mSceneBound.radius * light->GetFlightDesc()->lightDir;
-	light->GetFlightDesc()->targetPos = mSceneBound.center;
+	light->GetFlightDesc()->lightPos = Engine::GetInstance().GetFScene()->GetCamera()->GetPosition();
+	//light->GetFlightDesc()->lightPos = glm::vec3(1870.0f, -200.0f, 1610.0f);
+	light->GetFlightDesc()->targetPos = glm::vec3(0.0f, 0.0f, 0.0f);
 	light->GetFlightDesc()->lightView = glm::lookAtLH(light->GetFlightDesc()->lightPos, light->GetFlightDesc()->targetPos, light->GetFlightDesc()->lightUp);
 
-	// Transform bounding sphere to light space.
-	glm::vec3 sphereCenterLS;
-	sphereCenterLS = MathHelper::Vector3TransformCoord(light->GetFlightDesc()->lightPos, light->GetFlightDesc()->lightView);
+	glm::vec3 sphereCenterLS = MathHelper::Vector3TransformCoord(light->GetFlightDesc()->targetPos, light->GetFlightDesc()->lightView);
 
-	// Ortho frustum in light space encloses scene.
-	float l = sphereCenterLS.x - mSceneBound.radius;
-	float b = sphereCenterLS.y - mSceneBound.radius;
-	float n = sphereCenterLS.z - mSceneBound.radius;
-	float r = sphereCenterLS.x + mSceneBound.radius;
-	float t = sphereCenterLS.y + mSceneBound.radius;
-	float f = sphereCenterLS.z + mSceneBound.radius;
+	float l = sphereCenterLS.x - radius;
+	float b = sphereCenterLS.y - radius;
+	float n = sphereCenterLS.z - radius;
+	float r = sphereCenterLS.x + radius;
+	float t = sphereCenterLS.y + radius;
+	float f = sphereCenterLS.z + radius;
 
-	light->GetFlightDesc()->lightNearZ = n;
-	light->GetFlightDesc()->lightFarZ = f;
-	mat4 lightProj = glm::orthoLH(l, r, b, t, n, f);
+	light->GetFlightDesc()->lightProj = glm::orthoLH_ZO(l, r, b, t, n, f);
+	//light->GetFlightDesc()->lightProj = glm::orthoLH_ZO(l, r, b, t, 1.0f, 10000.0f);
 
-// 	// Transform NDC space [-1,+1]^2 to texture space [0,1]^2
-// 	mat4 T(
-// 		0.5f, 0.0f, 0.0f, 0.0f,
-// 		0.0f, -0.5f, 0.0f, 0.0f,
-// 		0.0f, 0.0f, 1.0f, 0.0f,
-// 		0.5f, 0.5f, 0.0f, 1.0f);
+	// Transform NDC space [-1,+1]^2 to texture space [0,1]^2
+	mat4 T(
+		0.5f, 0.0f, 0.0f, 0.0f,
+		0.0f, -0.5f, 0.0f, 0.0f,
+		0.0f, 0.0f, 1.0f, 0.0f,
+		0.5f, 0.5f, 0.0f, 1.0f);
 
-	mat4 S = light->GetFlightDesc()->lightView * light->GetFlightDesc()->lightProj;//* T;
+	//mat4 S = T * light->GetFlightDesc()->lightProj * light->GetFlightDesc()->lightView;
+	mat4 S = T * light->GetFlightDesc()->lightProj * light->GetFlightDesc()->lightView;
 	light->GetFlightDesc()->shadowTransform = S;
 	light = nullptr;
-}
-
-void DX12RHI::StartDraw()
-{
-	ResetCmdListAlloc();
-	ResetCommandList();
-	TransResourBarrier(1, D3D12_RESOURCE_STATE_PRESENT, D3D12_RESOURCE_STATE_RENDER_TARGET);
 }
 
 void DX12RHI::ResetCmdListAlloc()
@@ -477,9 +467,9 @@ void DX12RHI::ResetCmdListAlloc()
 	ThrowIfFailed(mDirectCmdListAlloc->Reset());
 }
 
-void DX12RHI::ResetCommandList()
+void DX12RHI::ResetCommandList(std::string pso)
 {
-	ThrowIfFailed(mCommandList->Reset(mDirectCmdListAlloc.Get(), mPSOs["geo_pso"].Get()));
+	ThrowIfFailed(mCommandList->Reset(mDirectCmdListAlloc.Get(), mPSOs[pso].Get()));
 }
 
 void DX12RHI::RSSetViewPorts(unsigned int numViewports, const VIEWPORT* scrernViewport)
@@ -504,26 +494,51 @@ void DX12RHI::RESetScissorRects(unsigned int numRects, const TAGRECT* rect)
 	mCommandList->RSSetScissorRects(numRects, &tagRect);
 }
 
-void DX12RHI::TransResourBarrier(unsigned int numBarriers, D3D12_RESOURCE_STATES currentState, D3D12_RESOURCE_STATES targetState)
+void DX12RHI::TransCurrentBackBufferResourBarrier(unsigned int numBarriers, RESOURCE_STATES currentState, RESOURCE_STATES targetState)
 {
 	// Indicate a state transition on the resource usage.
-	mCommandList->ResourceBarrier(numBarriers, &CD3DX12_RESOURCE_BARRIER::Transition(CurrentBackBuffer(),
-		currentState, targetState));
+	mCommandList->ResourceBarrier(numBarriers, &CD3DX12_RESOURCE_BARRIER::Transition(CurrentBackBuffer(), D3D12_RESOURCE_STATES(currentState), D3D12_RESOURCE_STATES(targetState)));
+}
+
+void DX12RHI::TransShadowMapResourBarrier(unsigned int numBarriers, RESOURCE_STATES currentState, RESOURCE_STATES targetState)
+{
+	mCommandList->ResourceBarrier(numBarriers, &CD3DX12_RESOURCE_BARRIER::Transition(mShadowMap->Resource(), D3D12_RESOURCE_STATES(currentState), D3D12_RESOURCE_STATES(targetState)));
+}
+
+unsigned __int64 DX12RHI::GetShadowMapCUPHandle()
+{
+	return mShadowMap->Dsv().ptr;
+}
+
+void DX12RHI::SetPipelineState(std::string pso)
+{
+	mCommandList->SetPipelineState(mPSOs[pso].Get());
+}
+
+unsigned __int64 DX12RHI::GetCurrentBackBufferViewHandle()
+{
+	CD3DX12_CPU_DESCRIPTOR_HANDLE handle(
+		mRtvHeap->GetCPUDescriptorHandleForHeapStart(),
+		mCurrBackBuffer,
+		mRtvDescriptorSize);
+	return handle.ptr;
+}
+
+unsigned __int64 DX12RHI::GetDepthStencilViewHandle()
+{
+	return mDsvHeap->GetCPUDescriptorHandleForHeapStart().ptr;
 }
 
 void DX12RHI::DrawSceneToShadowMap(FRenderScene& fRenderScene)
 {
-	ThrowIfFailed(mDirectCmdListAlloc->Reset());
-	ThrowIfFailed(mCommandList->Reset(mDirectCmdListAlloc.Get(), mPSOs["geo_pso"].Get()));
-	mCommandList->RSSetViewports(1, &mScreenViewport);
-	mCommandList->RSSetScissorRects(1, &mScissorRect);
-	mCommandList->ResourceBarrier(1, &CD3DX12_RESOURCE_BARRIER::Transition(mShadowMap->Resource(), D3D12_RESOURCE_STATE_GENERIC_READ, D3D12_RESOURCE_STATE_DEPTH_WRITE));
-	mCommandList->ClearDepthStencilView(mShadowMap->Dsv(), D3D12_CLEAR_FLAG_DEPTH | D3D12_CLEAR_FLAG_STENCIL, 1.0f, 0, 0, nullptr);
-	mCommandList->SetPipelineState(mPSOs["shadow_pso"].Get());
-	mCommandList->OMSetRenderTargets(0, nullptr, false, &mShadowMap->Dsv());
-	//mCommandList->OMSetRenderTargets(0, nullptr, false, &DepthStencilView());
-	ID3D12DescriptorHeap* descriptorHeaps[] = { mCbvHeap.Get() };
+	if (flag != 100)
+	{
+		UpdateShadowTransform();
+		flag++;
+	}
+	
 	mCommandList->SetGraphicsRootSignature(mShadowSignature.Get());
+	ID3D12DescriptorHeap* descriptorHeaps[] = { mCbvHeap.Get() };
 	for (int i = 0; i < fRenderScene.GetNumPrimitive(); i++)
 	{
 		mCommandList->IASetVertexBuffers(0, 1, &fRenderScene.GetPrimitive(i).GetMeshGeometryInfo().VertexBufferView());
@@ -533,11 +548,13 @@ void DX12RHI::DrawSceneToShadowMap(FRenderScene& fRenderScene)
 		//mat4 worldViewProj = Engine::GetInstance().GetFScene()->GetCamera()->GetProj() * Engine::GetInstance().GetFScene()->GetCamera()->GetView() * mMeshes[i].mMeshWorld;
 		// Update the constant buffer with the latest worldViewProj matrix.
 		ObjectConstants objConstants;
+		objConstants.lightProj = glm::transpose(Engine::GetInstance().GetFScene()->GetLight(0)->GetFlightDesc()->lightProj);
+		objConstants.lightVPl = glm::transpose(Engine::GetInstance().GetFScene()->GetLight(0)->GetFlightDesc()->lightProj * Engine::GetInstance().GetFScene()->GetLight(0)->GetFlightDesc()->lightView);
 		objConstants.Roatation = glm::transpose(fRenderScene.GetPrimitive(i).GetMeshGeometryInfo().Rotation);
+		objConstants.LightVP = glm::transpose(Engine::GetInstance().GetFScene()->GetLight(0)->GetFlightDesc()->shadowTransform);
+		objConstants.ViewProj = glm::transpose(Engine::GetInstance().GetFScene()->GetCamera()->GetProj() * Engine::GetInstance().GetFScene()->GetCamera()->GetView());
 // 		objConstants.Proj = glm::transpose(Engine::GetInstance().GetFScene()->GetLight(0)->GetFlightDesc()->lightProj);
 // 		objConstants.View = glm::transpose(Engine::GetInstance().GetFScene()->GetLight(0)->GetFlightDesc()->lightView);
-		objConstants.Proj = transpose(Engine::GetInstance().GetFScene()->GetCamera()->GetProj());
-		objConstants.View = transpose(Engine::GetInstance().GetFScene()->GetCamera()->GetView());
 		objConstants.World = glm::transpose(fRenderScene.GetPrimitive(i).GetMeshGeometryInfo().mMeshWorld);
 		objConstants.time = Engine::GetInstance().GetTimer()->TotalTime();
 		mObjectCB[fRenderScene.GetPrimitive(i).GetIndex()]->CopyData(0, objConstants);
@@ -551,22 +568,29 @@ void DX12RHI::DrawSceneToShadowMap(FRenderScene& fRenderScene)
 			fRenderScene.GetPrimitive(i).GetMeshGeometryInfo().DrawArgs[fRenderScene.GetPrimitive(i).GetMeshGeometryInfo().Name].IndexCount,
 			1, 0, 0, 0);
 	}
-	mCommandList->ResourceBarrier(1, &CD3DX12_RESOURCE_BARRIER::Transition(mShadowMap->Resource(), D3D12_RESOURCE_STATE_DEPTH_WRITE, D3D12_RESOURCE_STATE_GENERIC_READ));
-	mCommandList->ResourceBarrier(1, &CD3DX12_RESOURCE_BARRIER::Transition(CurrentBackBuffer(), D3D12_RESOURCE_STATE_PRESENT, D3D12_RESOURCE_STATE_RENDER_TARGET));
-
 }
 
-void DX12RHI::ClearBackBufferAndDepthBuffer(const float* color, float depth, unsigned int stencil, unsigned int numRects)
+void DX12RHI::ClearBackBuffer(const float* color)
 {
 	// Clear the back buffer and depth buffer.
 	mCommandList->ClearRenderTargetView(CurrentBackBufferView(), color, 0, nullptr);
-	mCommandList->ClearDepthStencilView(DepthStencilView(), D3D12_CLEAR_FLAG_DEPTH | D3D12_CLEAR_FLAG_STENCIL, depth, stencil, numRects, nullptr);
 }
 
-void DX12RHI::SetRenderTargets(unsigned int numRenderTarget)
+void DX12RHI::ClearDepthBuffer(unsigned __int64 handle)
 {
+	D3D12_CPU_DESCRIPTOR_HANDLE cpuHandle;
+	cpuHandle.ptr = handle;
+	mCommandList->ClearDepthStencilView(cpuHandle, D3D12_CLEAR_FLAG_DEPTH | D3D12_CLEAR_FLAG_STENCIL, 1.0f, 0, 0, nullptr);
+}
+
+void DX12RHI::SetRenderTargets(unsigned int numRenderTarget, unsigned __int64 renderTargetDescriptor, bool RTsSingleHandleToDescriptorRange, unsigned __int64 DepthDescriptor)
+{
+	D3D12_CPU_DESCRIPTOR_HANDLE rtvDes;
+	rtvDes.ptr = renderTargetDescriptor;
+	D3D12_CPU_DESCRIPTOR_HANDLE dsvDes;
+	dsvDes.ptr = DepthDescriptor;
 	// Specify the buffers we are going to render to.
-	mCommandList->OMSetRenderTargets(numRenderTarget, &CurrentBackBufferView(), true, &DepthStencilView());
+	mCommandList->OMSetRenderTargets(numRenderTarget, &rtvDes, true, &dsvDes);
 }
 
 void DX12RHI::SetGraphicsRootSignature()
@@ -576,8 +600,6 @@ void DX12RHI::SetGraphicsRootSignature()
 
 void DX12RHI::DrawFRenderScene(FRenderScene& fRenderScene)
 {
-	//Render items
-	mCommandList->SetPipelineState(mPSOs["geo_pso"].Get());
 	ID3D12DescriptorHeap* descriptorHeapsSRV[] = { mSrvDescriptorHeap.Get() };
 	ID3D12DescriptorHeap* descriptorHeaps[] = { mCbvHeap.Get() };
 	for (int i = 0; i < fRenderScene.GetNumPrimitive(); i++)
@@ -589,13 +611,14 @@ void DX12RHI::DrawFRenderScene(FRenderScene& fRenderScene)
 		//mat4 worldViewProj = Engine::GetInstance().GetFScene()->GetCamera()->GetProj() * Engine::GetInstance().GetFScene()->GetCamera()->GetView() * mMeshes[i].mMeshWorld;
 
 		// Update the constant buffer with the latest worldViewProj matrix.
-		ObjectConstants objConstants;
-		objConstants.Roatation = transpose(fRenderScene.GetPrimitive(i).GetMeshGeometryInfo().Rotation);
-		objConstants.Proj = transpose(Engine::GetInstance().GetFScene()->GetCamera()->GetProj());
-		objConstants.View = transpose(Engine::GetInstance().GetFScene()->GetCamera()->GetView());
-		objConstants.World = transpose(fRenderScene.GetPrimitive(i).GetMeshGeometryInfo().mMeshWorld);
-		objConstants.time = Engine::GetInstance().GetTimer()->TotalTime();
-		mObjectCB[fRenderScene.GetPrimitive(i).GetIndex()]->CopyData(0, objConstants);
+// 		ObjectConstants objConstants;
+// 		objConstants.Roatation = transpose(fRenderScene.GetPrimitive(i).GetMeshGeometryInfo().Rotation);
+// 		objConstants.ViewProj = glm::transpose(Engine::GetInstance().GetFScene()->GetCamera()->GetProj() * Engine::GetInstance().GetFScene()->GetCamera()->GetView());
+// // 		objConstants.Proj = transpose(Engine::GetInstance().GetFScene()->GetCamera()->GetProj());
+// // 		objConstants.View = transpose(Engine::GetInstance().GetFScene()->GetCamera()->GetView());
+// 		objConstants.World = transpose(fRenderScene.GetPrimitive(i).GetMeshGeometryInfo().mMeshWorld);
+// 		objConstants.time = Engine::GetInstance().GetTimer()->TotalTime();
+// 		mObjectCB[fRenderScene.GetPrimitive(i).GetIndex()]->CopyData(0, objConstants);
 
 		mCommandList->SetDescriptorHeaps(_countof(descriptorHeapsSRV), descriptorHeapsSRV);
 		auto handle1 = CD3DX12_GPU_DESCRIPTOR_HANDLE(mSrvDescriptorHeap->GetGPUDescriptorHandleForHeapStart());
@@ -614,14 +637,6 @@ void DX12RHI::DrawFRenderScene(FRenderScene& fRenderScene)
 			fRenderScene.GetPrimitive(i).GetMeshGeometryInfo().DrawArgs[fRenderScene.GetPrimitive(i).GetMeshGeometryInfo().Name].IndexCount,
 			1, 0, 0, 0);
 	}
-}
-
-void DX12RHI::EndDraw()
-{
-	TransResourBarrier(1, D3D12_RESOURCE_STATE_RENDER_TARGET, D3D12_RESOURCE_STATE_PRESENT);
-	CloseCommandList();
-	SwapChain();
-	FlushCommandQueue();
 }
 
 VIEWPORT DX12RHI::GetViewport()
@@ -708,7 +723,7 @@ void DX12RHI::CreatePrimitive(FActor& actor, FRenderScene& fRenderScene)
 		ThrowIfFailed(D3DCreateBlob(ibByteSize, &priDesc->GetMeshGeometryInfo().IndexBufferCPU));
 		CopyMemory(priDesc->GetMeshGeometryInfo().IndexBufferCPU->GetBufferPointer(), indices.data(), ibByteSize);
 
-		ResetCommandList();
+		ResetCommandList("geo_pso");
 		priDesc->GetMeshGeometryInfo().VertexBufferGPU = d3dUtil::CreateDefaultBuffer(md3dDevice.Get(),
 			mCommandList.Get(), vertices.data(), vbByteSize, priDesc->GetMeshGeometryInfo().VertexBufferUploader);
 
