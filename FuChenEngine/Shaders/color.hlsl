@@ -176,6 +176,7 @@ float4 PS(VertexOut pin) : SV_Target
 	float4 tex = diffuseAlbedo * normalMap;
 
 	float4 shadow = CalcShadowFactor(pin.ShadowPosH);
+	//float4 shadow = ShadowCalculation(pin.ShadowPosH);
 
 	//float4 RetColor = pow(pin.Normal * 0.5f + 0.5f,1/2.2f);
 	//float4 resultColor = pow(diffuseAlbedo * ShadowCalculation(pin.ShadowPosH) + 0.1, 1 / 2.2f);
