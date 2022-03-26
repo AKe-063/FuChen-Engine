@@ -57,7 +57,7 @@ ActorInfo Serialize::DeserializeActorInfo(const std::string& name)
 	std::string str = "../FuChenEngine/ExportFile/" + name;
 	std::string filePath = str + ".dat";
 	std::ifstream fin(filePath, std::ios::binary);
-	ThrowIfFailed(fin.is_open(), nullptr);
+	assert(fin.is_open());
 	ActorInfo actorInfo;
 	FMeshInfoStruct meshInfoStruct;
 	int num;
@@ -89,7 +89,7 @@ FLight Serialize::DeserialzeLightInfo(const std::string& name)
 	std::string str = "../FuChenEngine/ExportFile/" + name;
 	std::string filePath = str + ".dat";
 	std::ifstream fin(filePath, std::ios::binary);
-	ThrowIfFailed(fin.is_open(), nullptr);
+	assert(fin.is_open());
 	FLight lightInfo;
 	int num;
 

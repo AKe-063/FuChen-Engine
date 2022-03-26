@@ -23,5 +23,5 @@ FPrimitive& FRenderScene::GetPrimitive(const int& index)
 
 int FRenderScene::GetNumPrimitive()
 {
-	return fPrimitives.size();
+	return (int)fPrimitives.size();
 }

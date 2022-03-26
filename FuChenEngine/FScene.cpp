@@ -65,7 +65,7 @@ void FScene::AddNewActor(const std::string& name)
 	if (actors.find(name) != actors.end())
 	{
 		std::string newName = name;
-		int num = count(actorCount.begin(), actorCount.end(), name);
+		auto num = count(actorCount.begin(), actorCount.end(), name);
 		newName = name + std::to_string(num);
 		FActor newActor(actors.find(name)->second);
 		newActor.GetActorInfo().actorName = newName;

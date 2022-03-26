@@ -1,5 +1,5 @@
 #pragma once
-typedef struct VIEWPORT
+struct VIEWPORT
 {
 	float TopLeftX;
 	float TopLeftY;
@@ -9,7 +9,7 @@ typedef struct VIEWPORT
 	float MaxDepth;
 };
 
-typedef struct TAGRECT
+struct TAGRECT
 {
 	long    left;
 	long    top;
