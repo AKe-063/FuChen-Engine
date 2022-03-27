@@ -438,22 +438,26 @@ void DX12RHI::UpdateShadowTransform()
 {
 	FLight* light = Engine::GetInstance().GetFScene()->GetLight(0);
 	float radius = 2500.0f;
-	int speed = 100;
+	int speed = 5;
 	// Only the first "main" light casts a shadow.
 	//light->GetFlightDesc()->lightPos = Engine::GetInstance().GetFScene()->GetCamera()->GetPosition();
 	if (flag)
 	{
-		light->GetFlightDesc()->lightPos = glm::vec3(1200 - rota, rota, 2000.0f);
 		rota += speed;
-		if (rota == 1200)
+		if (rota >= 2000)
+		{
 			flag = !flag;
+		}
+		light->GetFlightDesc()->lightPos = glm::vec3(sqrt(4000000 - pow(rota, 2)), rota, 2000.0f);
 	}
 	else
 	{
-		light->GetFlightDesc()->lightPos = glm::vec3(1200 - rota, rota, 2000.0f);
 		rota -= speed;
-		if (rota == -1200)
+		if (rota <= -2000)
+		{
 			flag = !flag;
+		}
+		light->GetFlightDesc()->lightPos = glm::vec3(-sqrt(4000000 - pow(rota, 2)), rota, 2000.0f);
 	}
 	light->GetFlightDesc()->targetPos = glm::vec3(0.0f, 0.0f, 0.0f);
 	light->GetFlightDesc()->lightView = glm::lookAtLH(light->GetFlightDesc()->lightPos, light->GetFlightDesc()->targetPos, light->GetFlightDesc()->lightUp);
