@@ -3,14 +3,19 @@
 //
 // Transforms and colors geometry.
 //***************************************************************************************
-/*"DescriptorTable(b0, visibility = SHADER_VISIBILITY_VERTEX), " \*/
+/*"DescriptorTable(b0, visibility = SHADER_VISIBILITY_VERTEX), " \
+"DescriptorTable(CBV(b0, numDescriptors = 1), visibility = SHADER_VISIBILITY_VERTEX), " \
+"DescriptorTable(CBV(b1, numDescriptors = 1), visibility = SHADER_VISIBILITY_VERTEX), " \
+"DescriptorTable(CBV(b2, numDescriptors = 1), visibility = SHADER_VISIBILITY_VERTEX), " \*/
 #define FuChenSample_RootSig \
 	"RootFlags( ALLOW_INPUT_ASSEMBLER_INPUT_LAYOUT ), " \
-	"DescriptorTable(CBV(b0, numDescriptors = 1), visibility = SHADER_VISIBILITY_VERTEX), " \
+	"CBV(b0, visibility = SHADER_VISIBILITY_VERTEX), " \
+	"CBV(b1, visibility = SHADER_VISIBILITY_VERTEX), " \
+	"CBV(b2, visibility = SHADER_VISIBILITY_VERTEX), " \
 	"DescriptorTable(SRV(t0, numDescriptors = 1), visibility = SHADER_VISIBILITY_PIXEL), " \
 	"DescriptorTable(SRV(t1, numDescriptors = 1), visibility = SHADER_VISIBILITY_PIXEL), " \
 	"DescriptorTable(SRV(t2, numDescriptors = 1), visibility = SHADER_VISIBILITY_PIXEL), " \
-	"RootConstants(b1, num32BitConstants = 4), " \
+	"RootConstants(b3, num32BitConstants = 4), " \
 	"StaticSampler(s0," \
 		"addressU = TEXTURE_ADDRESS_WRAP," \
 		"addressV = TEXTURE_ADDRESS_WRAP," \

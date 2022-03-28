@@ -116,41 +116,27 @@ struct Vertex
 
 struct ObjectConstants
 {
-	mat4 lightProj = MathHelper::Identity4x4();
-	mat4 lightVPl = MathHelper::Identity4x4();
-	mat4 LightVP = MathHelper::Identity4x4();
+// 	mat4 lightProj = MathHelper::Identity4x4();
+// 	mat4 lightVP = MathHelper::Identity4x4();
+// 	mat4 lightOrthoVP = MathHelper::Identity4x4();
 	mat4 Roatation = MathHelper::Identity4x4();
 	mat4 World = MathHelper::Identity4x4();
 // 	mat4 View = MathHelper::Identity4x4();
 // 	mat4 Proj = MathHelper::Identity4x4();
-	mat4 ViewProj = MathHelper::Identity4x4();
+/*	mat4 ViewProj = MathHelper::Identity4x4();*/
 	float time = 1.0f;
 };
 
 struct PassConstants
 {
-	glm::mat4x4 View = MathHelper::Identity4x4();
-	glm::mat4x4 InvView = MathHelper::Identity4x4();
-	glm::mat4x4 Proj = MathHelper::Identity4x4();
-	glm::mat4x4 InvProj = MathHelper::Identity4x4();
-	glm::mat4x4 ViewProj = MathHelper::Identity4x4();
 	glm::mat4x4 InvViewProj = MathHelper::Identity4x4();
-	glm::vec3 EyePosW = { 0.0f, 0.0f, 0.0f };
-	float cbPerObjectPad1 = 0.0f;
-	glm::vec2 RenderTargetSize = { 0.0f, 0.0f };
-	glm::vec2 InvRenderTargetSize = { 0.0f, 0.0f };
-	float NearZ = 0.0f;
-	float FarZ = 0.0f;
-	float TotalTime = 0.0f;
-	float DeltaTime = 0.0f;
+};
 
-	glm::vec4 AmbientLight = { 0.0f, 0.0f, 0.0f, 1.0f };
-
-	// Indices [0, NUM_DIR_LIGHTS) are directional lights;
-	// indices [NUM_DIR_LIGHTS, NUM_DIR_LIGHTS+NUM_POINT_LIGHTS) are point lights;
-	// indices [NUM_DIR_LIGHTS+NUM_POINT_LIGHTS, NUM_DIR_LIGHTS+NUM_POINT_LIGHT+NUM_SPOT_LIGHTS)
-	// are spot lights for a maximum of MaxLights per object.
-	Light Lights[MaxLights];
+struct LightConstants 
+{
+	mat4 lightProj = MathHelper::Identity4x4();
+	mat4 lightVP = MathHelper::Identity4x4();
+	mat4 lightOrthoVP = MathHelper::Identity4x4();
 };
 
 struct BoundingSphere 

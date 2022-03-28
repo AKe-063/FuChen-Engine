@@ -34,7 +34,8 @@ public:
 	void BuildNewTexture(const std::string& name, const std::wstring& textureFilePath);
 	void BuildAllTextures();
 	void AddConstantBuffer(FPrimitive& fPrimitive);
-	void UpdateShadowTransform();
+	void UpdateMVP(FPrimitive& fPrimitive);
+	void BuildConstantBuffer();
 
 	//Abstract RHI
 	virtual void RSSetViewPorts(unsigned int numViewports, const VIEWPORT* scrernViewport)override;
@@ -81,6 +82,8 @@ private:
 	ComPtr<ID3D12DescriptorHeap> mCbvHeap = nullptr;
 	ComPtr<ID3D12DescriptorHeap> mSrvDescriptorHeap = nullptr;
 	std::vector<std::shared_ptr<UploadBuffer<ObjectConstants>>> mObjectCB;
+	std::unique_ptr<UploadBuffer<PassConstants>> mObjectPass;
+	std::unique_ptr<UploadBuffer<LightConstants>> mObjectLight;
 	ComPtr<ID3D12RootSignature> mRootSignature = nullptr;
 	ComPtr<ID3D12RootSignature> mShadowSignature = nullptr;
 	ComPtr<ID3DBlob> mvsByteCode = nullptr;

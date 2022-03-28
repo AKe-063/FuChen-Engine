@@ -14,18 +14,30 @@ SamplerComparisonState gsamShadow : register(s1);
 
 cbuffer cbPerObject : register(b0)
 {
-	float4x4 glightPrpj;
-	float4x4 glightVPj;
-	float4x4 gLightVP;
+	//float4x4 glightPrpj;
+	//float4x4 glightVPj;
+	//float4x4 gLightVP;
 	//float4x4 gWorldViewProj; 
 	float4x4 gRotation;
 	float4x4 gWorld;
-	float4x4 gViewProj;
+	//float4x4 gViewProj;
 	//float4x4 gProj;
 	float time;
 };
 
-float4 CameraLoc : register(b1);
+cbuffer lightConstant : register(b1)
+{
+	float4x4 glightPrpj;
+	float4x4 glightVP;
+	float4x4 glightOrthoVP;
+}
+
+cbuffer passConstant : register(b2)
+{
+	float4x4 gViewProj;
+}
+
+float4 CameraLoc : register(b3);
 
 struct VertexIn
 {
@@ -43,50 +55,6 @@ struct VertexOut
 	float2 TexC    : TEXCOORD;
 	float4 ShadowPosH : POSITION;
 };
-
-/*float ShadowCalculation(float4 shadowPosH)
-{
-	shadowPosH.xyz /= shadowPosH.w;
-	float currentDepth = shadowPosH.z;
-	uint w, h, numMips;
-	gShadowMap.GetDimensions(0, w, h, numMips);
-	float2 piexlPos = shadowPosH.xy * w;
-
-	float depthInMap = gShadowMap.Load(int3(piexlPos, 0)).r;
-	return currentDepth > depthInMap ? 0 : 1;
-}*/
-
-/*float ShadowCalculation(float4 shadowPosH)
-{
-	// Complete projection by doing division by w.
-	shadowPosH.xyz /= shadowPosH.w;
-
-	// Depth in NDC space.
-	float depth = shadowPosH.z;
-
-	uint width, height, numMips;
-	gShadowMap.GetDimensions(0, width, height, numMips);
-
-	// Texel size.
-	float dx = 1.0f / (float)width;
-
-	float percentLit = 0.0f;
-	const float2 offsets[9] =
-	{
-		float2(-dx,  -dx), float2(0.0f,  -dx), float2(dx,  -dx),
-		float2(-dx, 0.0f), float2(0.0f, 0.0f), float2(dx, 0.0f),
-		float2(-dx,  +dx), float2(0.0f,  +dx), float2(dx,  +dx)
-	};
-
-	[unroll]
-	for (int i = 0; i < 9; ++i)
-	{
-		percentLit += gShadowMap.SampleCmpLevelZero(gsamShadow,
-			shadowPosH.xy + offsets[i], depth).r;
-	}
-
-	return percentLit / 9.0f;
-}*/
 
 float CalcShadowFactor(float4 shadowPosH)
 {
@@ -145,13 +113,13 @@ VertexOut VS(VertexIn vin)
 	//float4x4 gWorldViewProj = mul(gWorld,mul(gView, gProj));
 	float4x4 gWorldViewProj = mul(gWorld,gViewProj);
 	float4 gWorldVertex = mul(float4(vin.PosL, 1.0f), gWorld);
-	float4x4 gLightViewProj = mul(gWorld,gLightVP);
+	float4x4 gLightViewProj = mul(gWorld, glightOrthoVP);
 	//vout.PosH = mul(float4(vin.PosL, abs(sin(time)) * 0.5 + 0.5), gWorldViewProj);
 
 
 	vout.PosH = mul(float4(vin.PosL, 1.0f), gWorldViewProj);
 
-	vout.ShadowPosH = mul(gWorldVertex, gLightVP);
+	vout.ShadowPosH = mul(gWorldVertex, glightOrthoVP);
 
 //	float4 PosWorld = mul(gWorld, float4(vin.PosL, 1.0f));
 //	vout.ShadowPosH = mul(gLightVP, PosWorld);

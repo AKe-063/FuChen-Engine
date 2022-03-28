@@ -23,3 +23,8 @@ MeshGeometry& DXPrimitive::GetMeshGeometryInfo()
 {
 	return geo;
 }
+
+ObjectConstants& DXPrimitive::GetObjConstantInfo()
+{
+	return objConstant;
+}

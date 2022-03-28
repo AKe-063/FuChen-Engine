@@ -122,6 +122,8 @@ void DX12RHI::Init()
 		throw("InitDX False!");
 	}
 	mShadowMap = std::make_unique<ShadowMap>(md3dDevice.Get(), 2048, 2048);
+	mObjectPass = std::make_unique<UploadBuffer<PassConstants>>(md3dDevice.Get(), 1, true);
+	mObjectLight = std::make_unique<UploadBuffer<LightConstants>>(md3dDevice.Get(), 1, true);
 
 	// Do the initial resize code.
 	OnResize();
@@ -130,6 +132,7 @@ void DX12RHI::Init()
 	ThrowIfFailed(GetCommandList()->Reset(GetCommandAllocator().Get(), nullptr));
 
 	BuildDescriptorHeaps();
+	BuildConstantBuffer();
 	BuildShadersAndInputLayout();
 	BuildRootSignature();
 	BuildPSO();
@@ -423,32 +426,34 @@ void DX12RHI::AddConstantBuffer(FPrimitive& fPrimitive)
 
 	md3dDevice->CreateConstantBufferView(&cbvDesc, handle);
 	mObjectCB.push_back(objConstant);
-	fPrimitive.SetIndex(mCbvCount++);
+	fPrimitive.SetIndex(mCbvCount-2);
+	mCbvCount++;
 }
 
-void DX12RHI::UpdateShadowTransform()
+void DX12RHI::UpdateMVP(FPrimitive& fPrimitive)
 {
 	FLight* light = Engine::GetInstance().GetFScene()->GetLight(0);
 	float radius = 2500.0f;
-	int speed = 5;
-	if (flag)
-	{
-		rota += speed;
-		if (rota >= 2000)
-		{
-			flag = !flag;
-		}
-		light->GetFlightDesc()->lightPos = glm::vec3(sqrt(4000000 - pow(rota, 2)), rota, 2000.0f);
-	}
-	else
-	{
-		rota -= speed;
-		if (rota <= -2000)
-		{
-			flag = !flag;
-		}
-		light->GetFlightDesc()->lightPos = glm::vec3(-sqrt(4000000 - pow(rota, 2)), rota, 2000.0f);
-	}
+// 	int speed = 5;
+// 	if (flag)
+// 	{
+// 		rota += speed;
+// 		if (rota >= 2000)
+// 		{
+// 			flag = !flag;
+// 		}
+// 		light->GetFlightDesc()->lightPos = glm::vec3(sqrt(4000000 - pow(rota, 2)), rota, 2000.0f);
+// 	}
+// 	else
+// 	{
+// 		rota -= speed;
+// 		if (rota <= -2000)
+// 		{
+// 			flag = !flag;
+// 		}
+// 		light->GetFlightDesc()->lightPos = glm::vec3(-sqrt(4000000 - pow(rota, 2)), rota, 2000.0f);
+// 	}
+	light->GetFlightDesc()->lightPos = glm::vec3(2000.0f, 2000.0f, 2000.0f);
 	light->GetFlightDesc()->targetPos = glm::vec3(0.0f, 0.0f, 0.0f);
 	light->GetFlightDesc()->lightView = glm::lookAtLH(light->GetFlightDesc()->lightPos, light->GetFlightDesc()->targetPos, light->GetFlightDesc()->lightUp);
 
@@ -462,7 +467,6 @@ void DX12RHI::UpdateShadowTransform()
 	float f = sphereCenterLS.z + radius;
 
 	light->GetFlightDesc()->lightProj = glm::orthoLH_ZO(l, r, b, t, n, f);
-	//light->GetFlightDesc()->lightProj = glm::orthoLH_ZO(l, r, b, t, 1.0f, 10000.0f);
 
 	// Transform NDC space [-1,+1]^2 to texture space [0,1]^2
 	mat4 T(
@@ -473,7 +477,51 @@ void DX12RHI::UpdateShadowTransform()
 
 	mat4 S = T * light->GetFlightDesc()->lightProj * light->GetFlightDesc()->lightView;
 	light->GetFlightDesc()->shadowTransform = S;
+
+	LightConstants lightConstant;
+	lightConstant.lightOrthoVP = glm::transpose(S);
+	lightConstant.lightProj = glm::transpose(light->GetFlightDesc()->lightProj);
+	lightConstant.lightVP = glm::transpose(light->GetFlightDesc()->lightProj * light->GetFlightDesc()->lightView);
+
+	PassConstants passConstant;
+	passConstant.InvViewProj = glm::transpose(Engine::GetInstance().GetFScene()->GetCamera()->GetProj() * Engine::GetInstance().GetFScene()->GetCamera()->GetView());
+
+	mObjectCB[fPrimitive.GetIndex()]->CopyData(0, fPrimitive.GetObjConstantInfo());
+	mObjectLight->CopyData(0, lightConstant);
+	mObjectPass->CopyData(0, passConstant);
+
 	light = nullptr;
+}
+
+void DX12RHI::BuildConstantBuffer()
+{
+	//PassCB
+	UINT objPCByteSize = d3dUtil::CalcConstantBufferByteSize(sizeof(PassConstants));
+
+	D3D12_GPU_VIRTUAL_ADDRESS cbAddress = mObjectPass->Resource()->GetGPUVirtualAddress();
+
+	auto handle = CD3DX12_CPU_DESCRIPTOR_HANDLE(mCbvHeap->GetCPUDescriptorHandleForHeapStart());
+	handle.Offset(mCbvCount++, mCbvSrvUavDescriptorSize);
+
+	D3D12_CONSTANT_BUFFER_VIEW_DESC cbvPassDesc;
+	cbvPassDesc.BufferLocation = cbAddress;
+	cbvPassDesc.SizeInBytes = objPCByteSize;
+
+	md3dDevice->CreateConstantBufferView(&cbvPassDesc, handle);
+
+	//LightCB
+	UINT objLCByteSize = d3dUtil::CalcConstantBufferByteSize(sizeof(LightConstants));
+
+	cbAddress = mObjectPass->Resource()->GetGPUVirtualAddress();
+
+	handle = CD3DX12_CPU_DESCRIPTOR_HANDLE(mCbvHeap->GetCPUDescriptorHandleForHeapStart());
+	handle.Offset(mCbvCount++, mCbvSrvUavDescriptorSize);
+
+	D3D12_CONSTANT_BUFFER_VIEW_DESC cbvLightDesc;
+	cbvLightDesc.BufferLocation = cbAddress;
+	cbvLightDesc.SizeInBytes = objLCByteSize;
+
+	md3dDevice->CreateConstantBufferView(&cbvLightDesc, handle);
 }
 
 void DX12RHI::ResetCmdListAlloc()
@@ -545,29 +593,18 @@ unsigned __int64 DX12RHI::GetDepthStencilViewHandle()
 
 void DX12RHI::DrawSceneToShadowMap(FRenderScene& fRenderScene)
 {
-	UpdateShadowTransform();
 	mCommandList->SetGraphicsRootSignature(mShadowSignature.Get());
 	ID3D12DescriptorHeap* descriptorHeaps[] = { mCbvHeap.Get() };
+	mCommandList->SetDescriptorHeaps(_countof(descriptorHeaps), descriptorHeaps);
 	for (int i = 0; i < fRenderScene.GetNumPrimitive(); i++)
 	{
+		UpdateMVP(fRenderScene.GetPrimitive(i));
 		mCommandList->IASetVertexBuffers(0, 1, &fRenderScene.GetPrimitive(i).GetMeshGeometryInfo().VertexBufferView());
 		mCommandList->IASetIndexBuffer(&fRenderScene.GetPrimitive(i).GetMeshGeometryInfo().IndexBufferView());
 		mCommandList->IASetPrimitiveTopology(D3D11_PRIMITIVE_TOPOLOGY_TRIANGLELIST);
-
-		ObjectConstants objConstants;
-		objConstants.lightProj = glm::transpose(Engine::GetInstance().GetFScene()->GetLight(0)->GetFlightDesc()->lightProj);
-		objConstants.lightVPl = glm::transpose(Engine::GetInstance().GetFScene()->GetLight(0)->GetFlightDesc()->lightProj * Engine::GetInstance().GetFScene()->GetLight(0)->GetFlightDesc()->lightView);
-		objConstants.Roatation = glm::transpose(fRenderScene.GetPrimitive(i).GetMeshGeometryInfo().Rotation);
-		objConstants.LightVP = glm::transpose(Engine::GetInstance().GetFScene()->GetLight(0)->GetFlightDesc()->shadowTransform);
-		objConstants.ViewProj = glm::transpose(Engine::GetInstance().GetFScene()->GetCamera()->GetProj() * Engine::GetInstance().GetFScene()->GetCamera()->GetView());
-		objConstants.World = glm::transpose(fRenderScene.GetPrimitive(i).GetMeshGeometryInfo().mMeshWorld);
-		objConstants.time = Engine::GetInstance().GetTimer()->TotalTime();
-		mObjectCB[fRenderScene.GetPrimitive(i).GetIndex()]->CopyData(0, objConstants);
-
-		mCommandList->SetDescriptorHeaps(_countof(descriptorHeaps), descriptorHeaps);
-		auto handle = CD3DX12_GPU_DESCRIPTOR_HANDLE(mCbvHeap->GetGPUDescriptorHandleForHeapStart());
-		handle.Offset(i, mCbvSrvUavDescriptorSize);
-		mCommandList->SetGraphicsRootDescriptorTable(0, handle);
+		mCommandList->SetGraphicsRootConstantBufferView(0, mObjectCB[fRenderScene.GetPrimitive(i).GetIndex()]->Resource()->GetGPUVirtualAddress());
+		mCommandList->SetGraphicsRootConstantBufferView(1, mObjectLight->Resource()->GetGPUVirtualAddress());
+		mCommandList->SetGraphicsRootConstantBufferView(2, mObjectPass->Resource()->GetGPUVirtualAddress());
 
 		mCommandList->DrawIndexedInstanced(
 			fRenderScene.GetPrimitive(i).GetMeshGeometryInfo().DrawArgs[fRenderScene.GetPrimitive(i).GetMeshGeometryInfo().Name].IndexCount,
@@ -616,15 +653,15 @@ void DX12RHI::DrawFRenderScene(FRenderScene& fRenderScene)
 		mCommandList->SetDescriptorHeaps(_countof(descriptorHeapsSRV), descriptorHeapsSRV);
 		auto handle1 = CD3DX12_GPU_DESCRIPTOR_HANDLE(mSrvDescriptorHeap->GetGPUDescriptorHandleForHeapStart());
 		handle1.Offset(2, mCbvSrvUavDescriptorSize);
-		mCommandList->SetGraphicsRootDescriptorTable(1, handle1);
+		mCommandList->SetGraphicsRootDescriptorTable(3, handle1);
 		handle1.Offset(2, mCbvSrvUavDescriptorSize);
-		mCommandList->SetGraphicsRootDescriptorTable(2, handle1);
-		mCommandList->SetGraphicsRootDescriptorTable(3, mShadowMap->Srv());
+		mCommandList->SetGraphicsRootDescriptorTable(4, handle1);
+		mCommandList->SetGraphicsRootDescriptorTable(5, mShadowMap->Srv());
 
 		mCommandList->SetDescriptorHeaps(_countof(descriptorHeaps), descriptorHeaps);
-		auto handle = CD3DX12_GPU_DESCRIPTOR_HANDLE(mCbvHeap->GetGPUDescriptorHandleForHeapStart());
-		handle.Offset(i, mCbvSrvUavDescriptorSize);
-		mCommandList->SetGraphicsRootDescriptorTable(0, handle);
+		mCommandList->SetGraphicsRootConstantBufferView(0, mObjectCB[fRenderScene.GetPrimitive(i).GetIndex()]->Resource()->GetGPUVirtualAddress());
+		mCommandList->SetGraphicsRootConstantBufferView(1, mObjectLight->Resource()->GetGPUVirtualAddress());
+		mCommandList->SetGraphicsRootConstantBufferView(2, mObjectPass->Resource()->GetGPUVirtualAddress());
 
 		mCommandList->DrawIndexedInstanced(
 			fRenderScene.GetPrimitive(i).GetMeshGeometryInfo().DrawArgs[fRenderScene.GetPrimitive(i).GetMeshGeometryInfo().Name].IndexCount,
@@ -699,20 +736,21 @@ void DX12RHI::CreatePrimitive(FActor& actor, FRenderScene& fRenderScene)
 		priDesc->GetMeshGeometryInfo().Name = meshInfo.name;
 		priDesc->GetMeshGeometryInfo().mMeshWorld = mWorld;
 
-		priDesc->GetMeshGeometryInfo().mMeshWorld = translate(
-			priDesc->GetMeshGeometryInfo().mMeshWorld,
-			vec3(fMeshInfo.transform.Translation.x,
-				fMeshInfo.transform.Translation.y,
-				fMeshInfo.transform.Translation.z
-			)) * mat4_cast(qua<float>(
-				fMeshInfo.transform.Rotation.w,
-				fMeshInfo.transform.Rotation.x,
-				fMeshInfo.transform.Rotation.y,
-				fMeshInfo.transform.Rotation.z
-				)) * scale(
-					vec3(fMeshInfo.transform.Scale3D.x,
-						fMeshInfo.transform.Scale3D.y,
-						fMeshInfo.transform.Scale3D.z));
+		priDesc->GetObjConstantInfo().World =
+			priDesc->GetMeshGeometryInfo().mMeshWorld = glm::transpose(
+				translate(priDesc->GetMeshGeometryInfo().mMeshWorld,
+					vec3(fMeshInfo.transform.Translation.x,
+						fMeshInfo.transform.Translation.y,
+						fMeshInfo.transform.Translation.z
+					)) * mat4_cast(qua<float>(
+						fMeshInfo.transform.Rotation.w,
+						fMeshInfo.transform.Rotation.x,
+						fMeshInfo.transform.Rotation.y,
+						fMeshInfo.transform.Rotation.z
+						)) * scale(
+							vec3(fMeshInfo.transform.Scale3D.x,
+								fMeshInfo.transform.Scale3D.y,
+								fMeshInfo.transform.Scale3D.z)));
 
 		for (int i = 0; i < meshInfo.loDs[0].numVertices; i++)
 		{
@@ -728,6 +766,15 @@ void DX12RHI::CreatePrimitive(FActor& actor, FRenderScene& fRenderScene)
 		{
 			indices.push_back(meshInfo.loDs[0].indices[i]);
 		}
+
+		priDesc->GetObjConstantInfo().Roatation =
+			priDesc->GetMeshGeometryInfo().Rotation =
+			glm::mat4_cast(qua<float>(
+				fMeshInfo.transform.Rotation.w,
+				fMeshInfo.transform.Rotation.x,
+				fMeshInfo.transform.Rotation.y,
+				fMeshInfo.transform.Rotation.z
+				));
 
 		const UINT vbByteSize = (UINT)vertices.size() * sizeof(Vertex);
 		const UINT ibByteSize = (UINT)indices.size() * sizeof(std::uint16_t);

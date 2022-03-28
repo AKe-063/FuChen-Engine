@@ -14,18 +14,30 @@ SamplerState gsamAnisotropicClamp : register(s5);*/
 
 cbuffer cbPerObject : register(b0)
 {
-	float4x4 glightPrpj;
-	float4x4 glightVPj;
-	float4x4 gLightVP;
+	//float4x4 glightPrpj;
+	//float4x4 glightVPj;
+	//float4x4 gLightVP;
 	//float4x4 gWorldViewProj; 
 	float4x4 gRotation;
 	float4x4 gWorld;
-	float4x4 gViewProj;
+	//float4x4 gViewProj;
 	//float4x4 gProj;
 	float time;
 };
 
-float4 CameraLoc : register(b1);
+cbuffer lightConstant : register(b1)
+{
+	float4x4 glightPrpj;
+	float4x4 glightVP;
+	float4x4 glightOrthoVP;
+}
+
+cbuffer passConstant : register(b2)
+{
+	float4x4 gViewProj;
+}
+
+float4 CameraLoc : register(b3);
 
 struct VertexIn
 {
@@ -48,7 +60,7 @@ VertexOut VS(VertexIn vin)
 {
 	VertexOut vout;
 
-	float4x4 gWorldViewProj = mul(gWorld, glightVPj);
+	float4x4 gWorldViewProj = mul(gWorld, glightVP);
 	vout.PosH = mul(float4(vin.PosL, 1.0f), gWorldViewProj);
 	vout.Color = vin.Color;
 	vout.Normal = mul(vin.Normal, gRotation);
