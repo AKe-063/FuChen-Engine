@@ -164,6 +164,7 @@
     <ClInclude Include="DXPrimitive.h" />
     <ClInclude Include="FActor.h" />
     <ClInclude Include="FAssetManager.h" />
+    <ClInclude Include="FHeapManager.h" />
     <ClInclude Include="FInputBase.h" />
     <ClInclude Include="FLight.h" />
     <ClInclude Include="FLightDesc.h" />
@@ -201,6 +202,7 @@
     <ClCompile Include="DXPrimitive.cpp" />
     <ClCompile Include="FActor.cpp" />
     <ClCompile Include="FAssetManager.cpp" />
+    <ClCompile Include="FHeapManager.cpp" />
     <ClCompile Include="FInputBase.cpp" />
     <ClCompile Include="FLight.cpp" />
     <ClCompile Include="FMaterial.cpp" />

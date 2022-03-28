@@ -6,6 +6,7 @@
 #include "RHI.h"
 #include "DXPrimitive.h"
 #include "ShadowMap.h"
+#include "FHeapManager.h"
 
 class DX12RHI : public RHI
 {
@@ -83,8 +84,9 @@ protected:
 	void LogOutputDisplayModes(IDXGIOutput* output, DXGI_FORMAT format);
 
 private:
+	std::unique_ptr<FHeapManager> mHeapManager;
 	ComPtr<ID3D12DescriptorHeap> mCbvHeap = nullptr;
-	ComPtr<ID3D12DescriptorHeap> mSrvDescriptorHeap = nullptr;
+	//ComPtr<ID3D12DescriptorHeap> mSrvDescriptorHeap = nullptr;
 	std::vector<std::shared_ptr<UploadBuffer<ObjectConstants>>> mObjectCB;
 	std::unique_ptr<UploadBuffer<PassConstants>> mObjectPass;
 	std::unique_ptr<UploadBuffer<LightConstants>> mObjectLight;
@@ -131,7 +133,7 @@ private:
 	UINT mCbvSrvUavDescriptorSize = 0;
 
 	//ConstantBufferIndexCount
-	int mCbvCount = 0;
+	//int mCbvCount = 0;
 
 	Window* mWindow;
 	std::unique_ptr<ShadowMap> mShadowMap;

@@ -124,6 +124,7 @@ void DX12RHI::Init()
 	mShadowMap = std::make_unique<ShadowMap>(md3dDevice.Get(), 2048, 2048);
 	mObjectPass = std::make_unique<UploadBuffer<PassConstants>>(md3dDevice.Get(), 1, true);
 	mObjectLight = std::make_unique<UploadBuffer<LightConstants>>(md3dDevice.Get(), 1, true);
+	mHeapManager = std::make_unique<FHeapManager>();
 
 	// Do the initial resize code.
 	OnResize();
@@ -284,24 +285,16 @@ void DX12RHI::BuildDescriptorHeaps()
 	managedHeapDesc.Type = D3D12_DESCRIPTOR_HEAP_TYPE_CBV_SRV_UAV;
 	managedHeapDesc.Flags = D3D12_DESCRIPTOR_HEAP_FLAG_SHADER_VISIBLE;
 	managedHeapDesc.NodeMask = 0;
-	ThrowIfFailed(md3dDevice->CreateDescriptorHeap(&managedHeapDesc,
-		IID_PPV_ARGS(&mCbvHeap)));
-
-	//Create the SRV heap
-	D3D12_DESCRIPTOR_HEAP_DESC srvHeapDesc = {};
-	srvHeapDesc.NumDescriptors = 1024;
-	srvHeapDesc.Type = D3D12_DESCRIPTOR_HEAP_TYPE_CBV_SRV_UAV;
-	srvHeapDesc.Flags = D3D12_DESCRIPTOR_HEAP_FLAG_SHADER_VISIBLE;
-	ThrowIfFailed(md3dDevice->CreateDescriptorHeap(&srvHeapDesc, IID_PPV_ARGS(&mSrvDescriptorHeap)));
+	mHeapManager->CreateDescriptorHeap(md3dDevice, managedHeapDesc);
 }
 
 void DX12RHI::BuildShaderResourceView()
 {
-	int index = 0;
 	for (auto texture : mTextures)
 	{
-		CD3DX12_CPU_DESCRIPTOR_HANDLE hDescriptor(mSrvDescriptorHeap->GetCPUDescriptorHandleForHeapStart());
-		hDescriptor.Offset(index++, mCbvSrvUavDescriptorSize);
+		CD3DX12_CPU_DESCRIPTOR_HANDLE hDescriptor(mHeapManager->GetCPUDescriptorHandleInHeapStart());
+		hDescriptor.Offset(mHeapManager->GetIndex(), mCbvSrvUavDescriptorSize);
+		mHeapManager->AddIndex(1);
 		auto tex = mTextures[texture.first].Resource;
 
 		D3D12_SHADER_RESOURCE_VIEW_DESC srvDesc = {};
@@ -314,13 +307,14 @@ void DX12RHI::BuildShaderResourceView()
 		md3dDevice->CreateShaderResourceView(tex.Get(), &srvDesc, hDescriptor);
 	}
 
-	auto srvCpuStart = mSrvDescriptorHeap->GetCPUDescriptorHandleForHeapStart();
-	auto srvGpuStart = mSrvDescriptorHeap->GetGPUDescriptorHandleForHeapStart();
+	auto srvCpuStart = mHeapManager->GetCPUDescriptorHandleInHeapStart();
+	auto srvGpuStart = mHeapManager->GetGPUDescriptorHandleInHeapStart();
 	auto dsvCpuStart = mDsvHeap->GetCPUDescriptorHandleForHeapStart();
 	mShadowMap->BuildDescriptors(
-		CD3DX12_CPU_DESCRIPTOR_HANDLE(srvCpuStart, (INT)mTextures.size(), mCbvSrvUavDescriptorSize),
-		CD3DX12_GPU_DESCRIPTOR_HANDLE(srvGpuStart, (INT)mTextures.size(), mCbvSrvUavDescriptorSize),
+		CD3DX12_CPU_DESCRIPTOR_HANDLE(srvCpuStart, (INT)mTextures.size()+2, mCbvSrvUavDescriptorSize),
+		CD3DX12_GPU_DESCRIPTOR_HANDLE(srvGpuStart, (INT)mTextures.size()+2, mCbvSrvUavDescriptorSize),
 		CD3DX12_CPU_DESCRIPTOR_HANDLE(dsvCpuStart, 1, mDsvDescriptorSize));
+	mHeapManager->AddIndex(1);
 }
 
 void DX12RHI::BuildRootSignature()
@@ -417,8 +411,8 @@ void DX12RHI::AddConstantBuffer(FPrimitive& fPrimitive)
 	std::shared_ptr<UploadBuffer<ObjectConstants>> objConstant = std::make_shared<UploadBuffer<ObjectConstants>>(md3dDevice.Get(), 1, true);
 	D3D12_GPU_VIRTUAL_ADDRESS cbAddress = objConstant->Resource()->GetGPUVirtualAddress();
 
-	auto handle = CD3DX12_CPU_DESCRIPTOR_HANDLE(mCbvHeap->GetCPUDescriptorHandleForHeapStart());
-	handle.Offset(mCbvCount, mCbvSrvUavDescriptorSize);
+	auto handle = CD3DX12_CPU_DESCRIPTOR_HANDLE(mHeapManager->GetCPUDescriptorHandleInHeapStart());
+	handle.Offset(mHeapManager->GetIndex(), mCbvSrvUavDescriptorSize);
 
 	D3D12_CONSTANT_BUFFER_VIEW_DESC cbvDesc;
 	cbvDesc.BufferLocation = cbAddress;
@@ -426,8 +420,8 @@ void DX12RHI::AddConstantBuffer(FPrimitive& fPrimitive)
 
 	md3dDevice->CreateConstantBufferView(&cbvDesc, handle);
 	mObjectCB.push_back(objConstant);
-	fPrimitive.SetIndex(mCbvCount - 2);
-	mCbvCount++;
+	fPrimitive.SetIndex(mHeapManager->GetIndex()-8);
+	mHeapManager->AddIndex(1);
 }
 
 void DX12RHI::BuildConstantBuffer()
@@ -437,8 +431,10 @@ void DX12RHI::BuildConstantBuffer()
 
 	D3D12_GPU_VIRTUAL_ADDRESS cbAddress = mObjectPass->Resource()->GetGPUVirtualAddress();
 
-	auto handle = CD3DX12_CPU_DESCRIPTOR_HANDLE(mCbvHeap->GetCPUDescriptorHandleForHeapStart());
-	handle.Offset(mCbvCount++, mCbvSrvUavDescriptorSize);
+	auto handle = CD3DX12_CPU_DESCRIPTOR_HANDLE(mHeapManager->GetCPUDescriptorHandleInHeapStart());
+
+	handle.Offset(mHeapManager->GetIndex(), mCbvSrvUavDescriptorSize);
+	mHeapManager->AddIndex(1);
 
 	D3D12_CONSTANT_BUFFER_VIEW_DESC cbvPassDesc;
 	cbvPassDesc.BufferLocation = cbAddress;
@@ -451,8 +447,9 @@ void DX12RHI::BuildConstantBuffer()
 
 	cbAddress = mObjectPass->Resource()->GetGPUVirtualAddress();
 
-	handle = CD3DX12_CPU_DESCRIPTOR_HANDLE(mCbvHeap->GetCPUDescriptorHandleForHeapStart());
-	handle.Offset(mCbvCount++, mCbvSrvUavDescriptorSize);
+	handle = CD3DX12_CPU_DESCRIPTOR_HANDLE(mHeapManager->GetCPUDescriptorHandleInHeapStart());
+	handle.Offset(mHeapManager->GetIndex(), mCbvSrvUavDescriptorSize);
+	mHeapManager->AddIndex(1);
 
 	D3D12_CONSTANT_BUFFER_VIEW_DESC cbvLightDesc;
 	cbvLightDesc.BufferLocation = cbAddress;
@@ -565,8 +562,7 @@ void DX12RHI::SetGraphicsRootSignature()
 
 void DX12RHI::DrawFPrimitive(FPrimitive& fPrimitive)
 {
-	ID3D12DescriptorHeap* descriptorHeapsSRV[] = { mSrvDescriptorHeap.Get() };
-	ID3D12DescriptorHeap* descriptorHeaps[] = { mCbvHeap.Get() };
+	ID3D12DescriptorHeap* descriptorHeaps[] = { mHeapManager->GetHeap() };
 	mCommandList->SetDescriptorHeaps(_countof(descriptorHeaps), descriptorHeaps);
 	mCommandList->SetGraphicsRootConstantBufferView(0, mObjectCB[fPrimitive.GetIndex()]->Resource()->GetGPUVirtualAddress());
 	mCommandList->SetGraphicsRootConstantBufferView(1, mObjectLight->Resource()->GetGPUVirtualAddress());
@@ -574,9 +570,8 @@ void DX12RHI::DrawFPrimitive(FPrimitive& fPrimitive)
 
 	if (!DCShadowMap)
 	{
-		mCommandList->SetDescriptorHeaps(_countof(descriptorHeapsSRV), descriptorHeapsSRV);
-		auto handle1 = CD3DX12_GPU_DESCRIPTOR_HANDLE(mSrvDescriptorHeap->GetGPUDescriptorHandleForHeapStart());
-		handle1.Offset(2, mCbvSrvUavDescriptorSize);
+		auto handle1 = CD3DX12_GPU_DESCRIPTOR_HANDLE(mHeapManager->GetGPUDescriptorHandleInHeapStart());
+		handle1.Offset(4, mCbvSrvUavDescriptorSize);
 		mCommandList->SetGraphicsRootDescriptorTable(3, handle1);
 		handle1.Offset(2, mCbvSrvUavDescriptorSize);
 		mCommandList->SetGraphicsRootDescriptorTable(4, handle1);
