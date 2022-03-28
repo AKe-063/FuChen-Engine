@@ -12,9 +12,9 @@ Window::~Window()
 
 }
 
-bool Window::Run()
+int Window::Run()
 {
-	return true;
+	return 1;
 }
 
 int Window::GetWidth()

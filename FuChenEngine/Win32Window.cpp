@@ -158,7 +158,7 @@ Win32Window::~Win32Window()
 	
 }
 
-bool Win32Window::Run()
+int Win32Window::Run()
 {
 	if(msg.message != WM_QUIT)
 	{
@@ -167,29 +167,18 @@ bool Win32Window::Run()
 		{
 			TranslateMessage(&msg);
 			DispatchMessage(&msg);
+			return 0;
 		}
 		// Otherwise, do animation/game stuff.
 		else
 		{
-			Engine::GetInstance().GetTimer()->Tick();
-
-			if (!Engine::GetInstance().GetmEnginePaused())
-			{
-				CalculateFrameStats();
-				Engine::GetInstance().Update();
-				//Engine::GetInstance().GetRenderer()->Draw();
-				Engine::GetInstance().GetRenderer()->Render();
-			}
-			else
-			{
-				Sleep(100);
-			}
+			CalculateFrameStats();
+			return 1;
 		}
-		return true;
 	}
 	else
 	{
-		return false;
+		return -1;
 	}
 }
 

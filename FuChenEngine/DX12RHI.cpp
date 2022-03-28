@@ -545,11 +545,6 @@ unsigned __int64 DX12RHI::GetDepthStencilViewHandle()
 
 void DX12RHI::DrawSceneToShadowMap(FRenderScene& fRenderScene)
 {
-	// 	if (flag != 100)
-	// 	{
-	// 		UpdateShadowTransform();
-	// 		flag++;
-	// 	}
 	UpdateShadowTransform();
 	mCommandList->SetGraphicsRootSignature(mShadowSignature.Get());
 	ID3D12DescriptorHeap* descriptorHeaps[] = { mCbvHeap.Get() };
@@ -559,16 +554,12 @@ void DX12RHI::DrawSceneToShadowMap(FRenderScene& fRenderScene)
 		mCommandList->IASetIndexBuffer(&fRenderScene.GetPrimitive(i).GetMeshGeometryInfo().IndexBufferView());
 		mCommandList->IASetPrimitiveTopology(D3D11_PRIMITIVE_TOPOLOGY_TRIANGLELIST);
 
-		//mat4 worldViewProj = Engine::GetInstance().GetFScene()->GetCamera()->GetProj() * Engine::GetInstance().GetFScene()->GetCamera()->GetView() * mMeshes[i].mMeshWorld;
-		// Update the constant buffer with the latest worldViewProj matrix.
 		ObjectConstants objConstants;
 		objConstants.lightProj = glm::transpose(Engine::GetInstance().GetFScene()->GetLight(0)->GetFlightDesc()->lightProj);
 		objConstants.lightVPl = glm::transpose(Engine::GetInstance().GetFScene()->GetLight(0)->GetFlightDesc()->lightProj * Engine::GetInstance().GetFScene()->GetLight(0)->GetFlightDesc()->lightView);
 		objConstants.Roatation = glm::transpose(fRenderScene.GetPrimitive(i).GetMeshGeometryInfo().Rotation);
 		objConstants.LightVP = glm::transpose(Engine::GetInstance().GetFScene()->GetLight(0)->GetFlightDesc()->shadowTransform);
 		objConstants.ViewProj = glm::transpose(Engine::GetInstance().GetFScene()->GetCamera()->GetProj() * Engine::GetInstance().GetFScene()->GetCamera()->GetView());
-		// 		objConstants.Proj = glm::transpose(Engine::GetInstance().GetFScene()->GetLight(0)->GetFlightDesc()->lightProj);
-		// 		objConstants.View = glm::transpose(Engine::GetInstance().GetFScene()->GetLight(0)->GetFlightDesc()->lightView);
 		objConstants.World = glm::transpose(fRenderScene.GetPrimitive(i).GetMeshGeometryInfo().mMeshWorld);
 		objConstants.time = Engine::GetInstance().GetTimer()->TotalTime();
 		mObjectCB[fRenderScene.GetPrimitive(i).GetIndex()]->CopyData(0, objConstants);

@@ -44,7 +44,6 @@ private:
 
 	// Used to keep track of the delta-time?and game time (?.4).
 	std::unique_ptr<GameTimer> mTimer;
-	bool initMap = false;
 
 	bool      mEnginePaused = false;  // is the application paused?
 	bool	  mEngineFinished = false;

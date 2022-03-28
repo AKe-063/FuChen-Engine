@@ -22,11 +22,28 @@ int Engine::Run()
 // 	}
 // 	mEngineFinished = true;
 // 	return mEngineFinished;
-	if (!initMap)
+
+	if (mWindow->Run() == 1)
 	{
-		initMap = true;
+		Engine::GetInstance().GetTimer()->Tick();
+
+		if (!Engine::GetInstance().GetmEnginePaused())
+		{
+			Engine::GetInstance().Update();
+			Engine::GetInstance().GetRenderer()->Render();
+		}
+		else
+		{
+			Sleep(100);
+		}
+		return 1;
 	}
-	return mWindow->Run();
+	else if (mWindow->Run() == -1)
+	{
+		return 0;
+	}
+
+	return 1;
 }
 
 bool Engine::Initialize()

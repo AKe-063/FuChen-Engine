@@ -6,7 +6,7 @@ class Win32Window : public Window
 public:
 	Win32Window();
 	~Win32Window();
-	virtual bool Run()override;
+	virtual int Run()override;
 
 	virtual bool CreateAWindow()override;
 	HINSTANCE GetAppInst();
