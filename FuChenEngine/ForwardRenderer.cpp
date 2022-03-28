@@ -27,14 +27,19 @@ void ForwardRenderer::Destroy()
 
 void ForwardRenderer::Render()
 {
+	rhi->ResetCmdListAlloc();
+	rhi->ResetCommandList("geo_pso");
+	if (!initMap)
+	{
+		rhi->BuildInitialMap();
+		initMap = true;
+	}
 	std::unordered_map<std::string, FActor> allActorMap = Engine::GetInstance().GetFScene()->GetAllActor();
 	for (std::string renderActorName : Engine::GetInstance().GetFScene()->GetDirtyActor())
 	{
 		BuildPrimitive(allActorMap[renderActorName]);
 		Engine::GetInstance().GetFScene()->EraseDirtyActorByIndex(0);
 	}
-	rhi->ResetCmdListAlloc();
-	rhi->ResetCommandList("geo_pso");
 	rhi->RSSetViewPorts(1, &rhi->GetShadowMapViewport());
 	rhi->RESetScissorRects(1, &rhi->GetShadowMapTagRect());
 	rhi->TransShadowMapResourBarrier(1, RESOURCE_STATE_GENERIC_READ, RESOURCE_STATE_DEPTH_WRITE);
@@ -67,9 +72,4 @@ void ForwardRenderer::Draw()
 	rhi->SetGraphicsRootSignature();
 	rhi->SetPipelineState("geo_pso");
 	rhi->DrawFRenderScene(fRenderScene);
-}
-
-void ForwardRenderer::BuildInitialMap()
-{
-	rhi->BuildInitialMap();
 }

@@ -8,17 +8,17 @@ using namespace std;
 
 DX12RHI::DX12RHI()
 {
-	
+
 }
 
 DX12RHI::~DX12RHI()
 {
-/*	OutputDebugStringA(std::to_string(mObjectCB[0].use_count()).c_str());*/
+	/*	OutputDebugStringA(std::to_string(mObjectCB[0].use_count()).c_str());*/
 
-// 	ComPtr<ID3D12DebugDevice> mDebugDevice;
-// 	md3dDevice->QueryInterface(mDebugDevice.GetAddressOf());
-// 	HRESULT hr = md3dDevice->QueryInterface(__uuidof(ID3D12DebugDevice), reinterpret_cast<void**>(mDebugDevice.GetAddressOf()));
-// 	mDebugDevice->ReportLiveDeviceObjects(D3D12_RLDO_DETAIL);
+	// 	ComPtr<ID3D12DebugDevice> mDebugDevice;
+	// 	md3dDevice->QueryInterface(mDebugDevice.GetAddressOf());
+	// 	HRESULT hr = md3dDevice->QueryInterface(__uuidof(ID3D12DebugDevice), reinterpret_cast<void**>(mDebugDevice.GetAddressOf()));
+	// 	mDebugDevice->ReportLiveDeviceObjects(D3D12_RLDO_DETAIL);
 }
 
 void DX12RHI::OnResize()
@@ -145,16 +145,8 @@ void DX12RHI::Init()
 
 void DX12RHI::BuildInitialMap()
 {
-	ThrowIfFailed(GetCommandList()->Reset(GetCommandAllocator().Get(), nullptr));
-
 	BuildAllTextures();
 	BuildShaderResourceView();
-
-	ThrowIfFailed(GetCommandList()->Close());
-	ID3D12CommandList* cmdsLists[] = { GetCommandList().Get() };
-	GetCommandQueue()->ExecuteCommandLists(_countof(cmdsLists), cmdsLists);
-
-	FlushCommandQueue();
 }
 
 void DX12RHI::BuildNewTexture(const std::string& name, const std::wstring& textureFilePath)
@@ -439,8 +431,6 @@ void DX12RHI::UpdateShadowTransform()
 	FLight* light = Engine::GetInstance().GetFScene()->GetLight(0);
 	float radius = 2500.0f;
 	int speed = 5;
-	// Only the first "main" light casts a shadow.
-	//light->GetFlightDesc()->lightPos = Engine::GetInstance().GetFScene()->GetCamera()->GetPosition();
 	if (flag)
 	{
 		rota += speed;
@@ -555,11 +545,11 @@ unsigned __int64 DX12RHI::GetDepthStencilViewHandle()
 
 void DX12RHI::DrawSceneToShadowMap(FRenderScene& fRenderScene)
 {
-// 	if (flag != 100)
-// 	{
-// 		UpdateShadowTransform();
-// 		flag++;
-// 	}
+	// 	if (flag != 100)
+	// 	{
+	// 		UpdateShadowTransform();
+	// 		flag++;
+	// 	}
 	UpdateShadowTransform();
 	mCommandList->SetGraphicsRootSignature(mShadowSignature.Get());
 	ID3D12DescriptorHeap* descriptorHeaps[] = { mCbvHeap.Get() };
@@ -577,8 +567,8 @@ void DX12RHI::DrawSceneToShadowMap(FRenderScene& fRenderScene)
 		objConstants.Roatation = glm::transpose(fRenderScene.GetPrimitive(i).GetMeshGeometryInfo().Rotation);
 		objConstants.LightVP = glm::transpose(Engine::GetInstance().GetFScene()->GetLight(0)->GetFlightDesc()->shadowTransform);
 		objConstants.ViewProj = glm::transpose(Engine::GetInstance().GetFScene()->GetCamera()->GetProj() * Engine::GetInstance().GetFScene()->GetCamera()->GetView());
-// 		objConstants.Proj = glm::transpose(Engine::GetInstance().GetFScene()->GetLight(0)->GetFlightDesc()->lightProj);
-// 		objConstants.View = glm::transpose(Engine::GetInstance().GetFScene()->GetLight(0)->GetFlightDesc()->lightView);
+		// 		objConstants.Proj = glm::transpose(Engine::GetInstance().GetFScene()->GetLight(0)->GetFlightDesc()->lightProj);
+		// 		objConstants.View = glm::transpose(Engine::GetInstance().GetFScene()->GetLight(0)->GetFlightDesc()->lightView);
 		objConstants.World = glm::transpose(fRenderScene.GetPrimitive(i).GetMeshGeometryInfo().mMeshWorld);
 		objConstants.time = Engine::GetInstance().GetTimer()->TotalTime();
 		mObjectCB[fRenderScene.GetPrimitive(i).GetIndex()]->CopyData(0, objConstants);
@@ -757,14 +747,11 @@ void DX12RHI::CreatePrimitive(FActor& actor, FRenderScene& fRenderScene)
 		ThrowIfFailed(D3DCreateBlob(ibByteSize, &priDesc->GetMeshGeometryInfo().IndexBufferCPU));
 		CopyMemory(priDesc->GetMeshGeometryInfo().IndexBufferCPU->GetBufferPointer(), indices.data(), ibByteSize);
 
-		ResetCommandList("geo_pso");
 		priDesc->GetMeshGeometryInfo().VertexBufferGPU = d3dUtil::CreateDefaultBuffer(md3dDevice.Get(),
 			mCommandList.Get(), vertices.data(), vbByteSize, priDesc->GetMeshGeometryInfo().VertexBufferUploader);
 
 		priDesc->GetMeshGeometryInfo().IndexBufferGPU = d3dUtil::CreateDefaultBuffer(md3dDevice.Get(),
 			mCommandList.Get(), indices.data(), ibByteSize, priDesc->GetMeshGeometryInfo().IndexBufferUploader);
-		CloseCommandList();
-		FlushCommandQueue();
 
 		priDesc->GetMeshGeometryInfo().VertexByteStride = sizeof(Vertex);
 		priDesc->GetMeshGeometryInfo().VertexBufferByteSize = vbByteSize;

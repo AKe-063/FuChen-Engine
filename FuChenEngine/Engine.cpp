@@ -24,7 +24,6 @@ int Engine::Run()
 // 	return mEngineFinished;
 	if (!initMap)
 	{
-		fRenderer->BuildInitialMap();
 		initMap = true;
 	}
 	return mWindow->Run();

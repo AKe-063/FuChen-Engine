@@ -13,5 +13,4 @@ public:
 	virtual void Render() = 0;
 	virtual void BuildPrimitive(FActor& actor) = 0;
 	virtual void Draw() = 0;
-	virtual void BuildInitialMap() = 0;
 };

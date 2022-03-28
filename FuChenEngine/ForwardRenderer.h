@@ -13,9 +13,9 @@ public:
 	virtual void Render()override;
 	virtual void BuildPrimitive(FActor& actor)override;
 	virtual void Draw()override;
-	virtual void BuildInitialMap()override;
 
 private:
+	bool initMap = false;
 	RHI* rhi;
 	FRenderScene fRenderScene;
 };
