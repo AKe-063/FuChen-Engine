@@ -426,71 +426,8 @@ void DX12RHI::AddConstantBuffer(FPrimitive& fPrimitive)
 
 	md3dDevice->CreateConstantBufferView(&cbvDesc, handle);
 	mObjectCB.push_back(objConstant);
-	fPrimitive.SetIndex(mCbvCount-2);
+	fPrimitive.SetIndex(mCbvCount - 2);
 	mCbvCount++;
-}
-
-void DX12RHI::UpdateMVP(FPrimitive& fPrimitive)
-{
-	FLight* light = Engine::GetInstance().GetFScene()->GetLight(0);
-	float radius = 2500.0f;
-// 	int speed = 5;
-// 	if (flag)
-// 	{
-// 		rota += speed;
-// 		if (rota >= 2000)
-// 		{
-// 			flag = !flag;
-// 		}
-// 		light->GetFlightDesc()->lightPos = glm::vec3(sqrt(4000000 - pow(rota, 2)), rota, 2000.0f);
-// 	}
-// 	else
-// 	{
-// 		rota -= speed;
-// 		if (rota <= -2000)
-// 		{
-// 			flag = !flag;
-// 		}
-// 		light->GetFlightDesc()->lightPos = glm::vec3(-sqrt(4000000 - pow(rota, 2)), rota, 2000.0f);
-// 	}
-	light->GetFlightDesc()->lightPos = glm::vec3(2000.0f, 2000.0f, 2000.0f);
-	light->GetFlightDesc()->targetPos = glm::vec3(0.0f, 0.0f, 0.0f);
-	light->GetFlightDesc()->lightView = glm::lookAtLH(light->GetFlightDesc()->lightPos, light->GetFlightDesc()->targetPos, light->GetFlightDesc()->lightUp);
-
-	glm::vec3 sphereCenterLS = MathHelper::Vector3TransformCoord(light->GetFlightDesc()->targetPos, light->GetFlightDesc()->lightView);
-
-	float l = sphereCenterLS.x - radius;
-	float b = sphereCenterLS.y - radius;
-	float n = sphereCenterLS.z - radius;
-	float r = sphereCenterLS.x + radius;
-	float t = sphereCenterLS.y + radius;
-	float f = sphereCenterLS.z + radius;
-
-	light->GetFlightDesc()->lightProj = glm::orthoLH_ZO(l, r, b, t, n, f);
-
-	// Transform NDC space [-1,+1]^2 to texture space [0,1]^2
-	mat4 T(
-		0.5f, 0.0f, 0.0f, 0.0f,
-		0.0f, -0.5f, 0.0f, 0.0f,
-		0.0f, 0.0f, 1.0f, 0.0f,
-		0.5f, 0.5f, 0.0f, 1.0f);
-
-	mat4 S = T * light->GetFlightDesc()->lightProj * light->GetFlightDesc()->lightView;
-	light->GetFlightDesc()->shadowTransform = S;
-
-	LightConstants lightConstant;
-	lightConstant.lightOrthoVP = glm::transpose(S);
-	lightConstant.lightProj = glm::transpose(light->GetFlightDesc()->lightProj);
-	lightConstant.lightVP = glm::transpose(light->GetFlightDesc()->lightProj * light->GetFlightDesc()->lightView);
-
-	PassConstants passConstant;
-	passConstant.InvViewProj = glm::transpose(Engine::GetInstance().GetFScene()->GetCamera()->GetProj() * Engine::GetInstance().GetFScene()->GetCamera()->GetView());
-
-	mObjectCB[fPrimitive.GetIndex()]->CopyData(0, fPrimitive.GetObjConstantInfo());
-	mObjectLight->CopyData(0, lightConstant);
-	mObjectPass->CopyData(0, passConstant);
-
-	light = nullptr;
 }
 
 void DX12RHI::BuildConstantBuffer()
@@ -591,25 +528,10 @@ unsigned __int64 DX12RHI::GetDepthStencilViewHandle()
 	return mDsvHeap->GetCPUDescriptorHandleForHeapStart().ptr;
 }
 
-void DX12RHI::DrawSceneToShadowMap(FRenderScene& fRenderScene)
+void DX12RHI::SetShadowSignature(FRenderScene& fRenderScene)
 {
 	mCommandList->SetGraphicsRootSignature(mShadowSignature.Get());
-	ID3D12DescriptorHeap* descriptorHeaps[] = { mCbvHeap.Get() };
-	mCommandList->SetDescriptorHeaps(_countof(descriptorHeaps), descriptorHeaps);
-	for (int i = 0; i < fRenderScene.GetNumPrimitive(); i++)
-	{
-		UpdateMVP(fRenderScene.GetPrimitive(i));
-		mCommandList->IASetVertexBuffers(0, 1, &fRenderScene.GetPrimitive(i).GetMeshGeometryInfo().VertexBufferView());
-		mCommandList->IASetIndexBuffer(&fRenderScene.GetPrimitive(i).GetMeshGeometryInfo().IndexBufferView());
-		mCommandList->IASetPrimitiveTopology(D3D11_PRIMITIVE_TOPOLOGY_TRIANGLELIST);
-		mCommandList->SetGraphicsRootConstantBufferView(0, mObjectCB[fRenderScene.GetPrimitive(i).GetIndex()]->Resource()->GetGPUVirtualAddress());
-		mCommandList->SetGraphicsRootConstantBufferView(1, mObjectLight->Resource()->GetGPUVirtualAddress());
-		mCommandList->SetGraphicsRootConstantBufferView(2, mObjectPass->Resource()->GetGPUVirtualAddress());
-
-		mCommandList->DrawIndexedInstanced(
-			fRenderScene.GetPrimitive(i).GetMeshGeometryInfo().DrawArgs[fRenderScene.GetPrimitive(i).GetMeshGeometryInfo().Name].IndexCount,
-			1, 0, 0, 0);
-	}
+	DCShadowMap = true;
 }
 
 void DX12RHI::ClearBackBuffer(const float* color)
@@ -638,18 +560,20 @@ void DX12RHI::SetRenderTargets(unsigned int numRenderTarget, unsigned __int64 re
 void DX12RHI::SetGraphicsRootSignature()
 {
 	mCommandList->SetGraphicsRootSignature(mRootSignature.Get());
+	DCShadowMap = false;
 }
 
-void DX12RHI::DrawFRenderScene(FRenderScene& fRenderScene)
+void DX12RHI::DrawFPrimitive(FPrimitive& fPrimitive)
 {
 	ID3D12DescriptorHeap* descriptorHeapsSRV[] = { mSrvDescriptorHeap.Get() };
 	ID3D12DescriptorHeap* descriptorHeaps[] = { mCbvHeap.Get() };
-	for (int i = 0; i < fRenderScene.GetNumPrimitive(); i++)
-	{
-		mCommandList->IASetVertexBuffers(0, 1, &fRenderScene.GetPrimitive(i).GetMeshGeometryInfo().VertexBufferView());
-		mCommandList->IASetIndexBuffer(&fRenderScene.GetPrimitive(i).GetMeshGeometryInfo().IndexBufferView());
-		mCommandList->IASetPrimitiveTopology(D3D11_PRIMITIVE_TOPOLOGY_TRIANGLELIST);
+	mCommandList->SetDescriptorHeaps(_countof(descriptorHeaps), descriptorHeaps);
+	mCommandList->SetGraphicsRootConstantBufferView(0, mObjectCB[fPrimitive.GetIndex()]->Resource()->GetGPUVirtualAddress());
+	mCommandList->SetGraphicsRootConstantBufferView(1, mObjectLight->Resource()->GetGPUVirtualAddress());
+	mCommandList->SetGraphicsRootConstantBufferView(2, mObjectPass->Resource()->GetGPUVirtualAddress());
 
+	if (!DCShadowMap)
+	{
 		mCommandList->SetDescriptorHeaps(_countof(descriptorHeapsSRV), descriptorHeapsSRV);
 		auto handle1 = CD3DX12_GPU_DESCRIPTOR_HANDLE(mSrvDescriptorHeap->GetGPUDescriptorHandleForHeapStart());
 		handle1.Offset(2, mCbvSrvUavDescriptorSize);
@@ -657,16 +581,11 @@ void DX12RHI::DrawFRenderScene(FRenderScene& fRenderScene)
 		handle1.Offset(2, mCbvSrvUavDescriptorSize);
 		mCommandList->SetGraphicsRootDescriptorTable(4, handle1);
 		mCommandList->SetGraphicsRootDescriptorTable(5, mShadowMap->Srv());
-
-		mCommandList->SetDescriptorHeaps(_countof(descriptorHeaps), descriptorHeaps);
-		mCommandList->SetGraphicsRootConstantBufferView(0, mObjectCB[fRenderScene.GetPrimitive(i).GetIndex()]->Resource()->GetGPUVirtualAddress());
-		mCommandList->SetGraphicsRootConstantBufferView(1, mObjectLight->Resource()->GetGPUVirtualAddress());
-		mCommandList->SetGraphicsRootConstantBufferView(2, mObjectPass->Resource()->GetGPUVirtualAddress());
-
-		mCommandList->DrawIndexedInstanced(
-			fRenderScene.GetPrimitive(i).GetMeshGeometryInfo().DrawArgs[fRenderScene.GetPrimitive(i).GetMeshGeometryInfo().Name].IndexCount,
-			1, 0, 0, 0);
 	}
+
+	mCommandList->DrawIndexedInstanced(
+		fPrimitive.GetMeshGeometryInfo().DrawArgs[fPrimitive.GetMeshGeometryInfo().Name].IndexCount,
+		1, 0, 0, 0);
 }
 
 VIEWPORT DX12RHI::GetViewport()
@@ -711,6 +630,40 @@ TAGRECT DX12RHI::GetShadowMapTagRect()
 	tagRect.left = mShadowMap->ScissorRect().left;
 	tagRect.top = mShadowMap->ScissorRect().top;
 	return tagRect;
+}
+
+void DX12RHI::UpdateVP()
+{
+	LightConstants lightConstant;
+	lightConstant.lightOrthoVP = glm::transpose(Engine::GetInstance().GetFScene()->GetLight(0)->GetFlightDesc()->shadowTransform);
+	lightConstant.lightProj = glm::transpose(Engine::GetInstance().GetFScene()->GetLight(0)->GetFlightDesc()->lightProj);
+	lightConstant.lightVP = glm::transpose(Engine::GetInstance().GetFScene()->GetLight(0)->GetFlightDesc()->lightProj * Engine::GetInstance().GetFScene()->GetLight(0)->GetFlightDesc()->lightView);
+
+	PassConstants passConstant;
+	passConstant.InvViewProj = glm::transpose(Engine::GetInstance().GetFScene()->GetCamera()->GetProj() * Engine::GetInstance().GetFScene()->GetCamera()->GetView());
+
+	mObjectLight->CopyData(0, lightConstant);
+	mObjectPass->CopyData(0, passConstant);
+}
+
+void DX12RHI::UpdateM(FPrimitive& fPrimitive)
+{
+	mObjectCB[fPrimitive.GetIndex()]->CopyData(0, fPrimitive.GetObjConstantInfo());
+}
+
+void DX12RHI::IASetVertexBF(FPrimitive& fPrimitive)
+{
+	mCommandList->IASetVertexBuffers(0, 1, &fPrimitive.GetMeshGeometryInfo().VertexBufferView());
+}
+
+void DX12RHI::IASetIndexBF(FPrimitive& fPrimitive)
+{
+	mCommandList->IASetIndexBuffer(&fPrimitive.GetMeshGeometryInfo().IndexBufferView());
+}
+
+void DX12RHI::IASetPriTopology(PRIMITIVE_TOPOLOGY topology)
+{
+	mCommandList->IASetPrimitiveTopology(D3D12_PRIMITIVE_TOPOLOGY(topology));
 }
 
 void DX12RHI::CreatePrimitive(FActor& actor, FRenderScene& fRenderScene)

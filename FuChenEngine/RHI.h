@@ -26,9 +26,9 @@ public:
 	virtual void ClearDepthBuffer(unsigned __int64 handle) = 0;
 	virtual void SetRenderTargets(unsigned int numRenderTarget, unsigned __int64 renderTargetDescriptor, bool RTsSingleHandleToDescriptorRange, unsigned __int64 DepthDescriptor) {};
 	virtual void SetGraphicsRootSignature() = 0;
-	virtual void DrawFRenderScene(FRenderScene& fRenderScene) = 0;
+	virtual void DrawFPrimitive(FPrimitive& fPrimitive) = 0;
 	virtual void CreatePrimitive(FActor& actor, FRenderScene& fRenderScene) = 0;
-	virtual void DrawSceneToShadowMap(FRenderScene& fRenderScene) = 0;
+	virtual void SetShadowSignature(FRenderScene& fRenderScene) = 0;
 	virtual void ResetCmdListAlloc() = 0;
 	virtual void ResetCommandList(std::string pso) = 0;
 	virtual void CloseCommandList() = 0;
@@ -42,6 +42,11 @@ public:
 	virtual void FlushCommandQueue() {};
 	virtual VIEWPORT GetShadowMapViewport() = 0;
 	virtual TAGRECT GetShadowMapTagRect() = 0;
+	virtual void UpdateVP() = 0;
+	virtual void UpdateM(FPrimitive& fPrimitive) = 0;
+	virtual void IASetVertexBF(FPrimitive& fPrimitive) = 0;
+	virtual void IASetIndexBF(FPrimitive& fPrimitive) = 0;
+	virtual void IASetPriTopology(PRIMITIVE_TOPOLOGY topology) = 0;
 
 protected:
 	static RHI* rhi;

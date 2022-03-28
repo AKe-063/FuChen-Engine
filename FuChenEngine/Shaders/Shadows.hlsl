@@ -3,8 +3,6 @@
 //***************************************************************************************
 #include <ShadowsHead.hlsli>
 
-Texture2D gShadowMap : register(t0);
-
 SamplerState gsamPointWrap        : register(s0);
 /*SamplerState gsamPointClamp       : register(s1);
 SamplerState gsamLinearWrap       : register(s2);
@@ -13,15 +11,9 @@ SamplerState gsamAnisotropicWrap  : register(s4);
 SamplerState gsamAnisotropicClamp : register(s5);*/
 
 cbuffer cbPerObject : register(b0)
-{
-	//float4x4 glightPrpj;
-	//float4x4 glightVPj;
-	//float4x4 gLightVP;
-	//float4x4 gWorldViewProj; 
+{ 
 	float4x4 gRotation;
 	float4x4 gWorld;
-	//float4x4 gViewProj;
-	//float4x4 gProj;
 	float time;
 };
 

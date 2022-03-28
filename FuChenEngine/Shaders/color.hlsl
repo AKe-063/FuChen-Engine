@@ -14,14 +14,8 @@ SamplerComparisonState gsamShadow : register(s1);
 
 cbuffer cbPerObject : register(b0)
 {
-	//float4x4 glightPrpj;
-	//float4x4 glightVPj;
-	//float4x4 gLightVP;
-	//float4x4 gWorldViewProj; 
 	float4x4 gRotation;
 	float4x4 gWorld;
-	//float4x4 gViewProj;
-	//float4x4 gProj;
 	float time;
 };
 

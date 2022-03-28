@@ -34,7 +34,6 @@ public:
 	void BuildNewTexture(const std::string& name, const std::wstring& textureFilePath);
 	void BuildAllTextures();
 	void AddConstantBuffer(FPrimitive& fPrimitive);
-	void UpdateMVP(FPrimitive& fPrimitive);
 	void BuildConstantBuffer();
 
 	//Abstract RHI
@@ -44,11 +43,11 @@ public:
 	virtual void ClearDepthBuffer(unsigned __int64 handle)override;
 	virtual void SetRenderTargets(unsigned int numRenderTarget, unsigned __int64 renderTargetDescriptor, bool RTsSingleHandleToDescriptorRange, unsigned __int64 DepthDescriptor)override;
 	virtual void SetGraphicsRootSignature()override;
-	virtual void DrawFRenderScene(FRenderScene& fRenderScene)override;
+	virtual void DrawFPrimitive(FPrimitive& fPrimitive)override;
 	virtual VIEWPORT GetViewport()override;
 	virtual TAGRECT GetTagRect()override;
 	virtual void CreatePrimitive(FActor& actor, FRenderScene& fRenderScene)override;
-	virtual void DrawSceneToShadowMap(FRenderScene& fRenderScene)override;
+	virtual void SetShadowSignature(FRenderScene& fRenderScene)override;
 	virtual void ResetCmdListAlloc()override;
 	virtual void ResetCommandList(std::string pso)override;
 	virtual void CloseCommandList()override;
@@ -62,6 +61,11 @@ public:
 	virtual void FlushCommandQueue()override;
 	virtual VIEWPORT GetShadowMapViewport()override;
 	virtual TAGRECT GetShadowMapTagRect()override;
+	virtual void UpdateVP()override;
+	virtual void UpdateM(FPrimitive& fPrimitive)override;
+	virtual void IASetVertexBF(FPrimitive& fPrimitive)override;
+	virtual void IASetIndexBF(FPrimitive& fPrimitive)override;
+	virtual void IASetPriTopology(PRIMITIVE_TOPOLOGY topology)override;
 
 protected:
 	//DX Init
@@ -133,6 +137,5 @@ private:
 	std::unique_ptr<ShadowMap> mShadowMap;
 
 	int flag = 0;
-	int rota = 0;
-	bool rotaFlag = true;
+	bool DCShadowMap = true;
 };

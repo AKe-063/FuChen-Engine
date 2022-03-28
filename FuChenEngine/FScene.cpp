@@ -124,5 +124,6 @@ void FScene::Update()
 {
 	GetCamera()->UpdateViewMatrix();
 	GetCamera()->SetView();
+	fLights[0].UpdateLightTrans();
 }
 

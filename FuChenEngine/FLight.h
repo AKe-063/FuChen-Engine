@@ -9,6 +9,7 @@ public:
 	~FLight();
 
 	FLightDesc* GetFlightDesc();
+	void UpdateLightTrans();
 
 private:
 	FLightDesc fLightDesc;
