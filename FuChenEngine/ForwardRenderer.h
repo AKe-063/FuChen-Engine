@@ -11,7 +11,7 @@ public:
 	virtual void Init()override;
 	virtual void Destroy()override;
 	virtual void Render()override;
-	virtual void BuildPrimitive(FActor& actor)override;
+	virtual void BuildDirtyPrimitive(FScene& fScene)override;
 	virtual void Draw(FPrimitive& fPrimitive)override;
 
 private:

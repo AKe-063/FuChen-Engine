@@ -17,5 +17,5 @@ public:
 
 private:
 	Microsoft::WRL::ComPtr<ID3D12DescriptorHeap> descriptorHeap = nullptr;
-	int index = 0;
+	int currentDescriptorNum = 0;
 };

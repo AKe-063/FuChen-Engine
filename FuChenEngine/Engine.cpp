@@ -25,12 +25,13 @@ int Engine::Run()
 
 	if (mWindow->Run() == 1)
 	{
-		Engine::GetInstance().GetTimer()->Tick();
+		mTimer->Tick();
 
-		if (!Engine::GetInstance().GetmEnginePaused())
+		if (!mEnginePaused)
 		{
-			Engine::GetInstance().Update();
-			Engine::GetInstance().GetRenderer()->Render();
+			Update();
+			fRenderer->BuildDirtyPrimitive(*fScene.get());
+			fRenderer->Render();
 		}
 		else
 		{

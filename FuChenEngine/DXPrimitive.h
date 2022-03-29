@@ -15,5 +15,6 @@ public:
 private:
 	MeshGeometry geo;
 	int objCBIndex = -1;
+	int32_t cbvHandle = -1;
 	ObjectConstants objConstant;
 };

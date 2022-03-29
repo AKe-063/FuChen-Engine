@@ -29,18 +29,6 @@ void ForwardRenderer::Render()
 {
 	rhi->ResetCmdListAlloc();
 	rhi->ResetCommandList("geo_pso");
-	if (!initMap)
-	{
-		rhi->BuildInitialMap();
-		initMap = true;
-	}
-	//Rebuild dirty primitives
-	std::unordered_map<std::string, FActor> allActorMap = Engine::GetInstance().GetFScene()->GetAllActor();
-	for (std::string renderActorName : Engine::GetInstance().GetFScene()->GetDirtyActor())
-	{
-		BuildPrimitive(allActorMap[renderActorName]);
-		Engine::GetInstance().GetFScene()->EraseDirtyActorByIndex(0);
-	}
 
 	//Draw ShadowMap
 	rhi->RSSetViewPorts(1, &rhi->GetShadowMapViewport());
@@ -78,9 +66,24 @@ void ForwardRenderer::Render()
 	rhi->FlushCommandQueue();
 }
 
-void ForwardRenderer::BuildPrimitive(FActor& actor)
+void ForwardRenderer::BuildDirtyPrimitive(FScene& fScene)
 {
-	rhi->CreatePrimitive(actor, fRenderScene);
+	rhi->ResetCmdListAlloc();
+	rhi->ResetCommandList("geo_pso");
+	if (!initMap)
+	{
+		rhi->BuildInitialMap();
+		initMap = true;
+	}
+	//Rebuild dirty primitives
+	std::unordered_map<std::string, FActor> allActorMap = fScene.GetAllActor();
+	for (std::string renderActorName : fScene.GetDirtyActor())
+	{
+		rhi->CreatePrimitive(allActorMap[renderActorName], fRenderScene);
+		fScene.EraseDirtyActorByIndex(0);
+	}
+	rhi->CloseCommandList();
+	rhi->FlushCommandQueue();
 }
 
 void ForwardRenderer::Draw(FPrimitive& fPrimitive)

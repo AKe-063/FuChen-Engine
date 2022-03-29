@@ -76,6 +76,7 @@ void FScene::AddNewActor(const std::string& name)
 		}
 		
 		actors.insert(std::make_pair(newName, newActor));
+		AddDirtyActor(newName);
 		names.push_back(newName);
 		actorCount.push_back(name);
 	}
@@ -103,6 +104,11 @@ std::unordered_map<std::string, FActor>& FScene::GetAllActor()
 std::vector<std::string> FScene::GetDirtyActor()
 {
 	return dirtyActor;
+}
+
+void FScene::AddDirtyActor(std::string actor)
+{
+	dirtyActor.push_back(actor);
 }
 
 void FScene::EraseDirtyActorByIndex(const int& index)
