@@ -5,3 +5,8 @@ FPrimitive::~FPrimitive()
 {
 
 }
+
+FRenderTexPrimitive::~FRenderTexPrimitive()
+{
+
+}

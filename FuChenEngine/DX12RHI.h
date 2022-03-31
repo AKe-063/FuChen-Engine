@@ -27,17 +27,16 @@ public:
 
 	//Render Build
 	void BuildDescriptorHeaps();
-	void BuildShaderResourceView();
+	void BuildTextureResourceView(std::shared_ptr<FRenderTexPrimitive> texPrimitive);
 	void BuildRootSignature();
 	void BuildShadersAndInputLayout();
 	void BuildPSO();
-	virtual void BuildInitialMap()override;
-	void BuildNewTexture(const std::string& name, const std::wstring& textureFilePath);
-	void BuildAllTextures();
 	void AddConstantBuffer(FPrimitive& fPrimitive);
 	void BuildConstantBuffer();
+	void BuildShadowMapResourceView();
 
 	//Abstract RHI
+	virtual void TransTextureToRenderResource(FActor& actor, FTexture* texture, FRenderScene& fRenderScene)override;
 	virtual void RSSetViewPorts(unsigned int numViewports, const VIEWPORT* scrernViewport)override;
 	virtual void RESetScissorRects(unsigned int numRects, const TAGRECT* rect)override;
 	virtual void ClearBackBuffer(const float* color)override;
@@ -47,7 +46,7 @@ public:
 	virtual void DrawFPrimitive(FPrimitive& fPrimitive)override;
 	virtual VIEWPORT GetViewport()override;
 	virtual TAGRECT GetTagRect()override;
-	virtual void CreatePrimitive(FActor& actor, FRenderScene& fRenderScene)override;
+	virtual void TransActorToRenderPrimitive(FActor& actor, FRenderScene& fRenderScene)override;
 	virtual void SetShadowSignature(FRenderScene& fRenderScene)override;
 	virtual void ResetCmdListAlloc()override;
 	virtual void ResetCommandList(std::string pso)override;
@@ -85,8 +84,6 @@ protected:
 
 private:
 	std::unique_ptr<FHeapManager> mHeapManager;
-	ComPtr<ID3D12DescriptorHeap> mCbvHeap = nullptr;
-	//ComPtr<ID3D12DescriptorHeap> mSrvDescriptorHeap = nullptr;
 	std::vector<std::shared_ptr<UploadBuffer<ObjectConstants>>> mObjectCB;
 	std::unique_ptr<UploadBuffer<PassConstants>> mObjectPass;
 	std::unique_ptr<UploadBuffer<LightConstants>> mObjectLight;
@@ -131,9 +128,6 @@ private:
 	UINT mRtvDescriptorSize = 0;
 	UINT mDsvDescriptorSize = 0;
 	UINT mCbvSrvUavDescriptorSize = 0;
-
-	//ConstantBufferIndexCount
-	//int mCbvCount = 0;
 
 	Window* mWindow;
 	std::unique_ptr<ShadowMap> mShadowMap;

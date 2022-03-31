@@ -1,0 +1,33 @@
+{
+	"staticMeshesNum": 1,
+	"staticMeshes": [
+		{
+			"name": "SM_MatPreviewMesh_02",
+			"vertices": 6736,
+			"texcoords": 2,
+			"transform":
+			{
+				"rotation":
+				{
+					"x": 0.42261898517608643,
+					"y": 0,
+					"z": 0,
+					"w": 0.90630745887756348
+				},
+				"translation":
+				{
+					"x": -1100,
+					"y": -240,
+					"z": 280
+				},
+				"scale3D":
+				{
+					"x": 1,
+					"y": 1,
+					"z": 1
+				}
+			}
+		}
+	],
+	"actorName": "ThirdPersonExampleMap_StaticMeshActor_5"
+}

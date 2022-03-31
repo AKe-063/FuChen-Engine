@@ -56,17 +56,17 @@ bool FAssetManager::AssetContrain(const std::string& name)
 	return true;
 }
 
-std::wstring FAssetManager::GetTextureFilePathFromName(const std::string& name)
+FTexture* FAssetManager::GetTextureFilePathFromName(const std::string& name)
 {
-	for (auto tex : textureFileLink)
+	for (size_t i = 0; i < textureFileLink.size(); i++)
 	{
-		auto& texDec = tex.GetDesc();
+		auto& texDec = textureFileLink[i].GetDesc();
 		if (texDec.name == name)
 		{
-			return texDec.textureFilePath;
+			return &textureFileLink[i];
 		}
 	}
-	return L"NULL";
+	return nullptr;
 }
 
 std::vector<FTexture> FAssetManager::GetTexturesFilePath()

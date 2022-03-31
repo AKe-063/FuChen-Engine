@@ -1,6 +1,5 @@
 #pragma once
 #include "FTexture.h"
-#include "FMaterialDesc.h"
 
 class FMaterial
 {
@@ -9,6 +8,6 @@ public:
 	~FMaterial();
 
 private:
-	FMaterialDesc materialDesc;
-	
+	std::unordered_map<std::string, FTexture> fTexex;
+
 };

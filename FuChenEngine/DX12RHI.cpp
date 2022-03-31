@@ -137,6 +137,7 @@ void DX12RHI::Init()
 	BuildShadersAndInputLayout();
 	BuildRootSignature();
 	BuildPSO();
+	BuildShadowMapResourceView();
 
 	// Execute the initialization commands.
 	ThrowIfFailed(GetCommandList()->Close());
@@ -147,38 +148,20 @@ void DX12RHI::Init()
 	FlushCommandQueue();
 }
 
-void DX12RHI::BuildInitialMap()
+void DX12RHI::TransTextureToRenderResource(FActor& actor, FTexture* texture, FRenderScene& fRenderScene)
 {
-	BuildAllTextures();
-	BuildShaderResourceView();
-}
-
-void DX12RHI::BuildNewTexture(const std::string& name, const std::wstring& textureFilePath)
-{
+	std::shared_ptr<FRenderTexPrimitive> fRenderTex = std::make_shared<DXRenderTexPrimitive>();
+	auto texDes = texture->GetDesc();
 	auto tex = Texture();
-	tex.Name = name;
-	tex.Filename = textureFilePath;
+	tex.Name = texDes.name;
+	tex.Filename = texDes.textureFilePath;
 	ThrowIfFailed(DirectX::CreateDDSTextureFromFile12(md3dDevice.Get(),
 		mCommandList.Get(), tex.Filename.c_str(),
 		tex.Resource, tex.UploadHeap));
 
-	mTextures[tex.Name] = tex;
-}
-
-void DX12RHI::BuildAllTextures()
-{
-	for (auto texture : FAssetManager::GetInstance().GetTexturesFilePath())
-	{
-		auto texDes = texture.GetDesc();
-		auto tex = Texture();
-		tex.Name = texDes.name;
-		tex.Filename = texDes.textureFilePath;
-		ThrowIfFailed(DirectX::CreateDDSTextureFromFile12(md3dDevice.Get(),
-			mCommandList.Get(), tex.Filename.c_str(),
-			tex.Resource, tex.UploadHeap));
-
-		mTextures[tex.Name] = tex;
-	}
+	fRenderTex->SetTex(tex);
+	fRenderScene.AddTextureResource(fRenderTex);
+	BuildTextureResourceView(fRenderTex);
 }
 
 void DX12RHI::Destroy()
@@ -288,33 +271,24 @@ void DX12RHI::BuildDescriptorHeaps()
 	mHeapManager->CreateDescriptorHeap(md3dDevice, managedHeapDesc);
 }
 
-void DX12RHI::BuildShaderResourceView()
+void DX12RHI::BuildTextureResourceView(std::shared_ptr<FRenderTexPrimitive> texPrimitive)
 {
-	for (auto texture : mTextures)
-	{
-		CD3DX12_CPU_DESCRIPTOR_HANDLE hDescriptor(mHeapManager->GetCPUDescriptorHandleInHeapStart());
-		hDescriptor.Offset(mHeapManager->GetIndex(), mCbvSrvUavDescriptorSize);
-		mHeapManager->AddIndex(1);
-		auto tex = mTextures[texture.first].Resource;
-
-		D3D12_SHADER_RESOURCE_VIEW_DESC srvDesc = {};
-		srvDesc.Shader4ComponentMapping = D3D12_DEFAULT_SHADER_4_COMPONENT_MAPPING;
-		srvDesc.Format = tex->GetDesc().Format;
-		srvDesc.ViewDimension = D3D12_SRV_DIMENSION_TEXTURE2D;
-		srvDesc.Texture2D.MostDetailedMip = 0;
-		srvDesc.Texture2D.MipLevels = tex->GetDesc().MipLevels;
-		srvDesc.Texture2D.ResourceMinLODClamp = 0.0f;
-		md3dDevice->CreateShaderResourceView(tex.Get(), &srvDesc, hDescriptor);
-	}
-
-	auto srvCpuStart = mHeapManager->GetCPUDescriptorHandleInHeapStart();
-	auto srvGpuStart = mHeapManager->GetGPUDescriptorHandleInHeapStart();
-	auto dsvCpuStart = mDsvHeap->GetCPUDescriptorHandleForHeapStart();
-	mShadowMap->BuildDescriptors(
-		CD3DX12_CPU_DESCRIPTOR_HANDLE(srvCpuStart, (INT)mTextures.size()+2, mCbvSrvUavDescriptorSize),
-		CD3DX12_GPU_DESCRIPTOR_HANDLE(srvGpuStart, (INT)mTextures.size()+2, mCbvSrvUavDescriptorSize),
-		CD3DX12_CPU_DESCRIPTOR_HANDLE(dsvCpuStart, 1, mDsvDescriptorSize));
+	Texture* texture = texPrimitive->GetTex();
+	CD3DX12_CPU_DESCRIPTOR_HANDLE hDescriptor(mHeapManager->GetCPUDescriptorHandleInHeapStart());
+	hDescriptor.Offset(mHeapManager->GetCurrentDescriptorNum(), mCbvSrvUavDescriptorSize);
 	mHeapManager->AddIndex(1);
+	auto tex = texture->Resource;
+
+	D3D12_SHADER_RESOURCE_VIEW_DESC srvDesc = {};
+	srvDesc.Shader4ComponentMapping = D3D12_DEFAULT_SHADER_4_COMPONENT_MAPPING;
+	srvDesc.Format = tex->GetDesc().Format;
+	srvDesc.ViewDimension = D3D12_SRV_DIMENSION_TEXTURE2D;
+	srvDesc.Texture2D.MostDetailedMip = 0;
+	srvDesc.Texture2D.MipLevels = tex->GetDesc().MipLevels;
+	srvDesc.Texture2D.ResourceMinLODClamp = 0.0f;
+	md3dDevice->CreateShaderResourceView(tex.Get(), &srvDesc, hDescriptor);
+
+	texPrimitive->SetSrvIndex(mHeapManager->GetCurrentDescriptorNum() - 1);
 }
 
 void DX12RHI::BuildRootSignature()
@@ -412,7 +386,7 @@ void DX12RHI::AddConstantBuffer(FPrimitive& fPrimitive)
 	D3D12_GPU_VIRTUAL_ADDRESS cbAddress = objConstant->Resource()->GetGPUVirtualAddress();
 
 	auto handle = CD3DX12_CPU_DESCRIPTOR_HANDLE(mHeapManager->GetCPUDescriptorHandleInHeapStart());
-	handle.Offset(mHeapManager->GetIndex(), mCbvSrvUavDescriptorSize);
+	handle.Offset(mHeapManager->GetCurrentDescriptorNum(), mCbvSrvUavDescriptorSize);
 
 	D3D12_CONSTANT_BUFFER_VIEW_DESC cbvDesc;
 	cbvDesc.BufferLocation = cbAddress;
@@ -420,7 +394,7 @@ void DX12RHI::AddConstantBuffer(FPrimitive& fPrimitive)
 
 	md3dDevice->CreateConstantBufferView(&cbvDesc, handle);
 	mObjectCB.push_back(objConstant);
-	fPrimitive.SetIndex(mHeapManager->GetIndex()-8);
+	fPrimitive.SetObjCBIndex((int)mObjectCB.size()-1);
 	mHeapManager->AddIndex(1);
 }
 
@@ -433,7 +407,7 @@ void DX12RHI::BuildConstantBuffer()
 
 	auto handle = CD3DX12_CPU_DESCRIPTOR_HANDLE(mHeapManager->GetCPUDescriptorHandleInHeapStart());
 
-	handle.Offset(mHeapManager->GetIndex(), mCbvSrvUavDescriptorSize);
+	handle.Offset(mHeapManager->GetCurrentDescriptorNum(), mCbvSrvUavDescriptorSize);
 	mHeapManager->AddIndex(1);
 
 	D3D12_CONSTANT_BUFFER_VIEW_DESC cbvPassDesc;
@@ -448,7 +422,7 @@ void DX12RHI::BuildConstantBuffer()
 	cbAddress = mObjectPass->Resource()->GetGPUVirtualAddress();
 
 	handle = CD3DX12_CPU_DESCRIPTOR_HANDLE(mHeapManager->GetCPUDescriptorHandleInHeapStart());
-	handle.Offset(mHeapManager->GetIndex(), mCbvSrvUavDescriptorSize);
+	handle.Offset(mHeapManager->GetCurrentDescriptorNum(), mCbvSrvUavDescriptorSize);
 	mHeapManager->AddIndex(1);
 
 	D3D12_CONSTANT_BUFFER_VIEW_DESC cbvLightDesc;
@@ -456,6 +430,18 @@ void DX12RHI::BuildConstantBuffer()
 	cbvLightDesc.SizeInBytes = objLCByteSize;
 
 	md3dDevice->CreateConstantBufferView(&cbvLightDesc, handle);
+}
+
+void DX12RHI::BuildShadowMapResourceView()
+{
+	auto srvCpuStart = mHeapManager->GetCPUDescriptorHandleInHeapStart();
+	auto srvGpuStart = mHeapManager->GetGPUDescriptorHandleInHeapStart();
+	auto dsvCpuStart = mDsvHeap->GetCPUDescriptorHandleForHeapStart();
+	mShadowMap->BuildDescriptors(
+		CD3DX12_CPU_DESCRIPTOR_HANDLE(srvCpuStart, (INT)mHeapManager->GetCurrentDescriptorNum(), mCbvSrvUavDescriptorSize),
+		CD3DX12_GPU_DESCRIPTOR_HANDLE(srvGpuStart, (INT)mHeapManager->GetCurrentDescriptorNum(), mCbvSrvUavDescriptorSize),
+		CD3DX12_CPU_DESCRIPTOR_HANDLE(dsvCpuStart, 1, mDsvDescriptorSize));
+	mHeapManager->AddIndex(1);
 }
 
 void DX12RHI::ResetCmdListAlloc()
@@ -564,17 +550,18 @@ void DX12RHI::DrawFPrimitive(FPrimitive& fPrimitive)
 {
 	ID3D12DescriptorHeap* descriptorHeaps[] = { mHeapManager->GetHeap() };
 	mCommandList->SetDescriptorHeaps(_countof(descriptorHeaps), descriptorHeaps);
-	mCommandList->SetGraphicsRootConstantBufferView(0, mObjectCB[fPrimitive.GetIndex()]->Resource()->GetGPUVirtualAddress());
+	mCommandList->SetGraphicsRootConstantBufferView(0, mObjectCB[fPrimitive.GetObjCBIndex()]->Resource()->GetGPUVirtualAddress());
 	mCommandList->SetGraphicsRootConstantBufferView(1, mObjectLight->Resource()->GetGPUVirtualAddress());
 	mCommandList->SetGraphicsRootConstantBufferView(2, mObjectPass->Resource()->GetGPUVirtualAddress());
 
 	if (!DCShadowMap)
 	{
-		auto handle1 = CD3DX12_GPU_DESCRIPTOR_HANDLE(mHeapManager->GetGPUDescriptorHandleInHeapStart());
-		handle1.Offset(4, mCbvSrvUavDescriptorSize);
-		mCommandList->SetGraphicsRootDescriptorTable(3, handle1);
-		handle1.Offset(2, mCbvSrvUavDescriptorSize);
-		mCommandList->SetGraphicsRootDescriptorTable(4, handle1);
+		auto mainTex = CD3DX12_GPU_DESCRIPTOR_HANDLE(mHeapManager->GetGPUDescriptorHandleInHeapStart());
+		mainTex = mainTex.Offset(fPrimitive.GetMainRsvIndex(), mCbvSrvUavDescriptorSize);
+		auto normalTex = CD3DX12_GPU_DESCRIPTOR_HANDLE(mHeapManager->GetGPUDescriptorHandleInHeapStart());
+		normalTex = normalTex.Offset(fPrimitive.GetNormalRsvIndex(), mCbvSrvUavDescriptorSize);
+		mCommandList->SetGraphicsRootDescriptorTable(3, mainTex);
+		mCommandList->SetGraphicsRootDescriptorTable(4, normalTex);
 		mCommandList->SetGraphicsRootDescriptorTable(5, mShadowMap->Srv());
 	}
 
@@ -643,7 +630,7 @@ void DX12RHI::UpdateVP()
 
 void DX12RHI::UpdateM(FPrimitive& fPrimitive)
 {
-	mObjectCB[fPrimitive.GetIndex()]->CopyData(0, fPrimitive.GetObjConstantInfo());
+	mObjectCB[fPrimitive.GetObjCBIndex()]->CopyData(0, fPrimitive.GetObjConstantInfo());
 }
 
 void DX12RHI::IASetVertexBF(FPrimitive& fPrimitive)
@@ -661,7 +648,7 @@ void DX12RHI::IASetPriTopology(PRIMITIVE_TOPOLOGY topology)
 	mCommandList->IASetPrimitiveTopology(D3D12_PRIMITIVE_TOPOLOGY(topology));
 }
 
-void DX12RHI::CreatePrimitive(FActor& actor, FRenderScene& fRenderScene)
+void DX12RHI::TransActorToRenderPrimitive(FActor& actor, FRenderScene& fRenderScene)
 {
 	std::vector<Vertex> vertices;
 	Vertex vertice;
@@ -752,7 +739,9 @@ void DX12RHI::CreatePrimitive(FActor& actor, FRenderScene& fRenderScene)
 		priDesc->GetMeshGeometryInfo().DrawArgs[priDesc->GetMeshGeometryInfo().Name] = submesh;
 
 		AddConstantBuffer(*priDesc);
-		fRenderScene.AddPrimitive(priDesc);
+ 		auto name = actorInfo.actorName.erase(actorInfo.actorName.size()-1);
+		fRenderScene.AddPrimitive(name, priDesc);
+
 	}
 }
 

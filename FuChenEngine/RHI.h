@@ -3,6 +3,7 @@
 #include "FPrimitive.h"
 #include "FActor.h"
 #include "FRenderScene.h"
+#include "FTexture.h"
 
 class RHI
 {
@@ -19,7 +20,6 @@ public:
 	virtual VIEWPORT GetViewport() = 0;
 	virtual TAGRECT GetTagRect() = 0;
 
-	virtual void BuildInitialMap() = 0;
 	virtual void RSSetViewPorts(unsigned int numViewports, const VIEWPORT* scrernViewport) = 0;
 	virtual void RESetScissorRects(unsigned int numRects, const TAGRECT* rect) = 0;
 	virtual void ClearBackBuffer(const float* color) = 0;
@@ -27,7 +27,7 @@ public:
 	virtual void SetRenderTargets(unsigned int numRenderTarget, unsigned __int64 renderTargetDescriptor, bool RTsSingleHandleToDescriptorRange, unsigned __int64 DepthDescriptor) {};
 	virtual void SetGraphicsRootSignature() = 0;
 	virtual void DrawFPrimitive(FPrimitive& fPrimitive) = 0;
-	virtual void CreatePrimitive(FActor& actor, FRenderScene& fRenderScene) = 0;
+	virtual void TransActorToRenderPrimitive(FActor& actor, FRenderScene& fRenderScene) = 0;
 	virtual void SetShadowSignature(FRenderScene& fRenderScene) = 0;
 	virtual void ResetCmdListAlloc() = 0;
 	virtual void ResetCommandList(std::string pso) = 0;
@@ -47,6 +47,7 @@ public:
 	virtual void IASetVertexBF(FPrimitive& fPrimitive) = 0;
 	virtual void IASetIndexBF(FPrimitive& fPrimitive) = 0;
 	virtual void IASetPriTopology(PRIMITIVE_TOPOLOGY topology) = 0;
+	virtual void TransTextureToRenderResource(FActor& actor, FTexture* texture, FRenderScene& fRenderScene) = 0;
 
 protected:
 	static RHI* rhi;

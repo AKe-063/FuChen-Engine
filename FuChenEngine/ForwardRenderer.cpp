@@ -39,10 +39,11 @@ void ForwardRenderer::Render()
 	rhi->SetRenderTargets(0, 0, false, rhi->GetShadowMapCUPHandle());
 	rhi->UpdateVP();
 	rhi->SetShadowSignature(fRenderScene);
-	for (int i = 0; i < fRenderScene.GetNumPrimitive(); i++)
+	for (auto primitiveMap : fRenderScene.GetAllPrimitives())
 	{
-		rhi->UpdateM(fRenderScene.GetPrimitive(i));
-		Draw(fRenderScene.GetPrimitive(i));
+		auto primitive = primitiveMap.second;
+		rhi->UpdateM(*primitive);
+		Draw(*primitive);
 	}
 	rhi->TransShadowMapResourBarrier(1, RESOURCE_STATE_DEPTH_WRITE, RESOURCE_STATE_GENERIC_READ);
 
@@ -56,9 +57,10 @@ void ForwardRenderer::Render()
 	rhi->SetRenderTargets(1, rhi->GetCurrentBackBufferViewHandle(), false, rhi->GetDepthStencilViewHandle());
 	rhi->SetGraphicsRootSignature();
 	rhi->SetPipelineState("geo_pso");
-	for (int i = 0; i < fRenderScene.GetNumPrimitive(); i++)
+	for (auto primitiveMap : fRenderScene.GetAllPrimitives())
 	{
-		Draw(fRenderScene.GetPrimitive(i));
+		auto primitive = primitiveMap.second;
+		Draw(*primitive);
 	}
 	rhi->TransCurrentBackBufferResourBarrier(1, RESOURCE_STATE_RENDER_TARGET, RESOURCE_STATE_PRESENT);
 	rhi->CloseCommandList();
@@ -70,16 +72,26 @@ void ForwardRenderer::BuildDirtyPrimitive(FScene& fScene)
 {
 	rhi->ResetCmdListAlloc();
 	rhi->ResetCommandList("geo_pso");
-	if (!initMap)
-	{
-		rhi->BuildInitialMap();
-		initMap = true;
-	}
-	//Rebuild dirty primitives
 	std::unordered_map<std::string, FActor> allActorMap = fScene.GetAllActor();
 	for (std::string renderActorName : fScene.GetDirtyActor())
 	{
-		rhi->CreatePrimitive(allActorMap[renderActorName], fRenderScene);
+		rhi->TransActorToRenderPrimitive(allActorMap[renderActorName], fRenderScene);
+		if (!fRenderScene.ContainTexture(allActorMap[renderActorName].GetMainTexName()))
+		{
+			rhi->TransTextureToRenderResource(
+				allActorMap[renderActorName],
+				FAssetManager::GetInstance().GetTextureFilePathFromName(allActorMap[renderActorName].GetMainTexName()),
+				fRenderScene);
+		}
+		if (!fRenderScene.ContainTexture(allActorMap[renderActorName].GetNormalTexName()))
+		{
+			rhi->TransTextureToRenderResource(
+				allActorMap[renderActorName],
+				FAssetManager::GetInstance().GetTextureFilePathFromName(allActorMap[renderActorName].GetNormalTexName()),
+				fRenderScene);
+		}
+		fRenderScene.GetPrimitive(renderActorName).SetMainRsvIndex(fRenderScene.GetTexByName(allActorMap[renderActorName].GetMainTexName())->GetSrvIndex());
+		fRenderScene.GetPrimitive(renderActorName).SetNormalRsvIndex(fRenderScene.GetTexByName(allActorMap[renderActorName].GetNormalTexName())->GetSrvIndex());
 		fScene.EraseDirtyActorByIndex(0);
 	}
 	rhi->CloseCommandList();

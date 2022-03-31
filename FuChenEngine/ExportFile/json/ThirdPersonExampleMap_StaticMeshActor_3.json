@@ -1,0 +1,33 @@
+{
+	"staticMeshesNum": 1,
+	"staticMeshes": [
+		{
+			"name": "SM_Chair",
+			"vertices": 1467,
+			"texcoords": 1,
+			"transform":
+			{
+				"rotation":
+				{
+					"x": -0.14454454183578491,
+					"y": -0.30997580289840698,
+					"z": 0.39713168144226074,
+					"w": 0.85165029764175415
+				},
+				"translation":
+				{
+					"x": -660,
+					"y": -700,
+					"z": 360
+				},
+				"scale3D":
+				{
+					"x": 1,
+					"y": 1,
+					"z": 1
+				}
+			}
+		}
+	],
+	"actorName": "ThirdPersonExampleMap_StaticMeshActor_3"
+}

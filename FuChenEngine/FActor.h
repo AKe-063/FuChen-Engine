@@ -10,10 +10,11 @@ public:
 	~FActor();
 
 	ActorInfo& GetActorInfo();
-
-protected:
-	ActorInfo actor;
+	std::string GetMainTexName();
+	std::string GetNormalTexName();
 
 private:
-
+	ActorInfo actor;
+	std::string mainTexName;
+	std::string normalTexName;
 };

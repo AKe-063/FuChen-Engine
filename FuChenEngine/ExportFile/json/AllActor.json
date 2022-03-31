@@ -12,7 +12,10 @@
 		"ThirdPersonExampleMap_Wall9",
 		"ThirdPersonExampleMap_Wall10",
 		"ThirdPersonExampleMap_Wall11",
-		"ThirdPersonExampleMap_NewBlueprint_C_1",
-		"ThirdPersonExampleMap_ThirdPersonCharacter_167"
+		"ThirdPersonExampleMap_ThirdPersonCharacter_167",
+		"ThirdPersonExampleMap_StaticMeshActor_1",
+		"ThirdPersonExampleMap_StaticMeshActor_3",
+		"ThirdPersonExampleMap_StaticMeshActor_5",
+		"ThirdPersonExampleMap_StaticMeshActor_7"
 	]
 }

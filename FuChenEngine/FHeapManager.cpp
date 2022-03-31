@@ -30,7 +30,7 @@ D3D12_GPU_DESCRIPTOR_HANDLE FHeapManager::GetGPUDescriptorHandleInHeapStart()
 	return descriptorHeap->GetGPUDescriptorHandleForHeapStart();
 }
 
-int FHeapManager::GetIndex()
+int FHeapManager::GetCurrentDescriptorNum()
 {
 	return currentDescriptorNum;
 }

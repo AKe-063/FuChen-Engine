@@ -126,9 +126,6 @@
     <ClInclude Include="FTexture.h">
       <Filter>Header Files\Resource</Filter>
     </ClInclude>
-    <ClInclude Include="FMaterialDesc.h">
-      <Filter>Header Files\Resource</Filter>
-    </ClInclude>
     <ClInclude Include="FRenderer.h">
       <Filter>Header Files\Render</Filter>
     </ClInclude>

@@ -15,7 +15,7 @@ public:
 	virtual void Draw(FPrimitive& fPrimitive)override;
 
 private:
-	bool initMap = false;
+	bool testInitTextureOnce = true;
 	RHI* rhi;
 	FRenderScene fRenderScene;
 };

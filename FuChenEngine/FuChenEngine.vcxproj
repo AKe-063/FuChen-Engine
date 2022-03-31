@@ -169,7 +169,6 @@
     <ClInclude Include="FLight.h" />
     <ClInclude Include="FLightDesc.h" />
     <ClInclude Include="FMaterial.h" />
-    <ClInclude Include="FMaterialDesc.h" />
     <ClInclude Include="ForwardRenderer.h" />
     <ClInclude Include="FPrimitive.h" />
     <ClInclude Include="FRenderer.h" />
