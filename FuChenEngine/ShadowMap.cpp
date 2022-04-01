@@ -1,9 +1,15 @@
 #include "stdafx.h"
 #include "ShadowMap.h"
+#include "RHI.h"
 
-ShadowMap::ShadowMap(ID3D12Device* device, UINT width, UINT height)
+DXShadowMap::DXShadowMap()
 {
-	md3dDevice = device;
+
+}
+
+void DXShadowMap::Init(unsigned int width, unsigned int height)
+{
+	md3dDevice = RHI::Get()->GetDevice()->fDevice;
 
 	mWidth = width;
 	mHeight = height;
@@ -14,42 +20,56 @@ ShadowMap::ShadowMap(ID3D12Device* device, UINT width, UINT height)
 	BuildResource();
 }
 
-UINT ShadowMap::Width()const
+unsigned int DXShadowMap::Width()const
 {
 	return mWidth;
 }
 
-UINT ShadowMap::Height()const
+unsigned int DXShadowMap::Height()const
 {
 	return mHeight;
 }
 
-ID3D12Resource* ShadowMap::Resource()
+std::shared_ptr<FPUResource> DXShadowMap::Resource()
 {
-	return mShadowMap.Get();
+	std::shared_ptr<FPUResource> fResource = std::make_shared<FPUResource>();
+	fResource->fPUResource = mShadowMap.Get();
+	return fResource;
 }
 
-CD3DX12_GPU_DESCRIPTOR_HANDLE ShadowMap::Srv()const
+CD3DX12_GPU_DESCRIPTOR_HANDLE DXShadowMap::Srv()const
 {
 	return mhGpuSrv;
 }
 
-CD3DX12_CPU_DESCRIPTOR_HANDLE ShadowMap::Dsv()const
+CD3DX12_CPU_DESCRIPTOR_HANDLE DXShadowMap::Dsv()const
 {
 	return mhCpuDsv;
 }
 
-D3D12_VIEWPORT ShadowMap::Viewport()const
+VIEWPORT DXShadowMap::Viewport()const
 {
-	return mViewport;
+	VIEWPORT thisViewport;
+	thisViewport.Height = mViewport.Height;
+	thisViewport.MaxDepth = mViewport.MaxDepth;
+	thisViewport.MinDepth = mViewport.MinDepth;
+	thisViewport.TopLeftX = mViewport.TopLeftX;
+	thisViewport.TopLeftY = mViewport.TopLeftY;
+	thisViewport.Width = mViewport.Width;
+	return thisViewport;
 }
 
-D3D12_RECT ShadowMap::ScissorRect()const
+TAGRECT DXShadowMap::ScissorRect()const
 {
-	return mScissorRect;
+	TAGRECT tagRect;
+	tagRect.bottom = mScissorRect.bottom;
+	tagRect.top = mScissorRect.top;
+	tagRect.left = mScissorRect.left;
+	tagRect.right = mScissorRect.right;
+	return tagRect;
 }
 
-void ShadowMap::BuildDescriptors(CD3DX12_CPU_DESCRIPTOR_HANDLE hCpuSrv,
+void DXShadowMap::BuildDescriptors(CD3DX12_CPU_DESCRIPTOR_HANDLE hCpuSrv,
 	CD3DX12_GPU_DESCRIPTOR_HANDLE hGpuSrv,
 	CD3DX12_CPU_DESCRIPTOR_HANDLE hCpuDsv)
 {
@@ -62,7 +82,7 @@ void ShadowMap::BuildDescriptors(CD3DX12_CPU_DESCRIPTOR_HANDLE hCpuSrv,
 	BuildDescriptors();
 }
 
-void ShadowMap::BuildDescriptors()
+void DXShadowMap::BuildDescriptors()
 {
 	// Create SRV to resource so we can sample the shadow map in a shader program.
 	D3D12_SHADER_RESOURCE_VIEW_DESC srvDesc = {};
@@ -84,7 +104,7 @@ void ShadowMap::BuildDescriptors()
 	md3dDevice->CreateDepthStencilView(mShadowMap.Get(), &dsvDesc, mhCpuDsv);
 }
 
-void ShadowMap::BuildResource()
+void DXShadowMap::BuildResource()
 {
 	D3D12_RESOURCE_DESC texDesc;
 	ZeroMemory(&texDesc, sizeof(D3D12_RESOURCE_DESC));

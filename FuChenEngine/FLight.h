@@ -13,4 +13,6 @@ public:
 
 private:
 	FLightDesc fLightDesc;
+	int rota = 0;
+	bool flag = true;
 };

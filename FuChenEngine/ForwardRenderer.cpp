@@ -27,51 +27,30 @@ void ForwardRenderer::Destroy()
 
 void ForwardRenderer::Render()
 {
-	rhi->ResetCmdListAlloc();
-	rhi->ResetCommandList("geo_pso");
-
+	rhi->BeginRender("geo_pso");
 	//Draw ShadowMap
-	rhi->RSSetViewPorts(1, &rhi->GetShadowMapViewport());
-	rhi->RESetScissorRects(1, &rhi->GetShadowMapTagRect());
 	rhi->TransShadowMapResourBarrier(1, RESOURCE_STATE_GENERIC_READ, RESOURCE_STATE_DEPTH_WRITE);
-	rhi->ClearDepthBuffer(rhi->GetShadowMapCUPHandle());
 	rhi->SetPipelineState("shadow_pso");
 	rhi->SetRenderTargets(0, 0, false, rhi->GetShadowMapCUPHandle());
-	rhi->UpdateVP();
-	rhi->SetShadowSignature(fRenderScene);
-	for (auto primitiveMap : fRenderScene.GetAllPrimitives())
-	{
-		auto primitive = primitiveMap.second;
-		rhi->UpdateM(*primitive);
-		Draw(*primitive);
-	}
-	rhi->TransShadowMapResourBarrier(1, RESOURCE_STATE_DEPTH_WRITE, RESOURCE_STATE_GENERIC_READ);
+	rhi->DrawShadow(fRenderScene);
 
-	//Draw real objecet
-	rhi->RSSetViewPorts(1, &rhi->GetViewport());
-	rhi->RESetScissorRects(1, &rhi->GetTagRect());
+	//TransBarrier
+	rhi->TransShadowMapResourBarrier(1, RESOURCE_STATE_DEPTH_WRITE, RESOURCE_STATE_GENERIC_READ);
 	rhi->TransCurrentBackBufferResourBarrier(1, RESOURCE_STATE_PRESENT, RESOURCE_STATE_RENDER_TARGET);
-	float color[4] = { 1.0f,1.0f,1.0f,1.0f };
-	rhi->ClearBackBuffer(color);
-	rhi->ClearDepthBuffer(rhi->GetDepthStencilViewHandle());
-	rhi->SetRenderTargets(1, rhi->GetCurrentBackBufferViewHandle(), false, rhi->GetDepthStencilViewHandle());
-	rhi->SetGraphicsRootSignature();
+
+	//Draw real object
+	rhi->BeginBaseDraw();
 	rhi->SetPipelineState("geo_pso");
-	for (auto primitiveMap : fRenderScene.GetAllPrimitives())
-	{
-		auto primitive = primitiveMap.second;
-		Draw(*primitive);
-	}
+	rhi->SetRenderTargets(1, rhi->GetCurrentBackBufferViewHandle(), false, rhi->GetDepthStencilViewHandle());
+	rhi->DrawPrimitives(fRenderScene);
 	rhi->TransCurrentBackBufferResourBarrier(1, RESOURCE_STATE_RENDER_TARGET, RESOURCE_STATE_PRESENT);
-	rhi->CloseCommandList();
-	rhi->SwapChain();
-	rhi->FlushCommandQueue();
+
+	rhi->EndDraw();
 }
 
 void ForwardRenderer::BuildDirtyPrimitive(FScene& fScene)
 {
-	rhi->ResetCmdListAlloc();
-	rhi->ResetCommandList("geo_pso");
+	rhi->BeginTransSceneDataToRenderScene("geo_pso");
 	std::unordered_map<std::string, FActor> allActorMap = fScene.GetAllActor();
 	for (std::string renderActorName : fScene.GetDirtyActor())
 	{
@@ -94,14 +73,13 @@ void ForwardRenderer::BuildDirtyPrimitive(FScene& fScene)
 		fRenderScene.GetPrimitive(renderActorName).SetNormalRsvIndex(fRenderScene.GetTexByName(allActorMap[renderActorName].GetNormalTexName())->GetSrvIndex());
 		fScene.EraseDirtyActorByIndex(0);
 	}
-	rhi->CloseCommandList();
-	rhi->FlushCommandQueue();
-}
+	rhi->EndTransScene();
 
-void ForwardRenderer::Draw(FPrimitive& fPrimitive)
-{
-	rhi->IASetVertexBF(fPrimitive);
-	rhi->IASetIndexBF(fPrimitive);
-	rhi->IASetPriTopology(PRIMITIVE_TOPOLOGY_TRIANGLELIST);
-	rhi->DrawFPrimitive(fPrimitive);
+	//Before render, to upload MVP buffer data to GPU.
+	for (auto primitiveMap : fRenderScene.GetAllPrimitives())
+	{
+		auto primitive = primitiveMap.second;
+		rhi->UpdateM(*primitive);
+	}
+	rhi->UpdateVP();
 }

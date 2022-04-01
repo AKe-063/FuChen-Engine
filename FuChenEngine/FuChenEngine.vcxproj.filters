@@ -156,6 +156,9 @@
     <ClInclude Include="FHeapManager.h">
       <Filter>Header Files\Render</Filter>
     </ClInclude>
+    <ClInclude Include="FPUResource.h">
+      <Filter>Header Files\Render</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="stdafx.cpp">

@@ -12,7 +12,6 @@ public:
 	virtual void Destroy()override;
 	virtual void Render()override;
 	virtual void BuildDirtyPrimitive(FScene& fScene)override;
-	virtual void Draw(FPrimitive& fPrimitive)override;
 
 private:
 	bool testInitTextureOnce = true;

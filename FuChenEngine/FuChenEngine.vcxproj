@@ -124,7 +124,7 @@
     <ClCompile>
       <WarningLevel>Level3</WarningLevel>
       <SDLCheck>true</SDLCheck>
-      <PreprocessorDefinitions>_FORWARD_RENDER=1;_Win32App=1;_PLATFORM_WIN32=1;_DX12_START_UP=1;_DEBUG;_CONSOLE;%(PreprocessorDefinitions)</PreprocessorDefinitions>
+      <PreprocessorDefinitions>_DX_PLATFORM=1;_FORWARD_RENDER=1;_Win32App=1;_PLATFORM_WIN32=1;_DX12_START_UP=1;_DEBUG;_CONSOLE;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <ConformanceMode>false</ConformanceMode>
       <PrecompiledHeader>Use</PrecompiledHeader>
       <AdditionalIncludeDirectories>%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
@@ -171,6 +171,7 @@
     <ClInclude Include="FMaterial.h" />
     <ClInclude Include="ForwardRenderer.h" />
     <ClInclude Include="FPrimitive.h" />
+    <ClInclude Include="FPUResource.h" />
     <ClInclude Include="FRenderer.h" />
     <ClInclude Include="FRenderScene.h" />
     <ClInclude Include="FScene.h" />

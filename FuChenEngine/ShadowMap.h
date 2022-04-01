@@ -1,23 +1,36 @@
 #pragma once
+#include "RHIParameterType.h"
+#include "FPUResource.h"
 
 class ShadowMap
 {
 public:
-	ShadowMap(ID3D12Device* device,
-		UINT width, UINT height);
+	virtual void Init(unsigned int width, unsigned int height) = 0;
+	virtual VIEWPORT Viewport()const = 0;
+	virtual TAGRECT ScissorRect()const = 0;
+	virtual std::shared_ptr<FPUResource> Resource() = 0;
+};
 
-	ShadowMap(const ShadowMap& rhs) = delete;
-	ShadowMap& operator=(const ShadowMap& rhs) = delete;
-	~ShadowMap() = default;
+class DXShadowMap : public ShadowMap
+{
+public:
+	DXShadowMap();
 
-	UINT Width()const;
-	UINT Height()const;
-	ID3D12Resource* Resource();
+	DXShadowMap(const DXShadowMap& rhs) = delete;
+	DXShadowMap& operator=(const DXShadowMap& rhs) = delete;
+	virtual ~DXShadowMap() {};
+
+	virtual void Init(unsigned int width, unsigned int height)override;
+
+	unsigned int Width()const;
+	unsigned int Height()const;
+	virtual std::shared_ptr<FPUResource> Resource()override;
 	CD3DX12_GPU_DESCRIPTOR_HANDLE Srv()const;
 	CD3DX12_CPU_DESCRIPTOR_HANDLE Dsv()const;
 
-	D3D12_VIEWPORT Viewport()const;
-	D3D12_RECT ScissorRect()const;
+	virtual VIEWPORT Viewport()const override;
+	virtual TAGRECT ScissorRect()const override;
+
 
 	void BuildDescriptors(
 		CD3DX12_CPU_DESCRIPTOR_HANDLE hCpuSrv,
