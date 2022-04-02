@@ -5,7 +5,6 @@
 #include "FAssetManager.h"
 #include "RHI.h"
 #include "DXPrimitive.h"
-#include "FRenderTarget.h"
 #include "FHeapManager.h"
 
 class DX12RHI : public RHI
@@ -32,14 +31,15 @@ public:
 	void BuildShadersAndInputLayout();
 	void BuildPSO();
 	void BuildConstantBuffer();
-	void BuildShadowMapResourceView();
 
 	//Abstract RHI
 	virtual void BeginRender(std::string pso)override;
 	virtual void BeginBaseDraw()override;
 	virtual void BeginTransSceneDataToRenderScene(std::string pso)override;
-	virtual void DrawShadow(FRenderScene& fRenderScene)override;
-	virtual void DrawPrimitives(FRenderScene& fRenderScene)override;
+	virtual void BuildShadowRenderTex(std::shared_ptr<FRenderTarget> mShadowMap)override;
+	virtual void CreateRenderTarget(std::shared_ptr<FRenderTarget>& mShadowMap)override;
+	virtual void DrawShadow(FRenderScene& fRenderScene, std::shared_ptr<FRenderTarget> mShadowMap)override;
+	virtual void DrawPrimitives(FRenderScene& fRenderScene, std::shared_ptr<FRenderTarget> mShadowMap)override;
 	virtual void EndDraw()override;
 	virtual void EndTransScene()override;
 	virtual void SetPipelineState(std::string pso)override;
@@ -47,18 +47,17 @@ public:
 	virtual std::shared_ptr<FDevice> GetDevice()override;
 	virtual VIEWPORT GetViewport()override;
 	virtual TAGRECT GetTagRect()override;
-	virtual SIZE_T GetShadowMapCUPHandle()override;
 	virtual unsigned __int64 GetCurrentBackBufferViewHandle()override;
 	virtual unsigned __int64 GetDepthStencilViewHandle()override;
 	virtual void TransActorToRenderPrimitive(FActor& actor, FRenderScene& fRenderScene)override;
 	virtual void TransCurrentBackBufferResourBarrier(unsigned int numBarriers, RESOURCE_STATES currentState, RESOURCE_STATES targetState)override;
-	virtual void TransShadowMapResourBarrier(unsigned int numBarriers, RESOURCE_STATES currentState, RESOURCE_STATES targetState)override;
+	virtual void TransShadowMapResourBarrier(FPUResource* resource, unsigned int numBarriers, RESOURCE_STATES currentState, RESOURCE_STATES targetState)override;
 	virtual void TransTextureToRenderResource(FActor& actor, FTexture* texture, FRenderScene& fRenderScene)override;
 	virtual void UpdateVP()override;
 	virtual void UpdateM(FPrimitive& fPrimitive)override;
 
 protected:
-	void DrawFPrimitive(FPrimitive& fPrimitive);
+	void DrawFPrimitive(FPrimitive& fPrimitive, std::shared_ptr<FRenderTarget> mShadowMap = nullptr);
 	void RSSetViewPorts(unsigned int numViewports, const VIEWPORT* scrernViewport);
 	void RESetScissorRects(unsigned int numRects, const TAGRECT* rect);
 	void ClearBackBuffer(const float* color);
@@ -73,8 +72,6 @@ protected:
 	void IASetVertexBF(FPrimitive& fPrimitive);
 	void IASetIndexBF(FPrimitive& fPrimitive);
 	void IASetPriTopology(PRIMITIVE_TOPOLOGY topology);
-	VIEWPORT GetShadowMapViewport();
-	TAGRECT GetShadowMapTagRect();
 
 	//DX Init
 	bool InitDirect3D();
@@ -135,5 +132,5 @@ private:
 	UINT mCbvSrvUavDescriptorSize = 0;
 	UINT64 mCurrentFence = 0;
 	Window* mWindow;
-	std::unique_ptr<FRenderTarget> mShadowMap;
+	//std::unique_ptr<FRenderTarget> mShadowMap;
 };

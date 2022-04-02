@@ -1,6 +1,7 @@
 #pragma once
 #include "FRenderer.h"
 #include "RHI.h"
+#include "FRenderTarget.h"
 
 class ForwardRenderer : public FRenderer
 {
@@ -17,4 +18,5 @@ private:
 	bool testInitTextureOnce = true;
 	RHI* rhi;
 	FRenderScene fRenderScene;
+	std::shared_ptr<FRenderTarget> mShadowMap;
 };

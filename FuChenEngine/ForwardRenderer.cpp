@@ -17,6 +17,7 @@ void ForwardRenderer::Init()
 {
 	rhi = RHI::Get();
 	rhi->Init();
+	rhi->CreateRenderTarget(mShadowMap);
 }
 
 void ForwardRenderer::Destroy()
@@ -29,20 +30,20 @@ void ForwardRenderer::Render()
 {
 	rhi->BeginRender("geo_pso");
 	//Draw ShadowMap
-	rhi->TransShadowMapResourBarrier(1, RESOURCE_STATE_GENERIC_READ, RESOURCE_STATE_DEPTH_WRITE);
+	rhi->TransShadowMapResourBarrier(mShadowMap->DSResource().get(), 1, RESOURCE_STATE_GENERIC_READ, RESOURCE_STATE_DEPTH_WRITE);
 	rhi->SetPipelineState("shadow_pso");
-	rhi->SetRenderTargets(0, 0, false, rhi->GetShadowMapCUPHandle());
-	rhi->DrawShadow(fRenderScene);
+	rhi->SetRenderTargets(0, 0, false, mShadowMap->Dsv());
+	rhi->DrawShadow(fRenderScene, mShadowMap);
 
 	//TransBarrier
-	rhi->TransShadowMapResourBarrier(1, RESOURCE_STATE_DEPTH_WRITE, RESOURCE_STATE_GENERIC_READ);
+	rhi->TransShadowMapResourBarrier(mShadowMap->DSResource().get(), 1, RESOURCE_STATE_DEPTH_WRITE, RESOURCE_STATE_GENERIC_READ);
 	rhi->TransCurrentBackBufferResourBarrier(1, RESOURCE_STATE_PRESENT, RESOURCE_STATE_RENDER_TARGET);
 
 	//Draw real object
 	rhi->BeginBaseDraw();
 	rhi->SetPipelineState("geo_pso");
 	rhi->SetRenderTargets(1, rhi->GetCurrentBackBufferViewHandle(), false, rhi->GetDepthStencilViewHandle());
-	rhi->DrawPrimitives(fRenderScene);
+	rhi->DrawPrimitives(fRenderScene, mShadowMap);
 	rhi->TransCurrentBackBufferResourBarrier(1, RESOURCE_STATE_RENDER_TARGET, RESOURCE_STATE_PRESENT);
 
 	rhi->EndDraw();
@@ -51,6 +52,7 @@ void ForwardRenderer::Render()
 void ForwardRenderer::BuildDirtyPrimitive(FScene& fScene)
 {
 	rhi->BeginTransSceneDataToRenderScene("geo_pso");
+	rhi->BuildShadowRenderTex(mShadowMap);
 	std::unordered_map<std::string, FActor> allActorMap = fScene.GetAllActor();
 	for (std::string renderActorName : fScene.GetDirtyActor())
 	{

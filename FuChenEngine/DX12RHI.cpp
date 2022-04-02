@@ -121,8 +121,6 @@ void DX12RHI::Init()
 	{
 		throw("InitDX False!");
 	}
-	mShadowMap = std::make_unique<DXRenderTarget>();
-	mShadowMap->Init(2048, 2048);
 	mObjectPass = std::make_unique<UploadBuffer<PassConstants>>(md3dDevice.Get(), 1, true);
 	mObjectLight = std::make_unique<UploadBuffer<LightConstants>>(md3dDevice.Get(), 1, true);
 	mHeapManager = std::make_unique<FHeapManager>();
@@ -138,7 +136,7 @@ void DX12RHI::Init()
 	BuildShadersAndInputLayout();
 	BuildRootSignature();
 	BuildPSO();
-	BuildShadowMapResourceView();
+	//BuildShadowRenderTex();
 
 	// Execute the initialization commands.
 	ThrowIfFailed(GetCommandList()->Close());
@@ -435,29 +433,33 @@ void DX12RHI::BuildConstantBuffer()
 	md3dDevice->CreateConstantBufferView(&cbvLightDesc, handle);
 }
 
-void DX12RHI::BuildShadowMapResourceView()
+void DX12RHI::BuildShadowRenderTex(std::shared_ptr<FRenderTarget> mShadowMap)
 {
-	mShadowMap->AddRTResource(RTDepthStencilBuffer, mHeapManager->GetHeap());
-	auto srvCpuStart = mHeapManager->GetCPUDescriptorHandleInHeapStart();
-	auto srvGpuStart = mHeapManager->GetGPUDescriptorHandleInHeapStart();
-	auto dsvCpuStart = mDsvHeap->GetCPUDescriptorHandleForHeapStart();
-	mShadowMap->BuildRTBuffer(
-		CD3DX12_CPU_DESCRIPTOR_HANDLE(dsvCpuStart, 1, mDsvDescriptorSize).ptr,
-		-1,
-		RTDepthStencilBuffer);
+	if (mShadowMap->DSResource() != nullptr)
+	{
+		mShadowMap->AddRTResource(RTDepthStencilBuffer, mHeapManager->GetHeap());
+		auto dsvCpuStart = mDsvHeap->GetCPUDescriptorHandleForHeapStart();
+		mShadowMap->BuildRTBuffer(
+			CD3DX12_CPU_DESCRIPTOR_HANDLE(dsvCpuStart, 1, mDsvDescriptorSize).ptr,
+			-1,
+			RTDepthStencilBuffer);
 
-	D3D12_SHADER_RESOURCE_VIEW_DESC srvDesc = {};
-	srvDesc.Shader4ComponentMapping = D3D12_DEFAULT_SHADER_4_COMPONENT_MAPPING;
-	srvDesc.Format = DXGI_FORMAT_R24_UNORM_X8_TYPELESS;
-	srvDesc.ViewDimension = D3D12_SRV_DIMENSION_TEXTURE2D;
-	srvDesc.Texture2D.MostDetailedMip = 0;
-	srvDesc.Texture2D.MipLevels = 1;
-	srvDesc.Texture2D.ResourceMinLODClamp = 0.0f;
-	srvDesc.Texture2D.PlaneSlice = 0;
- 	auto shadowCPUSrv = CD3DX12_CPU_DESCRIPTOR_HANDLE(srvCpuStart, (INT)mHeapManager->GetCurrentDescriptorNum(), mCbvSrvUavDescriptorSize);
-	mShadowMap->CreateRTTexture((UINT32)mHeapManager->GetCurrentDescriptorNum());
-	md3dDevice->CreateShaderResourceView(mShadowMap->DSResource()->fPUResource, &srvDesc, shadowCPUSrv);
-	mHeapManager->AddIndex(1);
+		D3D12_SHADER_RESOURCE_VIEW_DESC srvDesc = {};
+		srvDesc.Shader4ComponentMapping = D3D12_DEFAULT_SHADER_4_COMPONENT_MAPPING;
+		srvDesc.Format = DXGI_FORMAT_R24_UNORM_X8_TYPELESS;
+		srvDesc.ViewDimension = D3D12_SRV_DIMENSION_TEXTURE2D;
+		srvDesc.Texture2D.MostDetailedMip = 0;
+		srvDesc.Texture2D.MipLevels = 1;
+		srvDesc.Texture2D.ResourceMinLODClamp = 0.0f;
+		srvDesc.Texture2D.PlaneSlice = 0;
+
+		auto srvCpuStart = mHeapManager->GetCPUDescriptorHandleInHeapStart();
+		auto srvGpuStart = mHeapManager->GetGPUDescriptorHandleInHeapStart();
+		auto shadowCPUSrv = CD3DX12_CPU_DESCRIPTOR_HANDLE(srvCpuStart, (INT)mHeapManager->GetCurrentDescriptorNum(), mCbvSrvUavDescriptorSize);
+		mShadowMap->CreateRTTexture((UINT32)mHeapManager->GetCurrentDescriptorNum());
+		md3dDevice->CreateShaderResourceView(mShadowMap->DSResource()->fPUResource, &srvDesc, shadowCPUSrv);
+		mHeapManager->AddIndex(1);
+	}
 }
 
 void DX12RHI::BeginRender(std::string pso)
@@ -466,7 +468,7 @@ void DX12RHI::BeginRender(std::string pso)
 	ThrowIfFailed(mCommandList->Reset(mDirectCmdListAlloc.Get(), mPSOs[pso].Get()));
 }
 
-void DX12RHI::DrawShadow(FRenderScene& fRenderScene)
+void DX12RHI::DrawShadow(FRenderScene& fRenderScene, std::shared_ptr<FRenderTarget> mShadowMap)
 {
 	ID3D12DescriptorHeap* descriptorHeaps[] = { mHeapManager->GetHeap() };
 	mCommandList->SetDescriptorHeaps(_countof(descriptorHeaps), descriptorHeaps);
@@ -490,7 +492,7 @@ void DX12RHI::BeginBaseDraw()
 	mCommandList->RSSetScissorRects(1, &mScissorRect); 
 }
 
-void DX12RHI::DrawPrimitives(FRenderScene& fRenderScene)
+void DX12RHI::DrawPrimitives(FRenderScene& fRenderScene, std::shared_ptr<FRenderTarget> mShadowMap)
 {
 	ID3D12DescriptorHeap* descriptorHeaps[] = { mHeapManager->GetHeap() };
 	mCommandList->SetDescriptorHeaps(_countof(descriptorHeaps), descriptorHeaps);
@@ -504,7 +506,7 @@ void DX12RHI::DrawPrimitives(FRenderScene& fRenderScene)
 		IASetVertexBF(*primitive);
 		IASetIndexBF(*primitive);
 		IASetPriTopology(PRIMITIVE_TOPOLOGY_TRIANGLELIST);
-		DrawFPrimitive(*primitive);
+		DrawFPrimitive(*primitive, mShadowMap);
 	}
 }
 
@@ -519,6 +521,12 @@ void DX12RHI::BeginTransSceneDataToRenderScene(std::string pso)
 {
 	ThrowIfFailed(mDirectCmdListAlloc->Reset());
 	ThrowIfFailed(mCommandList->Reset(mDirectCmdListAlloc.Get(), mPSOs[pso].Get()));
+}
+
+void DX12RHI::CreateRenderTarget(std::shared_ptr<FRenderTarget>& mShadowMap)
+{
+	mShadowMap = std::make_shared<DXRenderTarget>();
+	mShadowMap->Init(2048, 2048);
 }
 
 void DX12RHI::EndTransScene()
@@ -565,14 +573,9 @@ void DX12RHI::TransCurrentBackBufferResourBarrier(unsigned int numBarriers, RESO
 	mCommandList->ResourceBarrier(numBarriers, &CD3DX12_RESOURCE_BARRIER::Transition(CurrentBackBuffer(), D3D12_RESOURCE_STATES(currentState), D3D12_RESOURCE_STATES(targetState)));
 }
 
-void DX12RHI::TransShadowMapResourBarrier(unsigned int numBarriers, RESOURCE_STATES currentState, RESOURCE_STATES targetState)
+void DX12RHI::TransShadowMapResourBarrier(FPUResource* resource, unsigned int numBarriers, RESOURCE_STATES currentState, RESOURCE_STATES targetState)
 {
-	mCommandList->ResourceBarrier(numBarriers, &CD3DX12_RESOURCE_BARRIER::Transition(mShadowMap->DSResource()->fPUResource, D3D12_RESOURCE_STATES(currentState), D3D12_RESOURCE_STATES(targetState)));
-}
-
-SIZE_T DX12RHI::GetShadowMapCUPHandle()
-{
-	return mShadowMap->Dsv();
+	mCommandList->ResourceBarrier(numBarriers, &CD3DX12_RESOURCE_BARRIER::Transition(resource->fPUResource, D3D12_RESOURCE_STATES(currentState), D3D12_RESOURCE_STATES(targetState)));
 }
 
 void DX12RHI::SetPipelineState(std::string pso)
@@ -629,7 +632,7 @@ void DX12RHI::SetGraphicsRootSignature()
 	DCShadowMap = false;
 }
 
-void DX12RHI::DrawFPrimitive(FPrimitive& fPrimitive)
+void DX12RHI::DrawFPrimitive(FPrimitive& fPrimitive, std::shared_ptr<FRenderTarget> mShadowMap /*= nullptr*/)
 {
 	mCommandList->SetGraphicsRootConstantBufferView(0, mObjectCB[fPrimitive.GetObjCBIndex()]->Resource()->GetGPUVirtualAddress());
 	mCommandList->SetGraphicsRootConstantBufferView(1, mObjectLight->Resource()->GetGPUVirtualAddress());
@@ -673,28 +676,6 @@ TAGRECT DX12RHI::GetTagRect()
 	tagRect.right = mScissorRect.right;
 	tagRect.left = mScissorRect.left;
 	tagRect.top = mScissorRect.top;
-	return tagRect;
-}
-
-VIEWPORT DX12RHI::GetShadowMapViewport()
-{
-	VIEWPORT viewport;
-	viewport.Height = mShadowMap->Viewport().Height;
-	viewport.MaxDepth = mShadowMap->Viewport().MaxDepth;
-	viewport.MinDepth = mShadowMap->Viewport().MinDepth;
-	viewport.TopLeftX = mShadowMap->Viewport().TopLeftX;
-	viewport.TopLeftY = mShadowMap->Viewport().TopLeftY;
-	viewport.Width = mShadowMap->Viewport().Width;
-	return viewport;
-}
-
-TAGRECT DX12RHI::GetShadowMapTagRect()
-{
-	TAGRECT tagRect;
-	tagRect.bottom = mShadowMap->ScissorRect().bottom;
-	tagRect.right = mShadowMap->ScissorRect().right;
-	tagRect.left = mShadowMap->ScissorRect().left;
-	tagRect.top = mShadowMap->ScissorRect().top;
 	return tagRect;
 }
 

@@ -150,13 +150,13 @@
     <ClInclude Include="FLightDesc.h">
       <Filter>Header Files\Resource</Filter>
     </ClInclude>
-    <ClInclude Include="FRenderTarget.h">
-      <Filter>Header Files\Render\DX</Filter>
-    </ClInclude>
     <ClInclude Include="FHeapManager.h">
       <Filter>Header Files\Render</Filter>
     </ClInclude>
     <ClInclude Include="FPUResource.h">
+      <Filter>Header Files\Render</Filter>
+    </ClInclude>
+    <ClInclude Include="FRenderTarget.h">
       <Filter>Header Files\Render</Filter>
     </ClInclude>
   </ItemGroup>
@@ -239,10 +239,10 @@
     <ClCompile Include="FLight.cpp">
       <Filter>Source Files\Resource</Filter>
     </ClCompile>
-    <ClCompile Include="FRenderTarget.cpp">
-      <Filter>Source Files\Render\DX</Filter>
-    </ClCompile>
     <ClCompile Include="FHeapManager.cpp">
+      <Filter>Source Files\Render</Filter>
+    </ClCompile>
+    <ClCompile Include="FRenderTarget.cpp">
       <Filter>Source Files\Render</Filter>
     </ClCompile>
   </ItemGroup>

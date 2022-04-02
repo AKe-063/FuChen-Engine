@@ -85,4 +85,5 @@ private:
 
 	RTDesc rtDSDesc;
 	Microsoft::WRL::ComPtr<ID3D12Resource> mRenderTargetDepthStencil = nullptr;
+	//bool bResourceValid = false;
 };
