@@ -13,6 +13,21 @@ public:
 
 };
 
+// class FRenderTexPrimitive
+// {
+// public:
+// 	virtual ~FRenderTexPrimitive();
+// 	int GetSrvIndex() { return srvIndex; };
+// 	Texture* GetTex() { return &tex; };
+// 
+// 	void SetSrvIndex(const int index) { srvIndex = index; };
+// 	void SetTex(Texture tex) { this->tex = tex; };
+// 
+// private:
+// 	int srvIndex;
+// 	Texture tex;
+// };
+
 class FPrimitive
 {
 public:

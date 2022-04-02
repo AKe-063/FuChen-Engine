@@ -5,7 +5,7 @@
 #include "FAssetManager.h"
 #include "RHI.h"
 #include "DXPrimitive.h"
-#include "ShadowMap.h"
+#include "FRenderTarget.h"
 #include "FHeapManager.h"
 
 class DX12RHI : public RHI
@@ -128,7 +128,6 @@ private:
 	Microsoft::WRL::ComPtr<ID3D12Resource> mDepthStencilBuffer;
 	Microsoft::WRL::ComPtr<ID3D12DescriptorHeap> mRtvHeap;
 	Microsoft::WRL::ComPtr<ID3D12DescriptorHeap> mDsvHeap;
-	std::unordered_map<std::string, Texture> mTextures;
 	D3D12_VIEWPORT mScreenViewport;
 	D3D12_RECT mScissorRect;
 	UINT mRtvDescriptorSize = 0;
@@ -136,5 +135,5 @@ private:
 	UINT mCbvSrvUavDescriptorSize = 0;
 	UINT64 mCurrentFence = 0;
 	Window* mWindow;
-	std::unique_ptr<ShadowMap> mShadowMap;
+	std::unique_ptr<FRenderTarget> mShadowMap;
 };

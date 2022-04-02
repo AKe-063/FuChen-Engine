@@ -121,7 +121,7 @@ void DX12RHI::Init()
 	{
 		throw("InitDX False!");
 	}
-	mShadowMap = std::make_unique<DXShadowMap>();
+	mShadowMap = std::make_unique<DXRenderTarget>();
 	mShadowMap->Init(2048, 2048);
 	mObjectPass = std::make_unique<UploadBuffer<PassConstants>>(md3dDevice.Get(), 1, true);
 	mObjectLight = std::make_unique<UploadBuffer<LightConstants>>(md3dDevice.Get(), 1, true);
@@ -437,13 +437,26 @@ void DX12RHI::BuildConstantBuffer()
 
 void DX12RHI::BuildShadowMapResourceView()
 {
+	mShadowMap->AddRTResource(RTDepthStencilBuffer, mHeapManager->GetHeap());
 	auto srvCpuStart = mHeapManager->GetCPUDescriptorHandleInHeapStart();
 	auto srvGpuStart = mHeapManager->GetGPUDescriptorHandleInHeapStart();
 	auto dsvCpuStart = mDsvHeap->GetCPUDescriptorHandleForHeapStart();
-	mShadowMap->BuildDescriptors(
-		CD3DX12_CPU_DESCRIPTOR_HANDLE(srvCpuStart, (INT)mHeapManager->GetCurrentDescriptorNum(), mCbvSrvUavDescriptorSize).ptr,
-		CD3DX12_GPU_DESCRIPTOR_HANDLE(srvGpuStart, (INT)mHeapManager->GetCurrentDescriptorNum(), mCbvSrvUavDescriptorSize).ptr,
-		CD3DX12_CPU_DESCRIPTOR_HANDLE(dsvCpuStart, 1, mDsvDescriptorSize).ptr);
+	mShadowMap->BuildRTBuffer(
+		CD3DX12_CPU_DESCRIPTOR_HANDLE(dsvCpuStart, 1, mDsvDescriptorSize).ptr,
+		-1,
+		RTDepthStencilBuffer);
+
+	D3D12_SHADER_RESOURCE_VIEW_DESC srvDesc = {};
+	srvDesc.Shader4ComponentMapping = D3D12_DEFAULT_SHADER_4_COMPONENT_MAPPING;
+	srvDesc.Format = DXGI_FORMAT_R24_UNORM_X8_TYPELESS;
+	srvDesc.ViewDimension = D3D12_SRV_DIMENSION_TEXTURE2D;
+	srvDesc.Texture2D.MostDetailedMip = 0;
+	srvDesc.Texture2D.MipLevels = 1;
+	srvDesc.Texture2D.ResourceMinLODClamp = 0.0f;
+	srvDesc.Texture2D.PlaneSlice = 0;
+ 	auto shadowCPUSrv = CD3DX12_CPU_DESCRIPTOR_HANDLE(srvCpuStart, (INT)mHeapManager->GetCurrentDescriptorNum(), mCbvSrvUavDescriptorSize);
+	mShadowMap->CreateRTTexture((UINT32)mHeapManager->GetCurrentDescriptorNum());
+	md3dDevice->CreateShaderResourceView(mShadowMap->DSResource()->fPUResource, &srvDesc, shadowCPUSrv);
 	mHeapManager->AddIndex(1);
 }
 
@@ -554,7 +567,7 @@ void DX12RHI::TransCurrentBackBufferResourBarrier(unsigned int numBarriers, RESO
 
 void DX12RHI::TransShadowMapResourBarrier(unsigned int numBarriers, RESOURCE_STATES currentState, RESOURCE_STATES targetState)
 {
-	mCommandList->ResourceBarrier(numBarriers, &CD3DX12_RESOURCE_BARRIER::Transition(mShadowMap->Resource()->fPUResource, D3D12_RESOURCE_STATES(currentState), D3D12_RESOURCE_STATES(targetState)));
+	mCommandList->ResourceBarrier(numBarriers, &CD3DX12_RESOURCE_BARRIER::Transition(mShadowMap->DSResource()->fPUResource, D3D12_RESOURCE_STATES(currentState), D3D12_RESOURCE_STATES(targetState)));
 }
 
 SIZE_T DX12RHI::GetShadowMapCUPHandle()
@@ -625,14 +638,15 @@ void DX12RHI::DrawFPrimitive(FPrimitive& fPrimitive)
 	if (!DCShadowMap)
 	{
 		auto mainTex = CD3DX12_GPU_DESCRIPTOR_HANDLE(mHeapManager->GetGPUDescriptorHandleInHeapStart());
-		mainTex = mainTex.Offset(fPrimitive.GetMainRsvIndex(), mCbvSrvUavDescriptorSize);
+		mainTex.Offset(fPrimitive.GetMainRsvIndex(), mCbvSrvUavDescriptorSize);
 		auto normalTex = CD3DX12_GPU_DESCRIPTOR_HANDLE(mHeapManager->GetGPUDescriptorHandleInHeapStart());
-		normalTex = normalTex.Offset(fPrimitive.GetNormalRsvIndex(), mCbvSrvUavDescriptorSize);
+		normalTex.Offset(fPrimitive.GetNormalRsvIndex(), mCbvSrvUavDescriptorSize);
+		auto shadowTex = CD3DX12_GPU_DESCRIPTOR_HANDLE(mHeapManager->GetGPUDescriptorHandleInHeapStart());
+		shadowTex.Offset(mShadowMap->GetRTDesc(RTDepthStencilBuffer).rtTexture->GetSrvIndex(), mCbvSrvUavDescriptorSize);
+
 		mCommandList->SetGraphicsRootDescriptorTable(3, mainTex);
 		mCommandList->SetGraphicsRootDescriptorTable(4, normalTex);
-		D3D12_GPU_DESCRIPTOR_HANDLE srv;
-		srv.ptr = mShadowMap->Srv();
-		mCommandList->SetGraphicsRootDescriptorTable(5, srv);
+		mCommandList->SetGraphicsRootDescriptorTable(5, shadowTex);
 	}
 
 	mCommandList->DrawIndexedInstanced(
