@@ -37,14 +37,14 @@ std::shared_ptr<FPUResource> DXShadowMap::Resource()
 	return fResource;
 }
 
-CD3DX12_GPU_DESCRIPTOR_HANDLE DXShadowMap::Srv()const
+SIZE_T DXShadowMap::Srv()const
 {
-	return mhGpuSrv;
+	return mhGpuSrv.ptr;
 }
 
-CD3DX12_CPU_DESCRIPTOR_HANDLE DXShadowMap::Dsv()const
+SIZE_T DXShadowMap::Dsv()const
 {
-	return mhCpuDsv;
+	return mhCpuDsv.ptr;
 }
 
 VIEWPORT DXShadowMap::Viewport()const
@@ -69,14 +69,14 @@ TAGRECT DXShadowMap::ScissorRect()const
 	return tagRect;
 }
 
-void DXShadowMap::BuildDescriptors(CD3DX12_CPU_DESCRIPTOR_HANDLE hCpuSrv,
-	CD3DX12_GPU_DESCRIPTOR_HANDLE hGpuSrv,
-	CD3DX12_CPU_DESCRIPTOR_HANDLE hCpuDsv)
+void DXShadowMap::BuildDescriptors(SIZE_T hCpuSrv,
+	SIZE_T hGpuSrv,
+	SIZE_T hCpuDsv)
 {
 	// Save references to the descriptors. 
-	mhCpuSrv = hCpuSrv;
-	mhGpuSrv = hGpuSrv;
-	mhCpuDsv = hCpuDsv;
+	mhCpuSrv.ptr = hCpuSrv;
+	mhGpuSrv.ptr = hGpuSrv;
+	mhCpuDsv.ptr = hCpuDsv;
 
 	//  Create the descriptors
 	BuildDescriptors();

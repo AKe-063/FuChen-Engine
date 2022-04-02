@@ -47,7 +47,7 @@ public:
 	virtual std::shared_ptr<FDevice> GetDevice()override;
 	virtual VIEWPORT GetViewport()override;
 	virtual TAGRECT GetTagRect()override;
-	virtual unsigned __int64 GetShadowMapCUPHandle()override;
+	virtual SIZE_T GetShadowMapCUPHandle()override;
 	virtual unsigned __int64 GetCurrentBackBufferViewHandle()override;
 	virtual unsigned __int64 GetDepthStencilViewHandle()override;
 	virtual void TransActorToRenderPrimitive(FActor& actor, FRenderScene& fRenderScene)override;
@@ -136,5 +136,5 @@ private:
 	UINT mCbvSrvUavDescriptorSize = 0;
 	UINT64 mCurrentFence = 0;
 	Window* mWindow;
-	std::unique_ptr<DXShadowMap> mShadowMap;
+	std::unique_ptr<ShadowMap> mShadowMap;
 };

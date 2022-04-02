@@ -5,10 +5,17 @@
 class ShadowMap
 {
 public:
+	virtual ~ShadowMap() {};
 	virtual void Init(unsigned int width, unsigned int height) = 0;
 	virtual VIEWPORT Viewport()const = 0;
 	virtual TAGRECT ScissorRect()const = 0;
+	virtual SIZE_T Srv()const = 0;
+	virtual SIZE_T Dsv()const = 0;
 	virtual std::shared_ptr<FPUResource> Resource() = 0;
+	virtual void BuildDescriptors(
+		SIZE_T hCpuSrv,
+		SIZE_T hGpuSrv,
+		SIZE_T hCpuDsv) = 0;
 };
 
 class DXShadowMap : public ShadowMap
@@ -25,19 +32,18 @@ public:
 	unsigned int Width()const;
 	unsigned int Height()const;
 	virtual std::shared_ptr<FPUResource> Resource()override;
-	CD3DX12_GPU_DESCRIPTOR_HANDLE Srv()const;
-	CD3DX12_CPU_DESCRIPTOR_HANDLE Dsv()const;
+	virtual SIZE_T Srv()const override;
+	virtual SIZE_T Dsv()const override;
 
 	virtual VIEWPORT Viewport()const override;
 	virtual TAGRECT ScissorRect()const override;
 
+	virtual void BuildDescriptors(
+		SIZE_T hCpuSrv,
+		SIZE_T hGpuSrv,
+		SIZE_T hCpuDsv)override;
 
-	void BuildDescriptors(
-		CD3DX12_CPU_DESCRIPTOR_HANDLE hCpuSrv,
-		CD3DX12_GPU_DESCRIPTOR_HANDLE hGpuSrv,
-		CD3DX12_CPU_DESCRIPTOR_HANDLE hCpuDsv);
-
-private:
+protected:
 	void BuildDescriptors();
 	void BuildResource();
 

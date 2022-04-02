@@ -441,9 +441,9 @@ void DX12RHI::BuildShadowMapResourceView()
 	auto srvGpuStart = mHeapManager->GetGPUDescriptorHandleInHeapStart();
 	auto dsvCpuStart = mDsvHeap->GetCPUDescriptorHandleForHeapStart();
 	mShadowMap->BuildDescriptors(
-		CD3DX12_CPU_DESCRIPTOR_HANDLE(srvCpuStart, (INT)mHeapManager->GetCurrentDescriptorNum(), mCbvSrvUavDescriptorSize),
-		CD3DX12_GPU_DESCRIPTOR_HANDLE(srvGpuStart, (INT)mHeapManager->GetCurrentDescriptorNum(), mCbvSrvUavDescriptorSize),
-		CD3DX12_CPU_DESCRIPTOR_HANDLE(dsvCpuStart, 1, mDsvDescriptorSize));
+		CD3DX12_CPU_DESCRIPTOR_HANDLE(srvCpuStart, (INT)mHeapManager->GetCurrentDescriptorNum(), mCbvSrvUavDescriptorSize).ptr,
+		CD3DX12_GPU_DESCRIPTOR_HANDLE(srvGpuStart, (INT)mHeapManager->GetCurrentDescriptorNum(), mCbvSrvUavDescriptorSize).ptr,
+		CD3DX12_CPU_DESCRIPTOR_HANDLE(dsvCpuStart, 1, mDsvDescriptorSize).ptr);
 	mHeapManager->AddIndex(1);
 }
 
@@ -459,7 +459,7 @@ void DX12RHI::DrawShadow(FRenderScene& fRenderScene)
 	mCommandList->SetDescriptorHeaps(_countof(descriptorHeaps), descriptorHeaps);
 	RSSetViewPorts(1, &mShadowMap->Viewport());
 	RESetScissorRects(1, &mShadowMap->ScissorRect());
-	ClearDepthBuffer(mShadowMap->Dsv().ptr);
+	ClearDepthBuffer(mShadowMap->Dsv());
 	SetShadowSignature();
 	for (auto primitiveMap : fRenderScene.GetAllPrimitives())
 	{
@@ -557,9 +557,9 @@ void DX12RHI::TransShadowMapResourBarrier(unsigned int numBarriers, RESOURCE_STA
 	mCommandList->ResourceBarrier(numBarriers, &CD3DX12_RESOURCE_BARRIER::Transition(mShadowMap->Resource()->fPUResource, D3D12_RESOURCE_STATES(currentState), D3D12_RESOURCE_STATES(targetState)));
 }
 
-unsigned __int64 DX12RHI::GetShadowMapCUPHandle()
+SIZE_T DX12RHI::GetShadowMapCUPHandle()
 {
-	return mShadowMap->Dsv().ptr;
+	return mShadowMap->Dsv();
 }
 
 void DX12RHI::SetPipelineState(std::string pso)
@@ -630,7 +630,9 @@ void DX12RHI::DrawFPrimitive(FPrimitive& fPrimitive)
 		normalTex = normalTex.Offset(fPrimitive.GetNormalRsvIndex(), mCbvSrvUavDescriptorSize);
 		mCommandList->SetGraphicsRootDescriptorTable(3, mainTex);
 		mCommandList->SetGraphicsRootDescriptorTable(4, normalTex);
-		mCommandList->SetGraphicsRootDescriptorTable(5, mShadowMap->Srv());
+		D3D12_GPU_DESCRIPTOR_HANDLE srv;
+		srv.ptr = mShadowMap->Srv();
+		mCommandList->SetGraphicsRootDescriptorTable(5, srv);
 	}
 
 	mCommandList->DrawIndexedInstanced(

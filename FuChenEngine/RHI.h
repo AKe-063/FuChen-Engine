@@ -24,7 +24,7 @@ public:
 	virtual std::shared_ptr<FDevice> GetDevice() = 0;
 	virtual unsigned __int64 GetCurrentBackBufferViewHandle() = 0;
 	virtual unsigned __int64 GetDepthStencilViewHandle() = 0;
-	virtual unsigned __int64 GetShadowMapCUPHandle() = 0;
+	virtual SIZE_T GetShadowMapCUPHandle() = 0;
 
 	virtual void BeginRender(std::string pso) = 0;
 	virtual void BeginTransSceneDataToRenderScene(std::string pso) = 0;

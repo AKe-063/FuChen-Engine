@@ -1,6 +1,7 @@
 #pragma once
 
 #include <crtdbg.h>
+#include <basetsd.h>
 #include <windows.h>
 #include <windowsx.h>
 #include <debugapi.h>
