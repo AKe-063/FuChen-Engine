@@ -46,7 +46,7 @@ void DX12RHI::OnResize()
 
 	mCurrBackBuffer = 0;
 
-	CD3DX12_CPU_DESCRIPTOR_HANDLE rtvHeapHandle(mRtvHeap->GetCPUDescriptorHandleForHeapStart());
+	CD3DX12_CPU_DESCRIPTOR_HANDLE rtvHeapHandle(mHeapManager->GetHeap(HeapType::RTV)->GetCPUDescriptorHandleForHeapStart());
 	for (UINT i = 0; i < SwapChainBufferCount; i++)
 	{
 		ThrowIfFailed(mSwapChain->GetBuffer(i, IID_PPV_ARGS(&mSwapChainBuffer[i])));
@@ -117,14 +117,14 @@ void DX12RHI::OnResize()
 void DX12RHI::Init()
 {
 	mWindow = Engine::GetInstance().GetWindow();
+	mHeapManager = std::make_unique<FHeapManager>();
 	if (!InitDirect3D())
 	{
 		throw("InitDX False!");
 	}
 	mObjectPass = std::make_unique<UploadBuffer<PassConstants>>(md3dDevice.Get(), 1, true);
 	mObjectLight = std::make_unique<UploadBuffer<LightConstants>>(md3dDevice.Get(), 1, true);
-	mHeapManager = std::make_unique<FHeapManager>();
-
+	
 	// Do the initial resize code.
 	OnResize();
 
@@ -269,13 +269,13 @@ void DX12RHI::BuildDescriptorHeaps()
 	managedHeapDesc.Type = D3D12_DESCRIPTOR_HEAP_TYPE_CBV_SRV_UAV;
 	managedHeapDesc.Flags = D3D12_DESCRIPTOR_HEAP_FLAG_SHADER_VISIBLE;
 	managedHeapDesc.NodeMask = 0;
-	mHeapManager->CreateDescriptorHeap(md3dDevice, managedHeapDesc);
+	mHeapManager->CreateDescriptorHeap(md3dDevice, managedHeapDesc, HeapType::CBV_SRV_UAV);
 }
 
 void DX12RHI::BuildTextureResourceView(std::shared_ptr<FRenderTexPrimitive> texPrimitive)
 {
 	Texture* texture = texPrimitive->GetTex();
-	CD3DX12_CPU_DESCRIPTOR_HANDLE hDescriptor(mHeapManager->GetCPUDescriptorHandleInHeapStart());
+	CD3DX12_CPU_DESCRIPTOR_HANDLE hDescriptor(mHeapManager->GetCPUDescriptorHandleInHeapStart(HeapType::CBV_SRV_UAV));
 	hDescriptor.Offset(mHeapManager->GetCurrentDescriptorNum(), mCbvSrvUavDescriptorSize);
 	mHeapManager->AddIndex(1);
 	auto tex = texture->Resource;
@@ -386,7 +386,7 @@ void DX12RHI::AddConstantBuffer(FPrimitive& fPrimitive)
 	std::shared_ptr<UploadBuffer<ObjectConstants>> objConstant = std::make_shared<UploadBuffer<ObjectConstants>>(md3dDevice.Get(), 1, true);
 	D3D12_GPU_VIRTUAL_ADDRESS cbAddress = objConstant->Resource()->GetGPUVirtualAddress();
 
-	auto handle = CD3DX12_CPU_DESCRIPTOR_HANDLE(mHeapManager->GetCPUDescriptorHandleInHeapStart());
+	auto handle = CD3DX12_CPU_DESCRIPTOR_HANDLE(mHeapManager->GetCPUDescriptorHandleInHeapStart(HeapType::CBV_SRV_UAV));
 	handle.Offset(mHeapManager->GetCurrentDescriptorNum(), mCbvSrvUavDescriptorSize);
 
 	D3D12_CONSTANT_BUFFER_VIEW_DESC cbvDesc;
@@ -406,7 +406,7 @@ void DX12RHI::BuildConstantBuffer()
 
 	D3D12_GPU_VIRTUAL_ADDRESS cbAddress = mObjectPass->Resource()->GetGPUVirtualAddress();
 
-	auto handle = CD3DX12_CPU_DESCRIPTOR_HANDLE(mHeapManager->GetCPUDescriptorHandleInHeapStart());
+	auto handle = CD3DX12_CPU_DESCRIPTOR_HANDLE(mHeapManager->GetCPUDescriptorHandleInHeapStart(HeapType::CBV_SRV_UAV));
 
 	handle.Offset(mHeapManager->GetCurrentDescriptorNum(), mCbvSrvUavDescriptorSize);
 	mHeapManager->AddIndex(1);
@@ -422,7 +422,7 @@ void DX12RHI::BuildConstantBuffer()
 
 	cbAddress = mObjectPass->Resource()->GetGPUVirtualAddress();
 
-	handle = CD3DX12_CPU_DESCRIPTOR_HANDLE(mHeapManager->GetCPUDescriptorHandleInHeapStart());
+	handle = CD3DX12_CPU_DESCRIPTOR_HANDLE(mHeapManager->GetCPUDescriptorHandleInHeapStart(HeapType::CBV_SRV_UAV));
 	handle.Offset(mHeapManager->GetCurrentDescriptorNum(), mCbvSrvUavDescriptorSize);
 	mHeapManager->AddIndex(1);
 
@@ -437,8 +437,8 @@ void DX12RHI::BuildShadowRenderTex(std::shared_ptr<FRenderTarget> mShadowMap)
 {
 	if (mShadowMap->DSResource() != nullptr)
 	{
-		mShadowMap->AddRTResource(RTDepthStencilBuffer, mHeapManager->GetHeap());
-		auto dsvCpuStart = mDsvHeap->GetCPUDescriptorHandleForHeapStart();
+		mShadowMap->AddRTResource(RTDepthStencilBuffer, mHeapManager->GetHeap(HeapType::CBV_SRV_UAV));
+		auto dsvCpuStart = mHeapManager->GetHeap(HeapType::DSV)->GetCPUDescriptorHandleForHeapStart();
 		mShadowMap->BuildRTBuffer(
 			CD3DX12_CPU_DESCRIPTOR_HANDLE(dsvCpuStart, 1, mDsvDescriptorSize).ptr,
 			-1,
@@ -453,7 +453,7 @@ void DX12RHI::BuildShadowRenderTex(std::shared_ptr<FRenderTarget> mShadowMap)
 		srvDesc.Texture2D.ResourceMinLODClamp = 0.0f;
 		srvDesc.Texture2D.PlaneSlice = 0;
 
-		auto srvCpuStart = mHeapManager->GetCPUDescriptorHandleInHeapStart();
+		auto srvCpuStart = mHeapManager->GetCPUDescriptorHandleInHeapStart(HeapType::CBV_SRV_UAV);
 		auto srvGpuStart = mHeapManager->GetGPUDescriptorHandleInHeapStart();
 		auto shadowCPUSrv = CD3DX12_CPU_DESCRIPTOR_HANDLE(srvCpuStart, (INT)mHeapManager->GetCurrentDescriptorNum(), mCbvSrvUavDescriptorSize);
 		mShadowMap->CreateRTTexture((UINT32)mHeapManager->GetCurrentDescriptorNum());
@@ -470,7 +470,7 @@ void DX12RHI::BeginRender(std::string pso)
 
 void DX12RHI::DrawShadow(FRenderScene& fRenderScene, std::shared_ptr<FRenderTarget> mShadowMap)
 {
-	ID3D12DescriptorHeap* descriptorHeaps[] = { mHeapManager->GetHeap() };
+	ID3D12DescriptorHeap* descriptorHeaps[] = { mHeapManager->GetHeap(HeapType::CBV_SRV_UAV) };
 	mCommandList->SetDescriptorHeaps(_countof(descriptorHeaps), descriptorHeaps);
 	RSSetViewPorts(1, &mShadowMap->Viewport());
 	RESetScissorRects(1, &mShadowMap->ScissorRect());
@@ -494,7 +494,7 @@ void DX12RHI::BeginBaseDraw()
 
 void DX12RHI::DrawPrimitives(FRenderScene& fRenderScene, std::shared_ptr<FRenderTarget> mShadowMap)
 {
-	ID3D12DescriptorHeap* descriptorHeaps[] = { mHeapManager->GetHeap() };
+	ID3D12DescriptorHeap* descriptorHeaps[] = { mHeapManager->GetHeap(HeapType::CBV_SRV_UAV) };
 	mCommandList->SetDescriptorHeaps(_countof(descriptorHeaps), descriptorHeaps);
 	float color[4] = { 1.0f,1.0f,1.0f,1.0f };
 	ClearBackBuffer(color);
@@ -586,7 +586,7 @@ void DX12RHI::SetPipelineState(std::string pso)
 unsigned __int64 DX12RHI::GetCurrentBackBufferViewHandle()
 {
 	CD3DX12_CPU_DESCRIPTOR_HANDLE handle(
-		mRtvHeap->GetCPUDescriptorHandleForHeapStart(),
+		mHeapManager->GetHeap(HeapType::RTV)->GetCPUDescriptorHandleForHeapStart(),
 		mCurrBackBuffer,
 		mRtvDescriptorSize);
 	return handle.ptr;
@@ -594,7 +594,7 @@ unsigned __int64 DX12RHI::GetCurrentBackBufferViewHandle()
 
 unsigned __int64 DX12RHI::GetDepthStencilViewHandle()
 {
-	return mDsvHeap->GetCPUDescriptorHandleForHeapStart().ptr;
+	return mHeapManager->GetHeap(HeapType::DSV)->GetCPUDescriptorHandleForHeapStart().ptr;
 }
 
 void DX12RHI::SetShadowSignature()
@@ -834,8 +834,9 @@ void DX12RHI::CreateRtvAndDsvDescriptorHeaps()
 	rtvHeapDesc.Type = D3D12_DESCRIPTOR_HEAP_TYPE_RTV;
 	rtvHeapDesc.Flags = D3D12_DESCRIPTOR_HEAP_FLAG_NONE;
 	rtvHeapDesc.NodeMask = 0;
-	ThrowIfFailed(md3dDevice->CreateDescriptorHeap(
-		&rtvHeapDesc, IID_PPV_ARGS(mRtvHeap.GetAddressOf())));
+	mHeapManager->CreateDescriptorHeap(md3dDevice, rtvHeapDesc, HeapType::RTV);
+// 	ThrowIfFailed(md3dDevice->CreateDescriptorHeap(
+// 		&rtvHeapDesc, IID_PPV_ARGS(mHeapManager->GetComHeap(HeapType::RTV).GetAddressOf())));
 
 
 	D3D12_DESCRIPTOR_HEAP_DESC dsvHeapDesc;
@@ -843,8 +844,9 @@ void DX12RHI::CreateRtvAndDsvDescriptorHeaps()
 	dsvHeapDesc.Type = D3D12_DESCRIPTOR_HEAP_TYPE_DSV;
 	dsvHeapDesc.Flags = D3D12_DESCRIPTOR_HEAP_FLAG_NONE;
 	dsvHeapDesc.NodeMask = 0;
-	ThrowIfFailed(md3dDevice->CreateDescriptorHeap(
-		&dsvHeapDesc, IID_PPV_ARGS(mDsvHeap.GetAddressOf())));
+	mHeapManager->CreateDescriptorHeap(md3dDevice, dsvHeapDesc, HeapType::DSV);
+// 	ThrowIfFailed(md3dDevice->CreateDescriptorHeap(
+// 		&dsvHeapDesc, IID_PPV_ARGS(mHeapManager->GetComHeap(HeapType::DSV).GetAddressOf())));
 }
 
 bool DX12RHI::Get4xMsaaState() const
@@ -938,14 +940,14 @@ ID3D12Resource* DX12RHI::CurrentBackBuffer()const
 D3D12_CPU_DESCRIPTOR_HANDLE DX12RHI::CurrentBackBufferView()const
 {
 	return CD3DX12_CPU_DESCRIPTOR_HANDLE(
-		mRtvHeap->GetCPUDescriptorHandleForHeapStart(),
+		mHeapManager->GetHeap(HeapType::RTV)->GetCPUDescriptorHandleForHeapStart(),
 		mCurrBackBuffer,
 		mRtvDescriptorSize);
 }
 
 D3D12_CPU_DESCRIPTOR_HANDLE DX12RHI::DepthStencilView()const
 {
-	return mDsvHeap->GetCPUDescriptorHandleForHeapStart();
+	return mHeapManager->GetCPUDescriptorHandleInHeapStart(HeapType::DSV);
 }
 
 void DX12RHI::LogAdapters()

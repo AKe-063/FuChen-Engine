@@ -9,43 +9,118 @@ FHeapManager::~FHeapManager()
 {
 }
 
-Microsoft::WRL::ComPtr<ID3D12DescriptorHeap> FHeapManager::GetComHeap()
+Microsoft::WRL::ComPtr<ID3D12DescriptorHeap> FHeapManager::GetComHeap(HeapType heapType)
 {
-	return descriptorHeap;
+	switch (heapType)
+	{
+	case HeapType::CBV_SRV_UAV:
+		return mCbvSrvUavHeap;
+	case HeapType::RTV:
+		return mRtvHeap;
+	case HeapType::DSV:
+		return mDsvHeap;
+	default:
+	{
+		assert(0);
+		break;
+	}
+	}
+	return nullptr;
 }
 
-void FHeapManager::CreateDescriptorHeap(Microsoft::WRL::ComPtr<ID3D12Device> device, D3D12_DESCRIPTOR_HEAP_DESC& managedHeapDesc)
+void FHeapManager::CreateDescriptorHeap(Microsoft::WRL::ComPtr<ID3D12Device> device, D3D12_DESCRIPTOR_HEAP_DESC& managedHeapDesc, HeapType heapType)
 {
-	ThrowIfFailed(device->CreateDescriptorHeap(&managedHeapDesc,
-		IID_PPV_ARGS(&descriptorHeap)));
+	switch (heapType)
+	{
+	case HeapType::CBV_SRV_UAV:
+	{
+		ThrowIfFailed(device->CreateDescriptorHeap(&managedHeapDesc,
+			IID_PPV_ARGS(&mCbvSrvUavHeap)));
+		break;
+	}
+	case HeapType::RTV:
+	{
+		ThrowIfFailed(device->CreateDescriptorHeap(&managedHeapDesc,
+			IID_PPV_ARGS(&mRtvHeap)));
+		break;
+	}
+	case HeapType::DSV:
+	{
+		ThrowIfFailed(device->CreateDescriptorHeap(&managedHeapDesc,
+			IID_PPV_ARGS(&mDsvHeap)));
+		break;
+	}
+	{
+		assert(0);
+		break;
+	}
+	}
 }
 
-D3D12_CPU_DESCRIPTOR_HANDLE FHeapManager::GetCPUDescriptorHandleInHeapStart()
+D3D12_CPU_DESCRIPTOR_HANDLE FHeapManager::GetCPUDescriptorHandleInHeapStart(HeapType heapType)
 {
-	return descriptorHeap->GetCPUDescriptorHandleForHeapStart();
+	switch (heapType)
+	{
+	case HeapType::CBV_SRV_UAV:
+	{
+		return mCbvSrvUavHeap->GetCPUDescriptorHandleForHeapStart();
+		break;
+	}
+	case HeapType::RTV:
+	{
+		return mRtvHeap->GetCPUDescriptorHandleForHeapStart();
+		break;
+	}
+	case HeapType::DSV:
+	{
+		return mDsvHeap->GetCPUDescriptorHandleForHeapStart();
+		break;
+	}
+	{
+		assert(0);
+		break;
+	}
+	}
+	D3D12_CPU_DESCRIPTOR_HANDLE nullPtr;
+	nullPtr.ptr = 0;
+	return nullPtr;
 }
 
 D3D12_GPU_DESCRIPTOR_HANDLE FHeapManager::GetGPUDescriptorHandleInHeapStart()
 {
-	return descriptorHeap->GetGPUDescriptorHandleForHeapStart();
+	return mCbvSrvUavHeap->GetGPUDescriptorHandleForHeapStart();
 }
 
 int FHeapManager::GetCurrentDescriptorNum()
 {
-	return currentDescriptorNum;
+	return currentCSUDescriptorNum;
 }
 
 void FHeapManager::AddIndex(const int count)
 {
-	currentDescriptorNum += count;
+	currentCSUDescriptorNum += count;
 }
 
 void FHeapManager::SubIndex(const int count)
 {
-	currentDescriptorNum -= count;
+	currentCSUDescriptorNum -= count;
 }
 
-ID3D12DescriptorHeap* FHeapManager::GetHeap()
+ID3D12DescriptorHeap* FHeapManager::GetHeap(HeapType heapType)
 {
-	return descriptorHeap.Get();
+	switch (heapType)
+	{
+	case HeapType::CBV_SRV_UAV:
+		return mCbvSrvUavHeap.Get();
+	case HeapType::RTV:
+		return mRtvHeap.Get();
+	case HeapType::DSV:
+		return mDsvHeap.Get();
+	default:
+	{
+		assert(0);
+		break;
+	}
+	}
+	return nullptr;
 }
