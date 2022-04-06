@@ -123,8 +123,6 @@ private:
 	Microsoft::WRL::ComPtr<ID3D12GraphicsCommandList> mCommandList;
 	Microsoft::WRL::ComPtr<ID3D12Resource> mSwapChainBuffer[SwapChainBufferCount];
 	Microsoft::WRL::ComPtr<ID3D12Resource> mDepthStencilBuffer;
-// 	Microsoft::WRL::ComPtr<ID3D12DescriptorHeap> mRtvHeap;
-// 	Microsoft::WRL::ComPtr<ID3D12DescriptorHeap> mDsvHeap;
 	D3D12_VIEWPORT mScreenViewport;
 	D3D12_RECT mScissorRect;
 	UINT mRtvDescriptorSize = 0;

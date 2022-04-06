@@ -136,7 +136,6 @@ void DX12RHI::Init()
 	BuildShadersAndInputLayout();
 	BuildRootSignature();
 	BuildPSO();
-	//BuildShadowRenderTex();
 
 	// Execute the initialization commands.
 	ThrowIfFailed(GetCommandList()->Close());
@@ -309,8 +308,6 @@ void DX12RHI::BuildRootSignature()
 
 void DX12RHI::BuildShadersAndInputLayout()
 {
-	HRESULT hr = S_OK;
-
 	mvsByteCode = d3dUtil::CompileShader(L"..\\FuChenEngine\\Shaders\\color.hlsl", nullptr, "VS", "vs_5_0");
 	mpsByteCode = d3dUtil::CompileShader(L"..\\FuChenEngine\\Shaders\\color.hlsl", nullptr, "PS", "ps_5_0");
 	mvsShadowShader = d3dUtil::CompileShader(L"..\\FuChenEngine\\Shaders\\Shadows.hlsl", nullptr, "VS", "vs_5_0");
@@ -733,6 +730,7 @@ void DX12RHI::TransActorToRenderPrimitive(FActor& actor, FRenderScene& fRenderSc
 		}
 
 		std::shared_ptr<DXPrimitive> priDesc = std::make_shared<DXPrimitive>();
+		priDesc->SetMaterial(actor.GetFMeshByName(fMeshInfo.name).GetMaterial());
 		priDesc->GetMeshGeometryInfo().Name = meshInfo.name;
 		priDesc->GetMeshGeometryInfo().mMeshWorld = MathHelper::Identity4x4();
 
@@ -835,8 +833,6 @@ void DX12RHI::CreateRtvAndDsvDescriptorHeaps()
 	rtvHeapDesc.Flags = D3D12_DESCRIPTOR_HEAP_FLAG_NONE;
 	rtvHeapDesc.NodeMask = 0;
 	mHeapManager->CreateDescriptorHeap(md3dDevice, rtvHeapDesc, HeapType::RTV);
-// 	ThrowIfFailed(md3dDevice->CreateDescriptorHeap(
-// 		&rtvHeapDesc, IID_PPV_ARGS(mHeapManager->GetComHeap(HeapType::RTV).GetAddressOf())));
 
 
 	D3D12_DESCRIPTOR_HEAP_DESC dsvHeapDesc;
@@ -845,8 +841,6 @@ void DX12RHI::CreateRtvAndDsvDescriptorHeaps()
 	dsvHeapDesc.Flags = D3D12_DESCRIPTOR_HEAP_FLAG_NONE;
 	dsvHeapDesc.NodeMask = 0;
 	mHeapManager->CreateDescriptorHeap(md3dDevice, dsvHeapDesc, HeapType::DSV);
-// 	ThrowIfFailed(md3dDevice->CreateDescriptorHeap(
-// 		&dsvHeapDesc, IID_PPV_ARGS(mHeapManager->GetComHeap(HeapType::DSV).GetAddressOf())));
 }
 
 bool DX12RHI::Get4xMsaaState() const

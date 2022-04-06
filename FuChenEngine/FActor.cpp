@@ -18,6 +18,11 @@ FActor::~FActor()
 
 }
 
+void FActor::AddMesh(FMesh mesh)
+{
+	fMesh.insert({ mesh.GetName(),mesh });
+}
+
 ActorInfo& FActor::GetActorInfo()
 {
 	return actor;
@@ -31,5 +36,10 @@ std::string FActor::GetMainTexName()
 std::string FActor::GetNormalTexName()
 {
 	return normalTexName;
+}
+
+FMesh FActor::GetFMeshByName(std::string name)
+{
+	return fMesh[name];
 }
 

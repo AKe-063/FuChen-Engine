@@ -159,6 +159,12 @@
     <ClInclude Include="FRenderTarget.h">
       <Filter>Header Files\Render</Filter>
     </ClInclude>
+    <ClInclude Include="FPSO.h">
+      <Filter>Header Files\Render</Filter>
+    </ClInclude>
+    <ClInclude Include="FShader.h">
+      <Filter>Header Files\Render</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="stdafx.cpp">
@@ -243,6 +249,12 @@
       <Filter>Source Files\Render</Filter>
     </ClCompile>
     <ClCompile Include="FRenderTarget.cpp">
+      <Filter>Source Files\Render</Filter>
+    </ClCompile>
+    <ClCompile Include="FPSO.cpp">
+      <Filter>Source Files\Render</Filter>
+    </ClCompile>
+    <ClCompile Include="FShader.cpp">
       <Filter>Source Files\Render</Filter>
     </ClCompile>
   </ItemGroup>

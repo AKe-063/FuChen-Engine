@@ -49,6 +49,12 @@ bool FScene::LoadAllActors(const std::string& filePath)
 	for (std::string name : names)
 	{
 		actors.insert({ name, Ar->DeserializeActorInfo(name) });
+		for (auto meshInfo : actors[name].GetActorInfo().staticMeshes)
+		{
+			FMesh fMesh;
+			fMesh = meshInfo;
+			actors[name].AddMesh(fMesh);
+		}
 		dirtyActor.push_back(name);
 	}
 	return true;

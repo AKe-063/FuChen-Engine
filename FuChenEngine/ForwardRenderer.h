@@ -2,6 +2,7 @@
 #include "FRenderer.h"
 #include "RHI.h"
 #include "FRenderTarget.h"
+#include "FShader.h"
 
 class ForwardRenderer : public FRenderer
 {
@@ -19,4 +20,5 @@ private:
 	RHI* rhi;
 	FRenderScene fRenderScene;
 	std::shared_ptr<FRenderTarget> mShadowMap;
+	std::shared_ptr<FShaderManager> fShaderManager;
 };

@@ -171,11 +171,13 @@
     <ClInclude Include="FMaterial.h" />
     <ClInclude Include="ForwardRenderer.h" />
     <ClInclude Include="FPrimitive.h" />
+    <ClInclude Include="FPSO.h" />
     <ClInclude Include="FPUResource.h" />
     <ClInclude Include="FRenderer.h" />
     <ClInclude Include="FRenderScene.h" />
     <ClInclude Include="FScene.h" />
     <ClInclude Include="FSemaphore.h" />
+    <ClInclude Include="FShader.h" />
     <ClInclude Include="FSingleton.h" />
     <ClInclude Include="FTexture.h" />
     <ClInclude Include="FTextureStruct.h" />
@@ -208,9 +210,11 @@
     <ClCompile Include="FMaterial.cpp" />
     <ClCompile Include="ForwardRenderer.cpp" />
     <ClCompile Include="FPrimitive.cpp" />
+    <ClCompile Include="FPSO.cpp" />
     <ClCompile Include="FRenderer.cpp" />
     <ClCompile Include="FRenderScene.cpp" />
     <ClCompile Include="FScene.cpp" />
+    <ClCompile Include="FShader.cpp" />
     <ClCompile Include="FTexture.cpp" />
     <ClCompile Include="FWin32Input.cpp" />
     <ClCompile Include="GameTimer.cpp" />

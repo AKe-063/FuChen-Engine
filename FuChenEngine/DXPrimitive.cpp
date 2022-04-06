@@ -3,6 +3,7 @@
 
 DXPrimitive::DXPrimitive()
 {
+	material = std::make_shared<FMaterial>();
 }
 
 DXPrimitive::~DXPrimitive()
@@ -27,6 +28,11 @@ void DXPrimitive::SetMainRsvIndex(const int& index)
 void DXPrimitive::SetNormalRsvIndex(const int& index)
 {
 	normalRsvHandle = index;
+}
+
+void DXPrimitive::SetMaterial(FMaterial fMaterial)
+{
+	*material = fMaterial;
 }
 
 int DXPrimitive::GetMainRsvIndex()

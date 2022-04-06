@@ -25,6 +25,7 @@ public:
 	virtual void SetObjCBIndex(const int& index)override;
 	virtual void SetMainRsvIndex(const int& index)override;
 	virtual void SetNormalRsvIndex(const int& index)override;
+	virtual void SetMaterial(FMaterial fMaterial)override;
 
 	virtual int GetMainRsvIndex()override;
 	virtual int GetNormalRsvIndex()override;
@@ -39,4 +40,5 @@ private:
 	int mainRsvHandle = -1;
 	int normalRsvHandle = -1;
 	ObjectConstants objConstant;
+	std::shared_ptr<FMaterial> material = nullptr;
 };

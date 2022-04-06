@@ -15,6 +15,7 @@ ForwardRenderer::~ForwardRenderer()
 
 void ForwardRenderer::Init()
 {
+	fShaderManager = std::make_shared<FShaderManager>();
 	rhi = RHI::Get();
 	rhi->Init();
 	rhi->CreateRenderTarget(mShadowMap);

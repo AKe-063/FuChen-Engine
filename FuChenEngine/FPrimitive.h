@@ -1,5 +1,6 @@
 #pragma once
 #include "MeshDescribe.h"
+#include "FMaterial.h"
 
 class FRenderTexPrimitive
 {
@@ -39,6 +40,7 @@ public:
 	virtual void SetObjCBIndex(const int& index) = 0;
 	virtual void SetMainRsvIndex(const int& index) = 0;
 	virtual void SetNormalRsvIndex(const int& index) = 0;
+	virtual void SetMaterial(FMaterial fMaterial) = 0;
 	virtual MeshGeometry& GetMeshGeometryInfo() = 0;
 	virtual ObjectConstants& GetObjConstantInfo() = 0;
 };
