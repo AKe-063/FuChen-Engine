@@ -6,6 +6,7 @@
 #include "RHI.h"
 #include "DXPrimitive.h"
 #include "FHeapManager.h"
+#include "FPSO.h"
 
 class DX12RHI : public RHI
 {
@@ -14,7 +15,7 @@ public:
 	virtual ~DX12RHI();
 
 	void OnResize();
-	virtual void Init()override;
+	virtual void Init(std::shared_ptr<FShaderManager> fShaderManager)override;
 	virtual void Destroy()override;
 
 	//Get Instance
@@ -27,9 +28,9 @@ public:
 	void AddConstantBuffer(FPrimitive& fPrimitive);
 	void BuildDescriptorHeaps();
 	void BuildTextureResourceView(std::shared_ptr<FRenderTexPrimitive> texPrimitive);
-	void BuildRootSignature();
-	void BuildShadersAndInputLayout();
-	void BuildPSO();
+	void BuildRootSignature(std::shared_ptr<FShaderManager> fShaderManager);
+	void BuildShadersAndInputLayout(std::shared_ptr<FShaderManager> fShaderManager);
+	void BuildPSO(std::shared_ptr<FShaderManager> fShaderManager, PSO_TYPE psoType);
 	void BuildConstantBuffer();
 
 	//Abstract RHI
@@ -87,18 +88,16 @@ protected:
 	D3D12_CPU_DESCRIPTOR_HANDLE DepthStencilView()const;
 
 private:
+	std::string currentPso;
 	std::unique_ptr<FHeapManager> mHeapManager;
 	std::vector<std::shared_ptr<UploadBuffer<ObjectConstants>>> mObjectCB;
 	std::unique_ptr<UploadBuffer<PassConstants>> mObjectPass;
 	std::unique_ptr<UploadBuffer<LightConstants>> mObjectLight;
 	std::vector<D3D12_INPUT_ELEMENT_DESC> mInputLayout;
 	std::unordered_map<std::string, ComPtr<ID3D12PipelineState>> mPSOs;
+	std::unique_ptr<FPsoManager> mFPsoManage;
 	ComPtr<ID3D12RootSignature> mRootSignature = nullptr;
 	ComPtr<ID3D12RootSignature> mShadowSignature = nullptr;
-	ComPtr<ID3DBlob> mvsByteCode = nullptr;
-	ComPtr<ID3DBlob> mpsByteCode = nullptr;
-	ComPtr<ID3DBlob> mvsShadowShader = nullptr;
-	ComPtr<ID3DBlob> mpsShadowShader = nullptr;
 
 	// Set true to use 4X MSAA (?.1.8).  The default is false.
 	bool      m4xMsaaState = false;    // 4X MSAA enabled

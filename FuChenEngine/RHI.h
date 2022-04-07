@@ -5,6 +5,7 @@
 #include "FRenderScene.h"
 #include "FTexture.h"
 #include "FRenderTarget.h"
+#include "FShader.h"
 
 class FDevice;
 
@@ -17,7 +18,7 @@ public:
 	static void CreateRHI();
 	static void ReleaseRHI();
 
-	virtual void Init() = 0;
+	virtual void Init(std::shared_ptr<FShaderManager> fShaderManager) = 0;
 	virtual void Destroy() = 0;
 
 	virtual VIEWPORT GetViewport() = 0;

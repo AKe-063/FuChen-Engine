@@ -16,7 +16,7 @@ std::string FMesh::GetName()
 	return name;
 }
 
-FMaterial FMesh::GetMaterial()
+FMaterial& FMesh::GetMaterial()
 {
 	return material;
 }

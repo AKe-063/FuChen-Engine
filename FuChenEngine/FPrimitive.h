@@ -37,6 +37,7 @@ public:
 	virtual int GetMainRsvIndex() = 0;
 	virtual int GetNormalRsvIndex() = 0;
 	virtual int GetObjCBIndex() = 0;
+	virtual std::shared_ptr<FMaterial> GetMaterial() = 0;
 	virtual void SetObjCBIndex(const int& index) = 0;
 	virtual void SetMainRsvIndex(const int& index) = 0;
 	virtual void SetNormalRsvIndex(const int& index) = 0;

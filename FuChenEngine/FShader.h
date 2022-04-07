@@ -128,7 +128,7 @@ enum class INPUT_FORMAT
 	INPUT_FORMAT_SAMPLER_FEEDBACK_MIP_REGION_USED_OPAQUE = 190,
 };
 
-enum INPUT_CLASSIFICATION
+enum class INPUT_CLASSIFICATION
 {
 	INPUT_CLASSIFICATION_PER_VERTEX_DATA = 0,
 	INPUT_CLASSIFICATION_PER_INSTANCE_DATA = 1
@@ -157,12 +157,15 @@ class FShader
 {
 public:
 	FShader();
+	FShader(std::wstring name, ShaderCompileResult compileResult, std::vector<INPUT_ELEMENT_DESC> inputLayout);
 	~FShader();
 
+	void SetShaderName(std::wstring name);
+	std::vector<INPUT_ELEMENT_DESC> GetLayout();
+	ShaderCompileResult compileResult;
 private:
 	std::wstring name;
-	ShaderCompileResult compileResult;
-	INPUT_ELEMENT_DESC inputLayout;
+	std::vector<INPUT_ELEMENT_DESC> inputLayout;
 };
 
 class FShaderManager
@@ -171,6 +174,8 @@ public:
 	FShaderManager();
 	~FShaderManager();
 
+	void AddShader(std::wstring name);
+	std::unordered_map<std::wstring, FShader>& GetShaderMap();
 private:
 	std::unordered_map<std::wstring, FShader> shaderMap;
 };

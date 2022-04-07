@@ -38,7 +38,7 @@ std::string FActor::GetNormalTexName()
 	return normalTexName;
 }
 
-FMesh FActor::GetFMeshByName(std::string name)
+FMesh& FActor::GetFMeshByName(std::string name)
 {
 	return fMesh[name];
 }

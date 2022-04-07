@@ -10,7 +10,7 @@ public:
 	virtual ~FMesh();
 
 	std::string GetName();
-	FMaterial GetMaterial();
+	FMaterial& GetMaterial();
 
 	void operator=(FMeshInfoStruct& meshInfo)
 	{

@@ -6,9 +6,8 @@ class DXRenderTexPrimitive : public FRenderTexPrimitive
 public:
 	virtual ~DXRenderTexPrimitive();
 	virtual int GetSrvIndex()override;
-	virtual void SetSrvIndex(const int index)override;
-
 	virtual Texture* GetTex()override;
+	virtual void SetSrvIndex(const int index)override;
 	virtual void SetTex(Texture tex)override;
 
 private:
@@ -30,6 +29,7 @@ public:
 	virtual int GetMainRsvIndex()override;
 	virtual int GetNormalRsvIndex()override;
 	virtual int GetObjCBIndex()override;
+	virtual std::shared_ptr<FMaterial> GetMaterial()override;
 	virtual MeshGeometry& GetMeshGeometryInfo()override;
 	virtual ObjectConstants& GetObjConstantInfo()override;
 

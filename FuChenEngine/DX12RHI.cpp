@@ -114,10 +114,11 @@ void DX12RHI::OnResize()
 	FScene::GetInstance().GetCamera()->SetLens(0.25f * MathHelper::Pi, mWindow->AspectRatio(), 1.0f, 20000.0f);
 }
 
-void DX12RHI::Init()
+void DX12RHI::Init(std::shared_ptr<FShaderManager> fShaderManager)
 {
 	mWindow = Engine::GetInstance().GetWindow();
 	mHeapManager = std::make_unique<FHeapManager>();
+	mFPsoManage = std::make_unique<FPsoManager>();
 	if (!InitDirect3D())
 	{
 		throw("InitDX False!");
@@ -133,9 +134,10 @@ void DX12RHI::Init()
 
 	BuildDescriptorHeaps();
 	BuildConstantBuffer();
-	BuildShadersAndInputLayout();
-	BuildRootSignature();
-	BuildPSO();
+	BuildShadersAndInputLayout(fShaderManager);
+	BuildRootSignature(fShaderManager);
+	BuildPSO(fShaderManager, PSO_TYPE::GLOBAL);
+	BuildPSO(fShaderManager, PSO_TYPE::SHADOWMAP);
 
 	// Execute the initialization commands.
 	ThrowIfFailed(GetCommandList()->Close());
@@ -291,89 +293,147 @@ void DX12RHI::BuildTextureResourceView(std::shared_ptr<FRenderTexPrimitive> texP
 	texPrimitive->SetSrvIndex(mHeapManager->GetCurrentDescriptorNum() - 1);
 }
 
-void DX12RHI::BuildRootSignature()
+void DX12RHI::BuildRootSignature(std::shared_ptr<FShaderManager> fShaderManager)
 {
 	ThrowIfFailed(md3dDevice->CreateRootSignature(
 		0,
-		mvsByteCode->GetBufferPointer(),
-		mvsByteCode->GetBufferSize(),
+		fShaderManager->GetShaderMap()[L"..\\FuChenEngine\\Shaders\\color.hlsl"].compileResult.mvsByteCode->GetBufferPointer(),
+		fShaderManager->GetShaderMap()[L"..\\FuChenEngine\\Shaders\\color.hlsl"].compileResult.mvsByteCode->GetBufferSize(),
 		IID_PPV_ARGS(&mRootSignature)));
 
 	ThrowIfFailed(md3dDevice->CreateRootSignature(
 		0,
-		mvsShadowShader->GetBufferPointer(),
-		mvsShadowShader->GetBufferSize(),
+		fShaderManager->GetShaderMap()[L"..\\FuChenEngine\\Shaders\\Shadows.hlsl"].compileResult.mvsByteCode->GetBufferPointer(),
+		fShaderManager->GetShaderMap()[L"..\\FuChenEngine\\Shaders\\Shadows.hlsl"].compileResult.mvsByteCode->GetBufferSize(),
 		IID_PPV_ARGS(&mShadowSignature)));
 }
 
-void DX12RHI::BuildShadersAndInputLayout()
+void DX12RHI::BuildShadersAndInputLayout(std::shared_ptr<FShaderManager> fShaderManager)
 {
-	mvsByteCode = d3dUtil::CompileShader(L"..\\FuChenEngine\\Shaders\\color.hlsl", nullptr, "VS", "vs_5_0");
-	mpsByteCode = d3dUtil::CompileShader(L"..\\FuChenEngine\\Shaders\\color.hlsl", nullptr, "PS", "ps_5_0");
-	mvsShadowShader = d3dUtil::CompileShader(L"..\\FuChenEngine\\Shaders\\Shadows.hlsl", nullptr, "VS", "vs_5_0");
-	mpsShadowShader = d3dUtil::CompileShader(L"..\\FuChenEngine\\Shaders\\Shadows.hlsl", nullptr, "PS", "ps_5_0");
-
-	mInputLayout =
+	for (auto shaderPair : fShaderManager->GetShaderMap())
 	{
-		{ "POSITION", 0, DXGI_FORMAT_R32G32B32_FLOAT, 0, 0, D3D12_INPUT_CLASSIFICATION_PER_VERTEX_DATA, 0 },
-		{ "Color", 0, DXGI_FORMAT_R32G32B32A32_FLOAT, 0, 12, D3D12_INPUT_CLASSIFICATION_PER_VERTEX_DATA, 0 },
-		{ "Normal", 0, DXGI_FORMAT_R32G32B32A32_FLOAT, 0, 28, D3D12_INPUT_CLASSIFICATION_PER_VERTEX_DATA, 0 },
-		{ "TEXCOORD", 0, DXGI_FORMAT_R32G32_FLOAT, 0, 44, D3D12_INPUT_CLASSIFICATION_PER_VERTEX_DATA, 0 }
-	};
+		Microsoft::WRL::ComPtr<ID3DBlob> vsByteCode = d3dUtil::CompileShader(shaderPair.first, nullptr, "VS", "vs_5_0");
+		Microsoft::WRL::ComPtr<ID3DBlob> psByteCode = d3dUtil::CompileShader(shaderPair.first, nullptr, "PS", "ps_5_0");
+		ShaderCompileResult result;
+		result.mvsByteCode = vsByteCode;
+		result.mpsByteCode = psByteCode;
+		std::vector<INPUT_ELEMENT_DESC> mInputLayout =
+		{
+			{ "POSITION", 0, INPUT_FORMAT(DXGI_FORMAT_R32G32B32_FLOAT), 0, 0, INPUT_CLASSIFICATION(D3D12_INPUT_CLASSIFICATION_PER_VERTEX_DATA), 0 },
+			{ "Color", 0, INPUT_FORMAT(DXGI_FORMAT_R32G32B32A32_FLOAT), 0, 12, INPUT_CLASSIFICATION(D3D12_INPUT_CLASSIFICATION_PER_VERTEX_DATA), 0 },
+			{ "Normal", 0, INPUT_FORMAT(DXGI_FORMAT_R32G32B32A32_FLOAT), 0, 28, INPUT_CLASSIFICATION(D3D12_INPUT_CLASSIFICATION_PER_VERTEX_DATA), 0 },
+			{ "TEXCOORD", 0, INPUT_FORMAT(DXGI_FORMAT_R32G32_FLOAT), 0, 44, INPUT_CLASSIFICATION(D3D12_INPUT_CLASSIFICATION_PER_VERTEX_DATA), 0 }
+		};
+		//FShader fShader(shaderPair.first, result, mInputLayout);
+		fShaderManager->GetShaderMap()[shaderPair.first] = FShader(shaderPair.first, result, mInputLayout);
+	}
+	
+// 	mvsByteCode = d3dUtil::CompileShader(L"..\\FuChenEngine\\Shaders\\color.hlsl", nullptr, "VS", "vs_5_0");
+// 	mpsByteCode = d3dUtil::CompileShader(L"..\\FuChenEngine\\Shaders\\color.hlsl", nullptr, "PS", "ps_5_0");
+// 	mvsShadowShader = d3dUtil::CompileShader(L"..\\FuChenEngine\\Shaders\\Shadows.hlsl", nullptr, "VS", "vs_5_0");
+// 	mpsShadowShader = d3dUtil::CompileShader(L"..\\FuChenEngine\\Shaders\\Shadows.hlsl", nullptr, "PS", "ps_5_0");
+// 
+// 	mInputLayout =
+// 	{
+// 		{ "POSITION", 0, DXGI_FORMAT_R32G32B32_FLOAT, 0, 0, D3D12_INPUT_CLASSIFICATION_PER_VERTEX_DATA, 0 },
+// 		{ "Color", 0, DXGI_FORMAT_R32G32B32A32_FLOAT, 0, 12, D3D12_INPUT_CLASSIFICATION_PER_VERTEX_DATA, 0 },
+// 		{ "Normal", 0, DXGI_FORMAT_R32G32B32A32_FLOAT, 0, 28, D3D12_INPUT_CLASSIFICATION_PER_VERTEX_DATA, 0 },
+// 		{ "TEXCOORD", 0, DXGI_FORMAT_R32G32_FLOAT, 0, 44, D3D12_INPUT_CLASSIFICATION_PER_VERTEX_DATA, 0 }
+// 	};
 }
 
-void DX12RHI::BuildPSO()
+void DX12RHI::BuildPSO(std::shared_ptr<FShaderManager> fShaderManager, PSO_TYPE psoType)
 {
-	D3D12_GRAPHICS_PIPELINE_STATE_DESC psoDesc;
-	ZeroMemory(&psoDesc, sizeof(D3D12_GRAPHICS_PIPELINE_STATE_DESC));
-	psoDesc.InputLayout = { mInputLayout.data(), (UINT)mInputLayout.size() };
-	psoDesc.pRootSignature = mRootSignature.Get();
-	psoDesc.VS =
+	switch (psoType)
 	{
-		reinterpret_cast<BYTE*>(mvsByteCode->GetBufferPointer()),
-		mvsByteCode->GetBufferSize()
-	};
-	psoDesc.PS =
+	case PSO_TYPE::GLOBAL:
 	{
-		reinterpret_cast<BYTE*>(mpsByteCode->GetBufferPointer()),
-		mpsByteCode->GetBufferSize()
-	};
-	psoDesc.RasterizerState = CD3DX12_RASTERIZER_DESC(D3D12_DEFAULT);
-	psoDesc.RasterizerState.FrontCounterClockwise = TRUE;
-	psoDesc.BlendState = CD3DX12_BLEND_DESC(D3D12_DEFAULT);
-	psoDesc.DepthStencilState = CD3DX12_DEPTH_STENCIL_DESC(D3D12_DEFAULT);
-	psoDesc.SampleMask = UINT_MAX;
-	psoDesc.PrimitiveTopologyType = D3D12_PRIMITIVE_TOPOLOGY_TYPE_TRIANGLE;
-	psoDesc.NumRenderTargets = 1;
-	psoDesc.RTVFormats[0] = mBackBufferFormat;
-	psoDesc.SampleDesc.Count = m4xMsaaState ? 4 : 1;
-	psoDesc.SampleDesc.Quality = m4xMsaaState ? (m4xMsaaQuality - 1) : 0;
-	psoDesc.DSVFormat = mDepthStencilFormat;
-	ThrowIfFailed(md3dDevice->CreateGraphicsPipelineState(&psoDesc, IID_PPV_ARGS(&mPSOs["geo_pso"])));
+		mFPsoManage->CreatePso(fShaderManager->GetShaderMap()[L"..\\FuChenEngine\\Shaders\\color.hlsl"], psoType);
+		mFPsoManage->psoMap["geo_pso"].psoDesc.SampleDesc.Count = m4xMsaaState ? 4 : 1;
+		mFPsoManage->psoMap["geo_pso"].psoDesc.SampleDesc.Quality = m4xMsaaState ? (m4xMsaaQuality - 1) : 0;
+		mFPsoManage->psoMap["geo_pso"].psoDesc.pRootSignature = mRootSignature.Get();
+		ThrowIfFailed(md3dDevice->CreateGraphicsPipelineState(&mFPsoManage->psoMap["geo_pso"].psoDesc, IID_PPV_ARGS(&mPSOs["geo_pso"])));
+		break;
+	}
+	case PSO_TYPE::SHADOWMAP:
+	{
+		mFPsoManage->CreatePso(fShaderManager->GetShaderMap()[L"..\\FuChenEngine\\Shaders\\Shadows.hlsl"], psoType);
+		mFPsoManage->psoMap["shadow_pso"].psoDesc.SampleDesc.Count = m4xMsaaState ? 4 : 1;
+		mFPsoManage->psoMap["shadow_pso"].psoDesc.SampleDesc.Quality = m4xMsaaState ? (m4xMsaaQuality - 1) : 0;
+		mFPsoManage->psoMap["shadow_pso"].psoDesc.pRootSignature = mShadowSignature.Get();
+		ThrowIfFailed(md3dDevice->CreateGraphicsPipelineState(&mFPsoManage->psoMap["shadow_pso"].psoDesc, IID_PPV_ARGS(&mPSOs["shadow_pso"])));
+		break;
+	}
+	default:
+	{
+		assert(0);
+		break;
+	}
+	}
+	
 
-	//
-   // PSO for shadow map pass.
-   //
-	D3D12_GRAPHICS_PIPELINE_STATE_DESC smapPsoDesc = psoDesc;
-	smapPsoDesc.RasterizerState.DepthBias = 10000;
-	smapPsoDesc.RasterizerState.DepthBiasClamp = 0.0f;
-	smapPsoDesc.RasterizerState.SlopeScaledDepthBias = 0.50f;
-	smapPsoDesc.pRootSignature = mShadowSignature.Get();
-	smapPsoDesc.VS =
-	{
-		reinterpret_cast<BYTE*>(mvsShadowShader->GetBufferPointer()),
-		mvsShadowShader->GetBufferSize()
-	};
-	smapPsoDesc.PS =
-	{
-		reinterpret_cast<BYTE*>(mpsShadowShader->GetBufferPointer()),
-		mpsShadowShader->GetBufferSize()
-	};
-
-	// Shadow map pass does not have a render target.
-	smapPsoDesc.RTVFormats[0] = DXGI_FORMAT_UNKNOWN;
-	smapPsoDesc.NumRenderTargets = 0;
-	ThrowIfFailed(md3dDevice->CreateGraphicsPipelineState(&smapPsoDesc, IID_PPV_ARGS(&mPSOs["shadow_pso"])));
+// 	D3D12_GRAPHICS_PIPELINE_STATE_DESC psoDesc;
+// 	ZeroMemory(&psoDesc, sizeof(D3D12_GRAPHICS_PIPELINE_STATE_DESC));
+// 	for (auto inputLayout : fShaderManager->GetShaderMap()[L"..\\FuChenEngine\\Shaders\\color.hlsl"].GetLayout())
+// 	{
+// 		D3D12_INPUT_ELEMENT_DESC dxInputLayout;
+// 		dxInputLayout.SemanticName = inputLayout.SemanticName;
+// 		dxInputLayout.SemanticIndex = inputLayout.SemanticIndex;
+// 		dxInputLayout.Format = DXGI_FORMAT(inputLayout.Format);
+// 		dxInputLayout.InputSlot = inputLayout.InputSlot;
+// 		dxInputLayout.AlignedByteOffset = inputLayout.AlignedByteOffset;
+// 		dxInputLayout.InputSlotClass = D3D12_INPUT_CLASSIFICATION(inputLayout.InputSlotClass);
+// 		dxInputLayout.InstanceDataStepRate = inputLayout.InstanceDataStepRate;
+// 		mInputLayout.push_back(dxInputLayout);
+// 	}
+// 	psoDesc.InputLayout = { mInputLayout.data(), (UINT)mInputLayout.size() };
+// 	psoDesc.pRootSignature = mRootSignature.Get();
+// 	psoDesc.VS =
+// 	{
+// 		reinterpret_cast<BYTE*>(fShaderManager->GetShaderMap()[L"..\\FuChenEngine\\Shaders\\color.hlsl"].compileResult.mvsByteCode->GetBufferPointer()),
+// 		fShaderManager->GetShaderMap()[L"..\\FuChenEngine\\Shaders\\color.hlsl"].compileResult.mvsByteCode->GetBufferSize()
+// 	};
+// 	psoDesc.PS =
+// 	{
+// 		reinterpret_cast<BYTE*>(fShaderManager->GetShaderMap()[L"..\\FuChenEngine\\Shaders\\color.hlsl"].compileResult.mpsByteCode->GetBufferPointer()),
+// 		fShaderManager->GetShaderMap()[L"..\\FuChenEngine\\Shaders\\color.hlsl"].compileResult.mpsByteCode->GetBufferSize()
+// 	};
+// 	psoDesc.RasterizerState = CD3DX12_RASTERIZER_DESC(D3D12_DEFAULT);
+// 	psoDesc.RasterizerState.FrontCounterClockwise = TRUE;
+// 	psoDesc.BlendState = CD3DX12_BLEND_DESC(D3D12_DEFAULT);
+// 	psoDesc.DepthStencilState = CD3DX12_DEPTH_STENCIL_DESC(D3D12_DEFAULT);
+// 	psoDesc.SampleMask = UINT_MAX;
+// 	psoDesc.PrimitiveTopologyType = D3D12_PRIMITIVE_TOPOLOGY_TYPE_TRIANGLE;
+// 	psoDesc.NumRenderTargets = 1;
+// 	psoDesc.RTVFormats[0] = mBackBufferFormat;
+// 	psoDesc.SampleDesc.Count = m4xMsaaState ? 4 : 1;
+// 	psoDesc.SampleDesc.Quality = m4xMsaaState ? (m4xMsaaQuality - 1) : 0;
+// 	psoDesc.DSVFormat = mDepthStencilFormat;
+// 	ThrowIfFailed(md3dDevice->CreateGraphicsPipelineState(&psoDesc, IID_PPV_ARGS(&mPSOs["geo_pso"])));
+// 
+// 	//
+//    // PSO for shadow map pass.
+//    //
+// 	D3D12_GRAPHICS_PIPELINE_STATE_DESC smapPsoDesc = psoDesc;
+// 	smapPsoDesc.RasterizerState.DepthBias = 10000;
+// 	smapPsoDesc.RasterizerState.DepthBiasClamp = 0.0f;
+// 	smapPsoDesc.RasterizerState.SlopeScaledDepthBias = 0.50f;
+// 	smapPsoDesc.pRootSignature = mShadowSignature.Get();
+// 	smapPsoDesc.VS =
+// 	{
+// 		reinterpret_cast<BYTE*>(fShaderManager->GetShaderMap()[L"..\\FuChenEngine\\Shaders\\Shadows.hlsl"].compileResult.mvsByteCode->GetBufferPointer()),
+// 		fShaderManager->GetShaderMap()[L"..\\FuChenEngine\\Shaders\\Shadows.hlsl"].compileResult.mvsByteCode->GetBufferSize()
+// 	};
+// 	smapPsoDesc.PS =
+// 	{
+// 		reinterpret_cast<BYTE*>(fShaderManager->GetShaderMap()[L"..\\FuChenEngine\\Shaders\\Shadows.hlsl"].compileResult.mpsByteCode->GetBufferPointer()),
+// 		fShaderManager->GetShaderMap()[L"..\\FuChenEngine\\Shaders\\Shadows.hlsl"].compileResult.mpsByteCode->GetBufferSize()
+// 	};
+// 
+// 	// Shadow map pass does not have a render target.
+// 	smapPsoDesc.RTVFormats[0] = DXGI_FORMAT_UNKNOWN;
+// 	smapPsoDesc.NumRenderTargets = 0;
+// 	ThrowIfFailed(md3dDevice->CreateGraphicsPipelineState(&smapPsoDesc, IID_PPV_ARGS(&mPSOs["shadow_pso"])));
 }
 
 void DX12RHI::AddConstantBuffer(FPrimitive& fPrimitive)
@@ -500,11 +560,17 @@ void DX12RHI::DrawPrimitives(FRenderScene& fRenderScene, std::shared_ptr<FRender
 	for (auto primitiveMap : fRenderScene.GetAllPrimitives())
 	{
 		auto primitive = primitiveMap.second;
+		if (primitive->GetMaterial()->GetPSO() != currentPso)
+		{
+			mCommandList->SetPipelineState(mPSOs[primitive->GetMaterial()->GetPSO()].Get());
+			currentPso = primitive->GetMaterial()->GetPSO();
+		}
 		IASetVertexBF(*primitive);
 		IASetIndexBF(*primitive);
 		IASetPriTopology(PRIMITIVE_TOPOLOGY_TRIANGLELIST);
 		DrawFPrimitive(*primitive, mShadowMap);
 	}
+	currentPso = "";
 }
 
 void DX12RHI::EndDraw()
@@ -730,6 +796,7 @@ void DX12RHI::TransActorToRenderPrimitive(FActor& actor, FRenderScene& fRenderSc
 		}
 
 		std::shared_ptr<DXPrimitive> priDesc = std::make_shared<DXPrimitive>();
+		actor.GetFMeshByName(fMeshInfo.name).GetMaterial().SetPSO("geo_pso");
 		priDesc->SetMaterial(actor.GetFMeshByName(fMeshInfo.name).GetMaterial());
 		priDesc->GetMeshGeometryInfo().Name = meshInfo.name;
 		priDesc->GetMeshGeometryInfo().mMeshWorld = MathHelper::Identity4x4();

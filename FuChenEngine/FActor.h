@@ -15,7 +15,7 @@ public:
 	ActorInfo& GetActorInfo();
 	std::string GetMainTexName();
 	std::string GetNormalTexName();
-	FMesh GetFMeshByName(std::string name);
+	FMesh& GetFMeshByName(std::string name);
 
 private:
 	ActorInfo actor;

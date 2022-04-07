@@ -16,8 +16,11 @@ ForwardRenderer::~ForwardRenderer()
 void ForwardRenderer::Init()
 {
 	fShaderManager = std::make_shared<FShaderManager>();
+	fShaderManager->AddShader(L"..\\FuChenEngine\\Shaders\\color.hlsl");
+	fShaderManager->AddShader(L"..\\FuChenEngine\\Shaders\\Shadows.hlsl");
+
 	rhi = RHI::Get();
-	rhi->Init();
+	rhi->Init(fShaderManager);
 	rhi->CreateRenderTarget(mShadowMap);
 }
 
@@ -42,7 +45,6 @@ void ForwardRenderer::Render()
 
 	//Draw real object
 	rhi->BeginBaseDraw();
-	rhi->SetPipelineState("geo_pso");
 	rhi->SetRenderTargets(1, rhi->GetCurrentBackBufferViewHandle(), false, rhi->GetDepthStencilViewHandle());
 	rhi->DrawPrimitives(fRenderScene, mShadowMap);
 	rhi->TransCurrentBackBufferResourBarrier(1, RESOURCE_STATE_RENDER_TARGET, RESOURCE_STATE_PRESENT);

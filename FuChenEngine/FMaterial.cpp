@@ -3,14 +3,24 @@
 
 FMaterial::FMaterial()
 {
-	fPSO = std::make_shared<FPSO>();
+	
 }
 
 FMaterial::~FMaterial()
 {
 }
 
+std::string FMaterial::GetPSO()
+{
+	return fPSO;
+}
+
 void FMaterial::SetShader(std::wstring shaderName)
 {
 	mShaderName = shaderName;
+}
+
+void FMaterial::SetPSO(std::string pso)
+{
+	fPSO = pso;
 }

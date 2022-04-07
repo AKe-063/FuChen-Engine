@@ -15,6 +15,11 @@ int DXPrimitive::GetObjCBIndex()
 	return objCBIndex;
 }
 
+std::shared_ptr<FMaterial> DXPrimitive::GetMaterial()
+{
+	return material;
+}
+
 void DXPrimitive::SetObjCBIndex(const int& index)
 {
 	objCBIndex = index;
