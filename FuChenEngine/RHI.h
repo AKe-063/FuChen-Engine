@@ -44,6 +44,7 @@ public:
 	virtual void TransTextureToRenderResource(FActor& actor, FTexture* texture, FRenderScene& fRenderScene) = 0;
 	virtual void UpdateVP() = 0;
 	virtual void UpdateM(FPrimitive& fPrimitive) = 0;
+	virtual void UploadMaterialData() = 0;
 	
 
 protected:

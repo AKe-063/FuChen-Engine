@@ -56,6 +56,7 @@ public:
 	virtual void TransTextureToRenderResource(FActor& actor, FTexture* texture, FRenderScene& fRenderScene)override;
 	virtual void UpdateVP()override;
 	virtual void UpdateM(FPrimitive& fPrimitive)override;
+	virtual void UploadMaterialData()override;
 
 protected:
 	void DrawFPrimitive(FPrimitive& fPrimitive, std::shared_ptr<FRenderTarget> mShadowMap = nullptr);
@@ -93,6 +94,8 @@ private:
 	std::vector<std::shared_ptr<UploadBuffer<ObjectConstants>>> mObjectCB;
 	std::unique_ptr<UploadBuffer<PassConstants>> mObjectPass;
 	std::unique_ptr<UploadBuffer<LightConstants>> mObjectLight;
+	std::unique_ptr<UploadBuffer<CameraConstants>> mObjectCamera;
+	std::unique_ptr<UploadBuffer<MaterialConstants>> mObjectMat;
 	std::vector<D3D12_INPUT_ELEMENT_DESC> mInputLayout;
 	std::unordered_map<std::string, ComPtr<ID3D12PipelineState>> mPSOs;
 	std::unique_ptr<FPsoManager> mFPsoManage;
@@ -113,6 +116,8 @@ private:
 	int mCurrBackBuffer = 0;
 	int flag = 0;
 	bool DCShadowMap = true;
+	bool ShadowTexSrvInit = false;
+	bool nowJustNeedOnce = false;
 	Microsoft::WRL::ComPtr<IDXGIFactory4> mdxgiFactory;
 	Microsoft::WRL::ComPtr<IDXGISwapChain> mSwapChain;
 	Microsoft::WRL::ComPtr<ID3D12Device> md3dDevice;

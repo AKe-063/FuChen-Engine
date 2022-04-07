@@ -125,6 +125,8 @@ void DX12RHI::Init(std::shared_ptr<FShaderManager> fShaderManager)
 	}
 	mObjectPass = std::make_unique<UploadBuffer<PassConstants>>(md3dDevice.Get(), 1, true);
 	mObjectLight = std::make_unique<UploadBuffer<LightConstants>>(md3dDevice.Get(), 1, true);
+	mObjectCamera = std::make_unique<UploadBuffer<CameraConstants>>(md3dDevice.Get(), 1, true);
+	mObjectMat = std::make_unique<UploadBuffer<MaterialConstants>>(md3dDevice.Get(), 1, true);
 	
 	// Do the initial resize code.
 	OnResize();
@@ -324,7 +326,6 @@ void DX12RHI::BuildShadersAndInputLayout(std::shared_ptr<FShaderManager> fShader
 			{ "Normal", 0, INPUT_FORMAT(DXGI_FORMAT_R32G32B32A32_FLOAT), 0, 28, INPUT_CLASSIFICATION(D3D12_INPUT_CLASSIFICATION_PER_VERTEX_DATA), 0 },
 			{ "TEXCOORD", 0, INPUT_FORMAT(DXGI_FORMAT_R32G32_FLOAT), 0, 44, INPUT_CLASSIFICATION(D3D12_INPUT_CLASSIFICATION_PER_VERTEX_DATA), 0 }
 		};
-		//FShader fShader(shaderPair.first, result, mInputLayout);
 		fShaderManager->GetShaderMap()[shaderPair.first] = FShader(shaderPair.first, result, mInputLayout);
 	}
 	
@@ -370,70 +371,6 @@ void DX12RHI::BuildPSO(std::shared_ptr<FShaderManager> fShaderManager, PSO_TYPE 
 		break;
 	}
 	}
-	
-
-// 	D3D12_GRAPHICS_PIPELINE_STATE_DESC psoDesc;
-// 	ZeroMemory(&psoDesc, sizeof(D3D12_GRAPHICS_PIPELINE_STATE_DESC));
-// 	for (auto inputLayout : fShaderManager->GetShaderMap()[L"..\\FuChenEngine\\Shaders\\color.hlsl"].GetLayout())
-// 	{
-// 		D3D12_INPUT_ELEMENT_DESC dxInputLayout;
-// 		dxInputLayout.SemanticName = inputLayout.SemanticName;
-// 		dxInputLayout.SemanticIndex = inputLayout.SemanticIndex;
-// 		dxInputLayout.Format = DXGI_FORMAT(inputLayout.Format);
-// 		dxInputLayout.InputSlot = inputLayout.InputSlot;
-// 		dxInputLayout.AlignedByteOffset = inputLayout.AlignedByteOffset;
-// 		dxInputLayout.InputSlotClass = D3D12_INPUT_CLASSIFICATION(inputLayout.InputSlotClass);
-// 		dxInputLayout.InstanceDataStepRate = inputLayout.InstanceDataStepRate;
-// 		mInputLayout.push_back(dxInputLayout);
-// 	}
-// 	psoDesc.InputLayout = { mInputLayout.data(), (UINT)mInputLayout.size() };
-// 	psoDesc.pRootSignature = mRootSignature.Get();
-// 	psoDesc.VS =
-// 	{
-// 		reinterpret_cast<BYTE*>(fShaderManager->GetShaderMap()[L"..\\FuChenEngine\\Shaders\\color.hlsl"].compileResult.mvsByteCode->GetBufferPointer()),
-// 		fShaderManager->GetShaderMap()[L"..\\FuChenEngine\\Shaders\\color.hlsl"].compileResult.mvsByteCode->GetBufferSize()
-// 	};
-// 	psoDesc.PS =
-// 	{
-// 		reinterpret_cast<BYTE*>(fShaderManager->GetShaderMap()[L"..\\FuChenEngine\\Shaders\\color.hlsl"].compileResult.mpsByteCode->GetBufferPointer()),
-// 		fShaderManager->GetShaderMap()[L"..\\FuChenEngine\\Shaders\\color.hlsl"].compileResult.mpsByteCode->GetBufferSize()
-// 	};
-// 	psoDesc.RasterizerState = CD3DX12_RASTERIZER_DESC(D3D12_DEFAULT);
-// 	psoDesc.RasterizerState.FrontCounterClockwise = TRUE;
-// 	psoDesc.BlendState = CD3DX12_BLEND_DESC(D3D12_DEFAULT);
-// 	psoDesc.DepthStencilState = CD3DX12_DEPTH_STENCIL_DESC(D3D12_DEFAULT);
-// 	psoDesc.SampleMask = UINT_MAX;
-// 	psoDesc.PrimitiveTopologyType = D3D12_PRIMITIVE_TOPOLOGY_TYPE_TRIANGLE;
-// 	psoDesc.NumRenderTargets = 1;
-// 	psoDesc.RTVFormats[0] = mBackBufferFormat;
-// 	psoDesc.SampleDesc.Count = m4xMsaaState ? 4 : 1;
-// 	psoDesc.SampleDesc.Quality = m4xMsaaState ? (m4xMsaaQuality - 1) : 0;
-// 	psoDesc.DSVFormat = mDepthStencilFormat;
-// 	ThrowIfFailed(md3dDevice->CreateGraphicsPipelineState(&psoDesc, IID_PPV_ARGS(&mPSOs["geo_pso"])));
-// 
-// 	//
-//    // PSO for shadow map pass.
-//    //
-// 	D3D12_GRAPHICS_PIPELINE_STATE_DESC smapPsoDesc = psoDesc;
-// 	smapPsoDesc.RasterizerState.DepthBias = 10000;
-// 	smapPsoDesc.RasterizerState.DepthBiasClamp = 0.0f;
-// 	smapPsoDesc.RasterizerState.SlopeScaledDepthBias = 0.50f;
-// 	smapPsoDesc.pRootSignature = mShadowSignature.Get();
-// 	smapPsoDesc.VS =
-// 	{
-// 		reinterpret_cast<BYTE*>(fShaderManager->GetShaderMap()[L"..\\FuChenEngine\\Shaders\\Shadows.hlsl"].compileResult.mvsByteCode->GetBufferPointer()),
-// 		fShaderManager->GetShaderMap()[L"..\\FuChenEngine\\Shaders\\Shadows.hlsl"].compileResult.mvsByteCode->GetBufferSize()
-// 	};
-// 	smapPsoDesc.PS =
-// 	{
-// 		reinterpret_cast<BYTE*>(fShaderManager->GetShaderMap()[L"..\\FuChenEngine\\Shaders\\Shadows.hlsl"].compileResult.mpsByteCode->GetBufferPointer()),
-// 		fShaderManager->GetShaderMap()[L"..\\FuChenEngine\\Shaders\\Shadows.hlsl"].compileResult.mpsByteCode->GetBufferSize()
-// 	};
-// 
-// 	// Shadow map pass does not have a render target.
-// 	smapPsoDesc.RTVFormats[0] = DXGI_FORMAT_UNKNOWN;
-// 	smapPsoDesc.NumRenderTargets = 0;
-// 	ThrowIfFailed(md3dDevice->CreateGraphicsPipelineState(&smapPsoDesc, IID_PPV_ARGS(&mPSOs["shadow_pso"])));
 }
 
 void DX12RHI::AddConstantBuffer(FPrimitive& fPrimitive)
@@ -477,7 +414,7 @@ void DX12RHI::BuildConstantBuffer()
 	//LightCB
 	UINT objLCByteSize = d3dUtil::CalcConstantBufferByteSize(sizeof(LightConstants));
 
-	cbAddress = mObjectPass->Resource()->GetGPUVirtualAddress();
+	cbAddress = mObjectLight->Resource()->GetGPUVirtualAddress();
 
 	handle = CD3DX12_CPU_DESCRIPTOR_HANDLE(mHeapManager->GetCPUDescriptorHandleInHeapStart(HeapType::CBV_SRV_UAV));
 	handle.Offset(mHeapManager->GetCurrentDescriptorNum(), mCbvSrvUavDescriptorSize);
@@ -488,11 +425,41 @@ void DX12RHI::BuildConstantBuffer()
 	cbvLightDesc.SizeInBytes = objLCByteSize;
 
 	md3dDevice->CreateConstantBufferView(&cbvLightDesc, handle);
+
+	//CameraCB
+	UINT objCCByteSize = d3dUtil::CalcConstantBufferByteSize(sizeof(PassConstants));
+
+	cbAddress = mObjectCamera->Resource()->GetGPUVirtualAddress();
+
+	handle = CD3DX12_CPU_DESCRIPTOR_HANDLE(mHeapManager->GetCPUDescriptorHandleInHeapStart(HeapType::CBV_SRV_UAV));
+	handle.Offset(mHeapManager->GetCurrentDescriptorNum(), mCbvSrvUavDescriptorSize);
+	mHeapManager->AddIndex(1);
+
+	D3D12_CONSTANT_BUFFER_VIEW_DESC cbvCameraDesc;
+	cbvCameraDesc.BufferLocation = cbAddress;
+	cbvCameraDesc.SizeInBytes = objCCByteSize;
+
+	md3dDevice->CreateConstantBufferView(&cbvCameraDesc, handle);
+
+	//Material
+	UINT objMatCByteSize = d3dUtil::CalcConstantBufferByteSize(sizeof(MaterialConstants));
+
+	cbAddress = mObjectMat->Resource()->GetGPUVirtualAddress();
+
+	handle = CD3DX12_CPU_DESCRIPTOR_HANDLE(mHeapManager->GetCPUDescriptorHandleInHeapStart(HeapType::CBV_SRV_UAV));
+	handle.Offset(mHeapManager->GetCurrentDescriptorNum(), mCbvSrvUavDescriptorSize);
+	mHeapManager->AddIndex(1);
+
+	D3D12_CONSTANT_BUFFER_VIEW_DESC cbvMatDesc;
+	cbvMatDesc.BufferLocation = cbAddress;
+	cbvMatDesc.SizeInBytes = objMatCByteSize;
+
+	md3dDevice->CreateConstantBufferView(&cbvMatDesc, handle);
 }
 
 void DX12RHI::BuildShadowRenderTex(std::shared_ptr<FRenderTarget> mShadowMap)
 {
-	if (mShadowMap->DSResource() != nullptr)
+	if (!ShadowTexSrvInit)
 	{
 		mShadowMap->AddRTResource(RTDepthStencilBuffer, mHeapManager->GetHeap(HeapType::CBV_SRV_UAV));
 		auto dsvCpuStart = mHeapManager->GetHeap(HeapType::DSV)->GetCPUDescriptorHandleForHeapStart();
@@ -516,6 +483,7 @@ void DX12RHI::BuildShadowRenderTex(std::shared_ptr<FRenderTarget> mShadowMap)
 		mShadowMap->CreateRTTexture((UINT32)mHeapManager->GetCurrentDescriptorNum());
 		md3dDevice->CreateShaderResourceView(mShadowMap->DSResource()->fPUResource, &srvDesc, shadowCPUSrv);
 		mHeapManager->AddIndex(1);
+		ShadowTexSrvInit = true;
 	}
 }
 
@@ -703,6 +671,8 @@ void DX12RHI::DrawFPrimitive(FPrimitive& fPrimitive, std::shared_ptr<FRenderTarg
 
 	if (!DCShadowMap)
 	{
+		mCommandList->SetGraphicsRootConstantBufferView(3, mObjectCamera->Resource()->GetGPUVirtualAddress());
+		mCommandList->SetGraphicsRootConstantBufferView(4, mObjectMat->Resource()->GetGPUVirtualAddress());
 		auto mainTex = CD3DX12_GPU_DESCRIPTOR_HANDLE(mHeapManager->GetGPUDescriptorHandleInHeapStart());
 		mainTex.Offset(fPrimitive.GetMainRsvIndex(), mCbvSrvUavDescriptorSize);
 		auto normalTex = CD3DX12_GPU_DESCRIPTOR_HANDLE(mHeapManager->GetGPUDescriptorHandleInHeapStart());
@@ -710,9 +680,9 @@ void DX12RHI::DrawFPrimitive(FPrimitive& fPrimitive, std::shared_ptr<FRenderTarg
 		auto shadowTex = CD3DX12_GPU_DESCRIPTOR_HANDLE(mHeapManager->GetGPUDescriptorHandleInHeapStart());
 		shadowTex.Offset(mShadowMap->GetRTDesc(RTDepthStencilBuffer).rtTexture->GetSrvIndex(), mCbvSrvUavDescriptorSize);
 
-		mCommandList->SetGraphicsRootDescriptorTable(3, mainTex);
-		mCommandList->SetGraphicsRootDescriptorTable(4, normalTex);
-		mCommandList->SetGraphicsRootDescriptorTable(5, shadowTex);
+		mCommandList->SetGraphicsRootDescriptorTable(5, mainTex);
+		mCommandList->SetGraphicsRootDescriptorTable(6, normalTex);
+		mCommandList->SetGraphicsRootDescriptorTable(7, shadowTex);
 	}
 
 	mCommandList->DrawIndexedInstanced(
@@ -748,12 +718,21 @@ void DX12RHI::UpdateVP()
 	lightConstant.lightOrthoVP = glm::transpose(Engine::GetInstance().GetFScene()->GetLight(0)->GetFlightDesc()->shadowTransform);
 	lightConstant.lightProj = glm::transpose(Engine::GetInstance().GetFScene()->GetLight(0)->GetFlightDesc()->lightProj);
 	lightConstant.lightVP = glm::transpose(Engine::GetInstance().GetFScene()->GetLight(0)->GetFlightDesc()->lightProj * Engine::GetInstance().GetFScene()->GetLight(0)->GetFlightDesc()->lightView);
+	lightConstant.lightDir = Engine::GetInstance().GetFScene()->GetLight(0)->GetFlightDesc()->lightDir;
+	lightConstant.density = Engine::GetInstance().GetFScene()->GetLight(0)->GetFlightDesc()->lightDensity;
 
 	PassConstants passConstant;
 	passConstant.InvViewProj = glm::transpose(Engine::GetInstance().GetFScene()->GetCamera()->GetProj() * Engine::GetInstance().GetFScene()->GetCamera()->GetView());
 
+	CameraConstants cameraConstant;
+	cameraConstant.cameraLoc = Engine::GetInstance().GetFScene()->GetCamera()->GetPosition();
+
+	MaterialConstants matConstant;
+
 	mObjectLight->CopyData(0, lightConstant);
 	mObjectPass->CopyData(0, passConstant);
+	mObjectCamera->CopyData(0, cameraConstant);
+	mObjectMat->CopyData(0, matConstant);
 }
 
 void DX12RHI::UpdateM(FPrimitive& fPrimitive)
@@ -774,6 +753,12 @@ void DX12RHI::IASetIndexBF(FPrimitive& fPrimitive)
 void DX12RHI::IASetPriTopology(PRIMITIVE_TOPOLOGY topology)
 {
 	mCommandList->IASetPrimitiveTopology(D3D12_PRIMITIVE_TOPOLOGY(topology));
+}
+
+void DX12RHI::UploadMaterialData()
+{
+	MaterialConstants matConstant;
+	mObjectMat->CopyData(0, matConstant);
 }
 
 void DX12RHI::TransActorToRenderPrimitive(FActor& actor, FRenderScene& fRenderScene)

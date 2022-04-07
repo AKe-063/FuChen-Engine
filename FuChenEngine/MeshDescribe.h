@@ -137,6 +137,20 @@ struct LightConstants
 	mat4 lightProj = MathHelper::Identity4x4();
 	mat4 lightVP = MathHelper::Identity4x4();
 	mat4 lightOrthoVP = MathHelper::Identity4x4();
+	float density;
+	vec3 lightDir;
+};
+
+struct CameraConstants
+{
+	vec4 cameraLoc = { 1.0f,1.0f,1.0f,1.0f };
+};
+
+struct MaterialConstants
+{
+	//vec4 DiffuseAlbedo = { 1.0f, 1.0f, 1.0f, 1.0f };
+	vec3 FresnelR0 = { 0.01f, 0.01f, 0.01f };
+	float Roughness = 0.25f;
 };
 
 struct BoundingSphere 

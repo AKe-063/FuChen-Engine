@@ -87,4 +87,5 @@ void ForwardRenderer::BuildDirtyPrimitive(FScene& fScene)
 		rhi->UpdateM(*primitive);
 	}
 	rhi->UpdateVP();
+	//rhi->UploadMaterialData();
 }

@@ -22,14 +22,14 @@ cbuffer lightConstant : register(b1)
 	float4x4 glightPrpj;
 	float4x4 glightVP;
 	float4x4 glightOrthoVP;
+	float gLightDensity;
+	float3 gLightDir;
 }
 
 cbuffer passConstant : register(b2)
 {
 	float4x4 gViewProj;
 }
-
-float4 CameraLoc : register(b3);
 
 struct VertexIn
 {
