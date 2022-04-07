@@ -10,7 +10,7 @@
 #define FuChenSample_RootSig \
 	"RootFlags( ALLOW_INPUT_ASSEMBLER_INPUT_LAYOUT ), " \
 	"CBV(b0, visibility = SHADER_VISIBILITY_VERTEX), " \
-	"CBV(b1, visibility = SHADER_VISIBILITY_VERTEX), " \
+	"CBV(b1, visibility = SHADER_VISIBILITY_ALL), " \
 	"CBV(b2, visibility = SHADER_VISIBILITY_VERTEX), " \
 	"CBV(b3, visibility = SHADER_VISIBILITY_PIXEL), " \
 	"CBV(b4, visibility = SHADER_VISIBILITY_PIXEL), " \

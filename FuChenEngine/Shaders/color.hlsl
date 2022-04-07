@@ -40,7 +40,7 @@ cbuffer CameraConstant : register(b3)
 
 cbuffer cbMaterial : register(b4)
 {
-	//float4 gDiffuseAlbedo;
+	float4 gDiffuseAlbedo;
 	float3 gFresnelR0;
 	float  gRoughness;
 };

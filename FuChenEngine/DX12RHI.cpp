@@ -440,21 +440,6 @@ void DX12RHI::BuildConstantBuffer()
 	cbvCameraDesc.SizeInBytes = objCCByteSize;
 
 	md3dDevice->CreateConstantBufferView(&cbvCameraDesc, handle);
-
-	//Material
-	UINT objMatCByteSize = d3dUtil::CalcConstantBufferByteSize(sizeof(MaterialConstants));
-
-	cbAddress = mObjectMat->Resource()->GetGPUVirtualAddress();
-
-	handle = CD3DX12_CPU_DESCRIPTOR_HANDLE(mHeapManager->GetCPUDescriptorHandleInHeapStart(HeapType::CBV_SRV_UAV));
-	handle.Offset(mHeapManager->GetCurrentDescriptorNum(), mCbvSrvUavDescriptorSize);
-	mHeapManager->AddIndex(1);
-
-	D3D12_CONSTANT_BUFFER_VIEW_DESC cbvMatDesc;
-	cbvMatDesc.BufferLocation = cbAddress;
-	cbvMatDesc.SizeInBytes = objMatCByteSize;
-
-	md3dDevice->CreateConstantBufferView(&cbvMatDesc, handle);
 }
 
 void DX12RHI::BuildShadowRenderTex(std::shared_ptr<FRenderTarget> mShadowMap)
@@ -727,12 +712,9 @@ void DX12RHI::UpdateVP()
 	CameraConstants cameraConstant;
 	cameraConstant.cameraLoc = Engine::GetInstance().GetFScene()->GetCamera()->GetPosition();
 
-	MaterialConstants matConstant;
-
 	mObjectLight->CopyData(0, lightConstant);
 	mObjectPass->CopyData(0, passConstant);
 	mObjectCamera->CopyData(0, cameraConstant);
-	mObjectMat->CopyData(0, matConstant);
 }
 
 void DX12RHI::UpdateM(FPrimitive& fPrimitive)
@@ -757,6 +739,24 @@ void DX12RHI::IASetPriTopology(PRIMITIVE_TOPOLOGY topology)
 
 void DX12RHI::UploadMaterialData()
 {
+	if (!nowJustNeedOnce)
+	{
+		//Material
+		UINT objMatCByteSize = d3dUtil::CalcConstantBufferByteSize(sizeof(MaterialConstants));
+
+		auto cbAddress = mObjectMat->Resource()->GetGPUVirtualAddress();
+
+		auto handle = CD3DX12_CPU_DESCRIPTOR_HANDLE(mHeapManager->GetCPUDescriptorHandleInHeapStart(HeapType::CBV_SRV_UAV));
+		handle.Offset(mHeapManager->GetCurrentDescriptorNum(), mCbvSrvUavDescriptorSize);
+		mHeapManager->AddIndex(1);
+
+		D3D12_CONSTANT_BUFFER_VIEW_DESC cbvMatDesc;
+		cbvMatDesc.BufferLocation = cbAddress;
+		cbvMatDesc.SizeInBytes = objMatCByteSize;
+
+		md3dDevice->CreateConstantBufferView(&cbvMatDesc, handle);
+		nowJustNeedOnce = true;
+	}
 	MaterialConstants matConstant;
 	mObjectMat->CopyData(0, matConstant);
 }

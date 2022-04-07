@@ -148,7 +148,7 @@ struct CameraConstants
 
 struct MaterialConstants
 {
-	//vec4 DiffuseAlbedo = { 1.0f, 1.0f, 1.0f, 1.0f };
+	vec4 DiffuseAlbedo = { 1.0f, 1.0f, 1.0f, 1.0f };
 	vec3 FresnelR0 = { 0.01f, 0.01f, 0.01f };
 	float Roughness = 0.25f;
 };
