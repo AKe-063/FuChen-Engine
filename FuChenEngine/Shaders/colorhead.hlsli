@@ -30,5 +30,10 @@
         "mipLODBias =0 ,"\
         "maxAnisotropy = 16,"\
         "comparisonFunc = COMPARISON_LESS_EQUAL,"\
-        "borderColor = STATIC_BORDER_COLOR_OPAQUE_BLACK)"
+        "borderColor = STATIC_BORDER_COLOR_OPAQUE_BLACK),"\
+	"StaticSampler(s2," \
+		"addressU = TEXTURE_ADDRESS_WRAP," \
+		"addressV = TEXTURE_ADDRESS_WRAP," \
+		"addressW = TEXTURE_ADDRESS_WRAP," \
+		"filter = FILTER_ANISOTROPIC)"
 

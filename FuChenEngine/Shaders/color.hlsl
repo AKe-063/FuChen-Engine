@@ -7,13 +7,14 @@ Texture2D gShadowMap : register(t2);
 SamplerState gsamPointWrap        : register(s0);
 /*SamplerState gsamPointClamp       : register(s1);
 SamplerState gsamLinearWrap       : register(s2);
-SamplerState gsamLinearClamp      : register(s3);
-SamplerState gsamAnisotropicWrap  : register(s4);
-SamplerState gsamAnisotropicClamp : register(s5);*/
+SamplerState gsamLinearClamp      : register(s3);*/
+SamplerState gsamAnisotropicWrap  : register(s2);
+//SamplerState gsamAnisotropicClamp : register(s5);
 SamplerComparisonState gsamShadow : register(s1);
 
 cbuffer cbPerObject : register(b0)
 {
+	float4x4 gScale;
 	float4x4 gRotation;
 	float4x4 gWorld;
 	float time;
@@ -48,7 +49,8 @@ cbuffer cbMaterial : register(b4)
 struct VertexIn
 {
 	float3 PosL  : POSITION;
-	float4 Color : COLOR;
+	float4 TangentY : TANGENTY;
+	float4 TangentX : TANGENTX;
 	float4 Normal : NORMAL;
 	float2 TexC    : TEXCOORD;
 };
@@ -57,9 +59,13 @@ struct VertexOut
 {
 	float4 PosH  : SV_POSITION;
 	float4 Color : COLOR;
-	float4 Normal : NORMAL;
+	float3 NormalW : NORMAL;
 	float2 TexC    : TEXCOORD;
 	float4 ShadowPosH : POSITION;
+	float3 PosW : POSITION1;
+	float3 TangentX : TANGENTX;
+	float3 NormalR : NORMALR;
+	float3 TangentY : TANGENTY;
 };
 
 float CalcShadowFactor(float4 shadowPosH)
@@ -148,6 +154,20 @@ float3 ComputeDirectionalLight(
 	return BlinnPhong(lightStrength, lightVec, normal, toEye, gDiffuseAlbedo, gFresnelR0, gRoughness);
 }
 
+float3 NormalSampleToWorldSpace(float3 normalMapSample, float3 unitNormalW, float3 tangentW)
+{
+	float3 normalT = 2.0f * normalMapSample - 1.0f;
+
+	float3 N = normalize(unitNormalW);
+	float3 T = normalize(tangentW - dot(tangentW, N) * N);
+	float3 B = normalize(cross(N, T));
+
+	float3x3 TBN = float3x3(T, B, N);
+
+	float3 bumpedNormalW = mul(normalT, TBN);
+	return bumpedNormalW;
+}
+
 [RootSignature(FuChenSample_RootSig)]
 VertexOut VS(VertexIn vin)
 {
@@ -161,11 +181,16 @@ VertexOut VS(VertexIn vin)
 
 
 	vout.PosH = mul(float4(vin.PosL, 1.0f), gWorldViewProj);
-
+	vout.PosW = mul(float4(vin.PosL, 1.0f), gWorld).xyz;
 	vout.ShadowPosH = mul(gWorldVertex, glightOrthoVP);
 
-	vout.Normal = mul(gRotation, vin.Normal);
-	vout.Color = vin.Normal;
+	vout.NormalW = mul(vin.Normal.xyz, (float3x3)gWorld);
+	vout.NormalR = mul(vin.Normal, gRotation).xyz;
+	//vout.TangentW = mul((float3x3)gWorld, normalize(vin.TangentX.xyz));
+	//vout.TangentW = mul(vin.TangentX.xyz, (float3x3)gWorld);
+	vout.TangentX = mul(vin.TangentX, gRotation).xyz;
+	vout.TangentY = mul(vin.TangentY, gRotation).xyz;
+	vout.Color = vin.Normal * 0.5 + 0.5;
 
 	// Output vertex attributes for interpolation across triangle.
 	vout.TexC = vin.TexC;
@@ -176,24 +201,28 @@ VertexOut VS(VertexIn vin)
 float4 PS(VertexOut pin) : SV_Target
 {
 	//Gamma Correction
-	float4 diffuseAlbedo = gDiffuseMap.Sample(gsamPointWrap, pin.TexC);
-	float4 normalMap = gNormalMap.Sample(gsamPointWrap, pin.TexC);
-	float4 tex = diffuseAlbedo * normalMap;
+	float4 diffuseAlbedo = gDiffuseMap.Sample(gsamAnisotropicWrap, pin.TexC);
+	float4 normalMap = gNormalMap.Sample(gsamAnisotropicWrap, pin.TexC);
+	//float3 bumpedNormalW = NormalSampleToWorldSpace(normalMap.xyz, pin.NormalR, pin.TangentX);
+	float3x3 TBN = float3x3(pin.TangentX, pin.TangentY, pin.NormalR);
+	//float3 bumpedNormalW = normalize(mul(normalMap.xyz, TBN));
+	float3 bumpedNormalW = pin.NormalR;
 
 	float4 shadow = CalcShadowFactor(pin.ShadowPosH);
 
-	float4 FinalColor = pin.Normal * 0.5f + 0.5f;
-	//float4 FinalColor = diffuseAlbedo;
+	//float4 mColor = float4(0.45f, 0.45f, 0.45f, 1.0f);//Diamond
+	float4 mColor = float4(1.0f, 0.86f, 0.57f, 1.0f);//Gold
+	//float4 mColor = diffuseAlbedo;
 
 	float4 directLight = float4(ComputeDirectionalLight(
 		gLightDir, gLightDensity,
-		FinalColor, gFresnelR0, gRoughness,
-		pin.Normal, gCameraLoc), 1.0f);
-	float4 DiffuseAlbedo = FinalColor * 0.01;
-	FinalColor = (shadow + 0.1) * (DiffuseAlbedo + directLight);
-	return pow(FinalColor, 1 / 2.2f);
+		mColor, gFresnelR0, gRoughness,
+		normalize(bumpedNormalW), normalize(gCameraLoc - pin.PosW)),1.0f);
+	float4 Ambient = mColor * 0.03;
+	Ambient = Ambient + (shadow + 0.1) * directLight;
+	return pow(Ambient, 1 / 2.2f);
 
-	//return pow(pin.Normal * 0.5f + 0.5f, 1 / 2.2f);
+	//return pow(pin.NormalW * 0.5f + 0.5f, 1 / 2.2f);
 	//return pow(diffuseAlbedo * (shadow + 0.1), 1 / 2.2f);
 	//return litColor * shadow;
 }

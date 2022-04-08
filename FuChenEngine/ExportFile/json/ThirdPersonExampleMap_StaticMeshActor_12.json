@@ -1,0 +1,33 @@
+{
+	"staticMeshesNum": 1,
+	"staticMeshes": [
+		{
+			"name": "SM_TableRound",
+			"vertices": 3900,
+			"texcoords": 2,
+			"transform":
+			{
+				"rotation":
+				{
+					"x": -0,
+					"y": 0.34202039241790771,
+					"z": 0,
+					"w": 0.93969255685806274
+				},
+				"translation":
+				{
+					"x": -690,
+					"y": 640,
+					"z": 490
+				},
+				"scale3D":
+				{
+					"x": 2.5,
+					"y": 2.5,
+					"z": 2.5
+				}
+			}
+		}
+	],
+	"actorName": "ThirdPersonExampleMap_StaticMeshActor_12"
+}

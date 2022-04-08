@@ -1,6 +1,5 @@
 {
 	"name": [
-		"ThirdPersonExampleMap_SkySphereBlueprint",
 		"ThirdPersonExampleMap_Linear_Stair_StaticMesh",
 		"ThirdPersonExampleMap_Bump_StaticMesh",
 		"ThirdPersonExampleMap_LeftArm_StaticMesh",
@@ -12,10 +11,11 @@
 		"ThirdPersonExampleMap_Wall9",
 		"ThirdPersonExampleMap_Wall10",
 		"ThirdPersonExampleMap_Wall11",
-		"ThirdPersonExampleMap_ThirdPersonCharacter_167",
 		"ThirdPersonExampleMap_StaticMeshActor_1",
-		"ThirdPersonExampleMap_StaticMeshActor_3",
-		"ThirdPersonExampleMap_StaticMeshActor_5",
-		"ThirdPersonExampleMap_StaticMeshActor_7"
+		"ThirdPersonExampleMap_StaticMeshActor_4",
+		"ThirdPersonExampleMap_StaticMeshActor_7",
+		"ThirdPersonExampleMap_StaticMeshActor_10",
+		"ThirdPersonExampleMap_StaticMeshActor_12",
+		"ThirdPersonExampleMap_ThirdPersonCharacter_167"
 	]
 }

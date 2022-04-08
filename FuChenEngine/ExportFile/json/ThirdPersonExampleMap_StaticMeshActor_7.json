@@ -2,23 +2,23 @@
 	"staticMeshesNum": 1,
 	"staticMeshes": [
 		{
-			"name": "SM_Rock",
-			"vertices": 664,
-			"texcoords": 1,
+			"name": "SM_MatPreviewMesh_02",
+			"vertices": 6736,
+			"texcoords": 2,
 			"transform":
 			{
 				"rotation":
 				{
-					"x": 0,
-					"y": 0,
-					"z": 0,
-					"w": 1
+					"x": 0.23457057774066925,
+					"y": -0.40821740031242371,
+					"z": -0.10938215255737305,
+					"w": 0.87542611360549927
 				},
 				"translation":
 				{
-					"x": -780,
-					"y": -350,
-					"z": 240
+					"x": -730,
+					"y": -600,
+					"z": 740
 				},
 				"scale3D":
 				{

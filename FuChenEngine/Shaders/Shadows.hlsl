@@ -12,6 +12,7 @@ SamplerState gsamAnisotropicClamp : register(s5);*/
 
 cbuffer cbPerObject : register(b0)
 { 
+	float4x4 gScale;
 	float4x4 gRotation;
 	float4x4 gWorld;
 	float time;
@@ -34,7 +35,8 @@ cbuffer passConstant : register(b2)
 struct VertexIn
 {
 	float3 PosL  : POSITION;
-	float4 Color : COLOR;
+	float4 TangentY : TANGENTY;
+	float4 TangentX : TANGENTX;
 	float4 Normal : NORMAL;
 	float2 TexC    : TEXCOORD;
 };
@@ -54,7 +56,7 @@ VertexOut VS(VertexIn vin)
 
 	float4x4 gWorldViewProj = mul(gWorld, glightVP);
 	vout.PosH = mul(float4(vin.PosL, 1.0f), gWorldViewProj);
-	vout.Color = vin.Color;
+	vout.Color = vin.TangentX;
 	vout.Normal = mul(vin.Normal, gRotation);
 	vout.TexC = vin.TexC;
 

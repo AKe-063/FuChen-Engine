@@ -84,11 +84,11 @@ void FAssetManager::LoadTexture()
 	textureFileLink.push_back(tex);
 
 	texDec.name = "T_Chair_M";
-	texDec.textureFilePath = L"../FuChenEngine/Textures/jacket_diff.dds";
+	texDec.textureFilePath = L"../FuChenEngine/Textures/Stone_Texture.dds";
 	textureFileLink.push_back(tex);
 
 	texDec.name = "T_Chair_N";
-	texDec.textureFilePath = L"../FuChenEngine/Textures/T_Chair_N.dds";
+	texDec.textureFilePath = L"../FuChenEngine/Textures/Stone_Normal.dds";
 	textureFileLink.push_back(tex);
 
 	texDec.name = "T_RockMesh_M";

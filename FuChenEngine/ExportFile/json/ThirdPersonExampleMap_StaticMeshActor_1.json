@@ -2,23 +2,23 @@
 	"staticMeshesNum": 1,
 	"staticMeshes": [
 		{
-			"name": "SM_Couch",
+			"name": "SM_Chair",
 			"vertices": 1467,
-			"texcoords": 2,
+			"texcoords": 1,
 			"transform":
 			{
 				"rotation":
 				{
-					"x": 0,
-					"y": 0,
-					"z": 0,
-					"w": 1
+					"x": 0.40821883082389832,
+					"y": -0.23456981778144836,
+					"z": 0.1093820258975029,
+					"w": 0.87542557716369629
 				},
 				"translation":
 				{
-					"x": -690,
-					"y": -70,
-					"z": 570
+					"x": -760,
+					"y": -300,
+					"z": 430
 				},
 				"scale3D":
 				{

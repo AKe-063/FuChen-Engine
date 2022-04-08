@@ -38,7 +38,8 @@ void FLight::UpdateLightTrans()
 // 		}
 // 		fLightDesc.lightPos = glm::vec3(-sqrt(4000000 - pow(rota, 2)), rota, 2000.0f);
 // 	}
-	fLightDesc.lightPos = glm::vec3(2000.0f, 2000.0f, 2000.0f);
+	fLightDesc.lightDir = glm::vec3(0, -1.0f, -1.0f);
+	fLightDesc.lightPos = glm::vec3(0.0f, 2000.0f, 2000.0f);
 	fLightDesc.targetPos = glm::vec3(0.0f, 0.0f, 0.0f);
 	fLightDesc.lightView = glm::lookAtLH(fLightDesc.lightPos, fLightDesc.targetPos, fLightDesc.lightUp);
 

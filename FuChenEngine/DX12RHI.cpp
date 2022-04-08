@@ -322,9 +322,10 @@ void DX12RHI::BuildShadersAndInputLayout(std::shared_ptr<FShaderManager> fShader
 		std::vector<INPUT_ELEMENT_DESC> mInputLayout =
 		{
 			{ "POSITION", 0, INPUT_FORMAT(DXGI_FORMAT_R32G32B32_FLOAT), 0, 0, INPUT_CLASSIFICATION(D3D12_INPUT_CLASSIFICATION_PER_VERTEX_DATA), 0 },
-			{ "Color", 0, INPUT_FORMAT(DXGI_FORMAT_R32G32B32A32_FLOAT), 0, 12, INPUT_CLASSIFICATION(D3D12_INPUT_CLASSIFICATION_PER_VERTEX_DATA), 0 },
-			{ "Normal", 0, INPUT_FORMAT(DXGI_FORMAT_R32G32B32A32_FLOAT), 0, 28, INPUT_CLASSIFICATION(D3D12_INPUT_CLASSIFICATION_PER_VERTEX_DATA), 0 },
-			{ "TEXCOORD", 0, INPUT_FORMAT(DXGI_FORMAT_R32G32_FLOAT), 0, 44, INPUT_CLASSIFICATION(D3D12_INPUT_CLASSIFICATION_PER_VERTEX_DATA), 0 }
+			{ "TangentY", 0, INPUT_FORMAT(DXGI_FORMAT_R32G32B32A32_FLOAT), 0, 12, INPUT_CLASSIFICATION(D3D12_INPUT_CLASSIFICATION_PER_VERTEX_DATA), 0 },
+			{ "TangentX", 0, INPUT_FORMAT(DXGI_FORMAT_R32G32B32A32_FLOAT), 0, 28, INPUT_CLASSIFICATION(D3D12_INPUT_CLASSIFICATION_PER_VERTEX_DATA), 0 },
+			{ "Normal", 0, INPUT_FORMAT(DXGI_FORMAT_R32G32B32A32_FLOAT), 0, 44, INPUT_CLASSIFICATION(D3D12_INPUT_CLASSIFICATION_PER_VERTEX_DATA), 0 },
+			{ "TEXCOORD", 0, INPUT_FORMAT(DXGI_FORMAT_R32G32_FLOAT), 0, 60, INPUT_CLASSIFICATION(D3D12_INPUT_CLASSIFICATION_PER_VERTEX_DATA), 0 }
 		};
 		fShaderManager->GetShaderMap()[shaderPair.first] = FShader(shaderPair.first, result, mInputLayout);
 	}
@@ -704,7 +705,7 @@ void DX12RHI::UpdateVP()
 	lightConstant.lightProj = glm::transpose(Engine::GetInstance().GetFScene()->GetLight(0)->GetFlightDesc()->lightProj);
 	lightConstant.lightVP = glm::transpose(Engine::GetInstance().GetFScene()->GetLight(0)->GetFlightDesc()->lightProj * Engine::GetInstance().GetFScene()->GetLight(0)->GetFlightDesc()->lightView);
 	lightConstant.lightDir = Engine::GetInstance().GetFScene()->GetLight(0)->GetFlightDesc()->lightDir;
-	lightConstant.density = Engine::GetInstance().GetFScene()->GetLight(0)->GetFlightDesc()->lightDensity;
+	lightConstant.density = Engine::GetInstance().GetFScene()->GetLight(0)->GetFlightDesc()->lightDensity - 1.75f;
 
 	PassConstants passConstant;
 	passConstant.InvViewProj = glm::transpose(Engine::GetInstance().GetFScene()->GetCamera()->GetProj() * Engine::GetInstance().GetFScene()->GetCamera()->GetView());
@@ -805,8 +806,9 @@ void DX12RHI::TransActorToRenderPrimitive(FActor& actor, FRenderScene& fRenderSc
 		for (int i = 0; i < meshInfo.loDs[0].numVertices; i++)
 		{
 			vertice = meshInfo.loDs[0].vertices[i];
-			vertice.SetNormal(meshInfo.loDs[0].normals[i]);
-			vertice.SetColor(meshInfo.loDs[0].normals[i]);
+			vertice.SetNormal(priDesc->GetMeshGeometryInfo().mMeshWorld, meshInfo.loDs[0].normals[i]);
+			vertice.SetTangentX(meshInfo.loDs[0].tangentX[i]);
+			vertice.SetTangentY(meshInfo.loDs[0].tangentY[i]);
 			vertice.mUVs = vec2(meshInfo.loDs[0].verticeUVs[i].x, meshInfo.loDs[0].verticeUVs[i].y);
 			vertices.push_back(vertice);
 		}
@@ -819,12 +821,19 @@ void DX12RHI::TransActorToRenderPrimitive(FActor& actor, FRenderScene& fRenderSc
 
 		priDesc->GetObjConstantInfo().Roatation =
 			priDesc->GetMeshGeometryInfo().Rotation =
+			glm::transpose(
 			glm::mat4_cast(qua<float>(
 				fMeshInfo.transform.Rotation.w,
 				fMeshInfo.transform.Rotation.x,
 				fMeshInfo.transform.Rotation.y,
 				fMeshInfo.transform.Rotation.z
-				));
+				)));
+
+		priDesc->GetObjConstantInfo().Scale = 
+			glm::transpose(
+				scale(vec3(fMeshInfo.transform.Scale3D.x,
+				fMeshInfo.transform.Scale3D.y,
+				fMeshInfo.transform.Scale3D.z)));
 
 		const UINT vbByteSize = (UINT)vertices.size() * sizeof(Vertex);
 		const UINT ibByteSize = (UINT)indices.size() * sizeof(std::uint16_t);

@@ -66,6 +66,8 @@ struct MeshesLODInfo
 	std::vector<int32_t> indices;
 	int numTexcoords ;
 	std::vector<FVector4> normals;
+	std::vector<FVector4> tangentX;
+	std::vector<FVector4> tangentY;
 	std::vector<FVector2D> verticeUVs;
 };
 
@@ -94,7 +96,8 @@ struct ActorInfo
 struct Vertex
 {
 	vec3 Pos;
-	vec4 Color;
+	vec4 TangentY;
+	vec4 TangentX;
 	vec4 Normal;
 	vec2 mUVs;
 
@@ -103,14 +106,20 @@ struct Vertex
 		Pos = vec3(vector.x, vector.y, vector.z);
 	}
 
-	void SetNormal(const FVector4& vector)
+	void SetNormal(const mat4& transformMat, const FVector4& vector)
 	{
+		//Normal = vec4(mat3(transpose(inverse(transformMat))) * vec3(vector.x, vector.y, vector.z),1.0f);
 		Normal = vec4(vector.x, vector.y, vector.z, vector.w);
 	}
 
-	void SetColor(const FVector4& vector)
+	void SetTangentX(const FVector4& vector)
 	{
-		Color = vec4(vector.x, vector.y, vector.z, vector.w);
+		TangentX = vec4(vector.x, vector.y, vector.z, vector.w);
+	}
+
+	void SetTangentY(const FVector4& vector)
+	{
+		TangentY = vec4(vector.x, vector.y, vector.z, vector.w);
 	}
 };
 
@@ -119,6 +128,7 @@ struct ObjectConstants
 // 	mat4 lightProj = MathHelper::Identity4x4();
 // 	mat4 lightVP = MathHelper::Identity4x4();
 // 	mat4 lightOrthoVP = MathHelper::Identity4x4();
+	mat4 Scale = MathHelper::Identity4x4();
 	mat4 Roatation = MathHelper::Identity4x4();
 	mat4 World = MathHelper::Identity4x4();
 // 	mat4 View = MathHelper::Identity4x4();
@@ -149,8 +159,9 @@ struct CameraConstants
 struct MaterialConstants
 {
 	vec4 DiffuseAlbedo = { 1.0f, 1.0f, 1.0f, 1.0f };
-	vec3 FresnelR0 = { 0.01f, 0.01f, 0.01f };
-	float Roughness = 0.25f;
+	//vec3 FresnelR0 = { 0.17f, 0.17f, 0.17f }; //Diamond
+	vec3 FresnelR0 = { 1.0f, 0.71f, 0.29f }; //Gold
+	float Roughness = 0.05f;
 };
 
 struct BoundingSphere 
