@@ -90,7 +90,6 @@ float CalcShadowFactor(float4 shadowPosH)
 	return percentLit / 9.0f;
 }
 
-
 float ShadowCalculation(float4 PosH)
 {
 	PosH.xyz /= PosH.w;
@@ -165,11 +164,8 @@ VertexOut VS(VertexIn vin)
 
 	vout.ShadowPosH = mul(gWorldVertex, glightOrthoVP);
 
-	// Just pass vertex color into the pixel shader.
-	vout.Color = vin.Color;
-
-	//vout.Normal = mul(vin.Normal, gRotation);
-	vout.Normal = mul(vin.Normal, gWorld);
+	vout.Normal = mul(gRotation, vin.Normal);
+	vout.Color = vin.Normal;
 
 	// Output vertex attributes for interpolation across triangle.
 	vout.TexC = vin.TexC;
@@ -179,18 +175,6 @@ VertexOut VS(VertexIn vin)
 
 float4 PS(VertexOut pin) : SV_Target
 {
-	/*pin.Normal = normalize(pin.Normal);
-	float3 toEyes = normalize(gCameraLoc - pin.PosH);
-	float4 ambient = { 0,0,0,1.0f };
-	ambient = ambient * gDiffuseAlbedo;
-
-	const float shininess = 1.0f - gRoughness;
-	Material mat = { gDiffuseAlbedo, gFresnelR0, shininess };
-	float3 shadowFactor = 1.0f;
-	Light gLights[MaxLights];
-	float4 directLight = ComputeLighting(gLights, mat, pin.PosH,
-		pin.Normal, toEyes, shadowFactor);*/
-
 	//Gamma Correction
 	float4 diffuseAlbedo = gDiffuseMap.Sample(gsamPointWrap, pin.TexC);
 	float4 normalMap = gNormalMap.Sample(gsamPointWrap, pin.TexC);
@@ -198,16 +182,18 @@ float4 PS(VertexOut pin) : SV_Target
 
 	float4 shadow = CalcShadowFactor(pin.ShadowPosH);
 
+	float4 FinalColor = pin.Normal * 0.5f + 0.5f;
+	//float4 FinalColor = diffuseAlbedo;
+
 	float4 directLight = float4(ComputeDirectionalLight(
 		gLightDir, gLightDensity,
-		diffuseAlbedo, gFresnelR0, gRoughness,
+		FinalColor, gFresnelR0, gRoughness,
 		pin.Normal, gCameraLoc), 1.0f);
-	float4 DiffuseAlbedo = diffuseAlbedo * 0.01;
-	float4 FinalColor = (shadow + 0.1) * (DiffuseAlbedo + directLight);
+	float4 DiffuseAlbedo = FinalColor * 0.01;
+	FinalColor = (shadow + 0.1) * (DiffuseAlbedo + directLight);
 	return pow(FinalColor, 1 / 2.2f);
-	/*float4 litColor = diffuseAlbedo + directLight;
-	litColor.a = gDiffuseAlbedo.a;*/
 
+	//return pow(pin.Normal * 0.5f + 0.5f, 1 / 2.2f);
 	//return pow(diffuseAlbedo * (shadow + 0.1), 1 / 2.2f);
 	//return litColor * shadow;
 }
