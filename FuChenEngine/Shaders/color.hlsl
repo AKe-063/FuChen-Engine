@@ -205,14 +205,14 @@ float4 PS(VertexOut pin) : SV_Target
 	float4 normalMap = gNormalMap.Sample(gsamAnisotropicWrap, pin.TexC);
 	//float3 bumpedNormalW = NormalSampleToWorldSpace(normalMap.xyz, pin.NormalR, pin.TangentX);
 	float3x3 TBN = float3x3(pin.TangentX, pin.TangentY, pin.NormalR);
-	//float3 bumpedNormalW = normalize(mul(normalMap.xyz, TBN));
-	float3 bumpedNormalW = pin.NormalR;
+	float3 bumpedNormalW = normalize(mul(normalMap.xyz, TBN));
+	//float3 bumpedNormalW = pin.NormalR;
 
 	float4 shadow = CalcShadowFactor(pin.ShadowPosH);
 
 	//float4 mColor = float4(0.45f, 0.45f, 0.45f, 1.0f);//Diamond
-	float4 mColor = float4(1.0f, 0.86f, 0.57f, 1.0f);//Gold
-	//float4 mColor = diffuseAlbedo;
+	//float4 mColor = float4(1.0f, 0.86f, 0.57f, 1.0f);//Gold
+	float4 mColor = diffuseAlbedo;
 
 	float4 directLight = float4(ComputeDirectionalLight(
 		gLightDir, gLightDensity,
