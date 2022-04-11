@@ -19,26 +19,26 @@ FLightDesc* FLight::GetFlightDesc()
 void FLight::UpdateLightTrans()
 {
  	float radius = 2500.0f;
-// 	int speed = 5;
-// 	if (flag)
-// 	{
-// 		rota += speed;
-// 		if (rota >= 2000)
-// 		{
-// 			flag = !flag;
-// 		}
-// 		fLightDesc.lightPos = glm::vec3(sqrt(4000000 - pow(rota, 2)), rota, 2000.0f);
-// 	}
-// 	else
-// 	{
-// 		rota -= speed;
-// 		if (rota <= -2000)
-// 		{
-// 			flag = !flag;
-// 		}
-// 		fLightDesc.lightPos = glm::vec3(-sqrt(4000000 - pow(rota, 2)), rota, 2000.0f);
-// 	}
-	fLightDesc.lightPos = glm::vec3(-2000.0f, 2000.0f, 2000.0f);
+	int speed = 5;
+	if (flag)
+	{
+		rota += speed;
+		if (rota >= 2000)
+		{
+			flag = !flag;
+		}
+		fLightDesc.lightPos = glm::vec3(sqrt(4000000 - pow(rota, 2)), rota, 2000.0f);
+	}
+	else
+	{
+		rota -= speed;
+		if (rota <= -2000)
+		{
+			flag = !flag;
+		}
+		fLightDesc.lightPos = glm::vec3(-sqrt(4000000 - pow(rota, 2)), rota, 2000.0f);
+	}
+	//fLightDesc.lightPos = glm::vec3(-2000.0f, 2000.0f, 2000.0f);
 	fLightDesc.targetPos = glm::vec3(0.0f, 0.0f, 0.0f);
 	fLightDesc.lightDir = glm::normalize(fLightDesc.targetPos - fLightDesc.lightPos);
 	fLightDesc.lightView = glm::lookAtLH(fLightDesc.lightPos, fLightDesc.targetPos, fLightDesc.lightUp);
