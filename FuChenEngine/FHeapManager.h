@@ -17,8 +17,12 @@ public:
 	void CreateDescriptorHeap(Microsoft::WRL::ComPtr<ID3D12Device> device, D3D12_DESCRIPTOR_HEAP_DESC& managedHeapDesc, HeapType heapType);
 	D3D12_CPU_DESCRIPTOR_HANDLE GetCPUDescriptorHandleInHeapStart(HeapType heapType);
 	D3D12_GPU_DESCRIPTOR_HANDLE GetGPUDescriptorHandleInHeapStart();
-	int GetCurrentDescriptorNum();
-	void AddIndex(const int count);
+	int GetCurrentCSUDescriptorNum();
+	int GetCurrentRtvDescriptorNum();
+	int GetCurrentDsvDescriptorNum();
+	void AddCSUHeapDescriptorIndex(const int count);
+	void AddRtvHeapDescriptorIndex(const int count);
+	void AddDsvHeapDescriptorIndex(const int count);
 	void SubIndex(const int count);
 	ID3D12DescriptorHeap* GetHeap(HeapType heapType);
 
@@ -27,4 +31,6 @@ private:
 	Microsoft::WRL::ComPtr<ID3D12DescriptorHeap> mRtvHeap = nullptr;
 	Microsoft::WRL::ComPtr<ID3D12DescriptorHeap> mDsvHeap = nullptr;
 	int currentCSUDescriptorNum = 0;
+	int currentRtvDescriptorNum = 0;
+	int currentDsvDescriptorNum = 0;
 };

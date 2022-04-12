@@ -21,7 +21,8 @@ void ForwardRenderer::Init()
 
 	rhi = RHI::Get();
 	rhi->Init(fShaderManager);
-	rhi->CreateRenderTarget(mShadowMap);
+	rhi->CreateRenderTarget(mShadowMap, 2048.0f, 2048.0f);
+	rhi->CreateRenderTarget(mBloomRT, 1440.0f, 900.0f);
 }
 
 void ForwardRenderer::Destroy()

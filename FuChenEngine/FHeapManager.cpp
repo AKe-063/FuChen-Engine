@@ -91,14 +91,34 @@ D3D12_GPU_DESCRIPTOR_HANDLE FHeapManager::GetGPUDescriptorHandleInHeapStart()
 	return mCbvSrvUavHeap->GetGPUDescriptorHandleForHeapStart();
 }
 
-int FHeapManager::GetCurrentDescriptorNum()
+int FHeapManager::GetCurrentCSUDescriptorNum()
 {
 	return currentCSUDescriptorNum;
 }
 
-void FHeapManager::AddIndex(const int count)
+int FHeapManager::GetCurrentRtvDescriptorNum()
+{
+	return currentRtvDescriptorNum;
+}
+
+int FHeapManager::GetCurrentDsvDescriptorNum()
+{
+	return currentDsvDescriptorNum;
+}
+
+void FHeapManager::AddCSUHeapDescriptorIndex(const int count)
 {
 	currentCSUDescriptorNum += count;
+}
+
+void FHeapManager::AddRtvHeapDescriptorIndex(const int count)
+{
+	currentRtvDescriptorNum += count;
+}
+
+void FHeapManager::AddDsvHeapDescriptorIndex(const int count)
+{
+	currentDsvDescriptorNum += count;
 }
 
 void FHeapManager::SubIndex(const int count)

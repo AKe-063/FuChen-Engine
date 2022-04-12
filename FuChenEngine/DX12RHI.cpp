@@ -52,6 +52,7 @@ void DX12RHI::OnResize()
 		ThrowIfFailed(mSwapChain->GetBuffer(i, IID_PPV_ARGS(&mSwapChainBuffer[i])));
 		md3dDevice->CreateRenderTargetView(mSwapChainBuffer[i].Get(), nullptr, rtvHeapHandle);
 		rtvHeapHandle.Offset(1, mRtvDescriptorSize);
+		mHeapManager->AddRtvHeapDescriptorIndex(1);
 	}
 
 	// Create the depth/stencil buffer and view.
@@ -87,6 +88,7 @@ void DX12RHI::OnResize()
 	dsvDesc.Format = mDepthStencilFormat;
 	dsvDesc.Texture2D.MipSlice = 0;
 	md3dDevice->CreateDepthStencilView(mDepthStencilBuffer.Get(), &dsvDesc, DepthStencilView());
+	mHeapManager->AddDsvHeapDescriptorIndex(1);
 
 	// Transition the resource from its initial state to be used as a depth buffer.
 	mCommandList->ResourceBarrier(1, &CD3DX12_RESOURCE_BARRIER::Transition(mDepthStencilBuffer.Get(),
@@ -279,8 +281,8 @@ void DX12RHI::BuildTextureResourceView(std::shared_ptr<FRenderTexPrimitive> texP
 {
 	Texture* texture = texPrimitive->GetTex();
 	CD3DX12_CPU_DESCRIPTOR_HANDLE hDescriptor(mHeapManager->GetCPUDescriptorHandleInHeapStart(HeapType::CBV_SRV_UAV));
-	hDescriptor.Offset(mHeapManager->GetCurrentDescriptorNum(), mCbvSrvUavDescriptorSize);
-	mHeapManager->AddIndex(1);
+	hDescriptor.Offset(mHeapManager->GetCurrentCSUDescriptorNum(), mCbvSrvUavDescriptorSize);
+	mHeapManager->AddCSUHeapDescriptorIndex(1);
 	auto tex = texture->Resource;
 
 	D3D12_SHADER_RESOURCE_VIEW_DESC srvDesc = {};
@@ -292,7 +294,7 @@ void DX12RHI::BuildTextureResourceView(std::shared_ptr<FRenderTexPrimitive> texP
 	srvDesc.Texture2D.ResourceMinLODClamp = 0.0f;
 	md3dDevice->CreateShaderResourceView(tex.Get(), &srvDesc, hDescriptor);
 
-	texPrimitive->SetSrvIndex(mHeapManager->GetCurrentDescriptorNum() - 1);
+	texPrimitive->SetSrvIndex(mHeapManager->GetCurrentCSUDescriptorNum() - 1);
 }
 
 void DX12RHI::BuildRootSignature(std::shared_ptr<FShaderManager> fShaderManager)
@@ -382,7 +384,7 @@ void DX12RHI::AddConstantBuffer(FPrimitive& fPrimitive)
 	D3D12_GPU_VIRTUAL_ADDRESS cbAddress = objConstant->Resource()->GetGPUVirtualAddress();
 
 	auto handle = CD3DX12_CPU_DESCRIPTOR_HANDLE(mHeapManager->GetCPUDescriptorHandleInHeapStart(HeapType::CBV_SRV_UAV));
-	handle.Offset(mHeapManager->GetCurrentDescriptorNum(), mCbvSrvUavDescriptorSize);
+	handle.Offset(mHeapManager->GetCurrentCSUDescriptorNum(), mCbvSrvUavDescriptorSize);
 
 	D3D12_CONSTANT_BUFFER_VIEW_DESC cbvDesc;
 	cbvDesc.BufferLocation = cbAddress;
@@ -391,7 +393,7 @@ void DX12RHI::AddConstantBuffer(FPrimitive& fPrimitive)
 	md3dDevice->CreateConstantBufferView(&cbvDesc, handle);
 	mObjectCB.push_back(objConstant);
 	fPrimitive.SetObjCBIndex((int)mObjectCB.size()-1);
-	mHeapManager->AddIndex(1);
+	mHeapManager->AddCSUHeapDescriptorIndex(1);
 }
 
 void DX12RHI::BuildConstantBuffer()
@@ -403,8 +405,8 @@ void DX12RHI::BuildConstantBuffer()
 
 	auto handle = CD3DX12_CPU_DESCRIPTOR_HANDLE(mHeapManager->GetCPUDescriptorHandleInHeapStart(HeapType::CBV_SRV_UAV));
 
-	handle.Offset(mHeapManager->GetCurrentDescriptorNum(), mCbvSrvUavDescriptorSize);
-	mHeapManager->AddIndex(1);
+	handle.Offset(mHeapManager->GetCurrentCSUDescriptorNum(), mCbvSrvUavDescriptorSize);
+	mHeapManager->AddCSUHeapDescriptorIndex(1);
 
 	D3D12_CONSTANT_BUFFER_VIEW_DESC cbvPassDesc;
 	cbvPassDesc.BufferLocation = cbAddress;
@@ -418,8 +420,8 @@ void DX12RHI::BuildConstantBuffer()
 	cbAddress = mObjectLight->Resource()->GetGPUVirtualAddress();
 
 	handle = CD3DX12_CPU_DESCRIPTOR_HANDLE(mHeapManager->GetCPUDescriptorHandleInHeapStart(HeapType::CBV_SRV_UAV));
-	handle.Offset(mHeapManager->GetCurrentDescriptorNum(), mCbvSrvUavDescriptorSize);
-	mHeapManager->AddIndex(1);
+	handle.Offset(mHeapManager->GetCurrentCSUDescriptorNum(), mCbvSrvUavDescriptorSize);
+	mHeapManager->AddCSUHeapDescriptorIndex(1);
 
 	D3D12_CONSTANT_BUFFER_VIEW_DESC cbvLightDesc;
 	cbvLightDesc.BufferLocation = cbAddress;
@@ -433,8 +435,8 @@ void DX12RHI::BuildConstantBuffer()
 	cbAddress = mObjectCamera->Resource()->GetGPUVirtualAddress();
 
 	handle = CD3DX12_CPU_DESCRIPTOR_HANDLE(mHeapManager->GetCPUDescriptorHandleInHeapStart(HeapType::CBV_SRV_UAV));
-	handle.Offset(mHeapManager->GetCurrentDescriptorNum(), mCbvSrvUavDescriptorSize);
-	mHeapManager->AddIndex(1);
+	handle.Offset(mHeapManager->GetCurrentCSUDescriptorNum(), mCbvSrvUavDescriptorSize);
+	mHeapManager->AddCSUHeapDescriptorIndex(1);
 
 	D3D12_CONSTANT_BUFFER_VIEW_DESC cbvCameraDesc;
 	cbvCameraDesc.BufferLocation = cbAddress;
@@ -445,14 +447,14 @@ void DX12RHI::BuildConstantBuffer()
 
 void DX12RHI::BuildShadowRenderTex(std::shared_ptr<FRenderTarget> mShadowMap)
 {
-	if (!ShadowTexSrvInit)
+	if (!mShadowMap->bInit)
 	{
-		mShadowMap->AddRTResource(RTDepthStencilBuffer, mHeapManager->GetHeap(HeapType::CBV_SRV_UAV));
 		auto dsvCpuStart = mHeapManager->GetHeap(HeapType::DSV)->GetCPUDescriptorHandleForHeapStart();
 		mShadowMap->BuildRTBuffer(
-			CD3DX12_CPU_DESCRIPTOR_HANDLE(dsvCpuStart, 1, mDsvDescriptorSize).ptr,
+			CD3DX12_CPU_DESCRIPTOR_HANDLE(dsvCpuStart, mHeapManager->GetCurrentDsvDescriptorNum(), mDsvDescriptorSize).ptr,
 			-1,
 			RTDepthStencilBuffer);
+		mHeapManager->AddDsvHeapDescriptorIndex(1);
 
 		D3D12_SHADER_RESOURCE_VIEW_DESC srvDesc = {};
 		srvDesc.Shader4ComponentMapping = D3D12_DEFAULT_SHADER_4_COMPONENT_MAPPING;
@@ -465,11 +467,52 @@ void DX12RHI::BuildShadowRenderTex(std::shared_ptr<FRenderTarget> mShadowMap)
 
 		auto srvCpuStart = mHeapManager->GetCPUDescriptorHandleInHeapStart(HeapType::CBV_SRV_UAV);
 		auto srvGpuStart = mHeapManager->GetGPUDescriptorHandleInHeapStart();
-		auto shadowCPUSrv = CD3DX12_CPU_DESCRIPTOR_HANDLE(srvCpuStart, (INT)mHeapManager->GetCurrentDescriptorNum(), mCbvSrvUavDescriptorSize);
-		mShadowMap->CreateRTTexture((UINT32)mHeapManager->GetCurrentDescriptorNum());
+		auto shadowCPUSrv = CD3DX12_CPU_DESCRIPTOR_HANDLE(srvCpuStart, (INT)mHeapManager->GetCurrentCSUDescriptorNum(), mCbvSrvUavDescriptorSize);
+		mShadowMap->CreateRTTexture((UINT32)mHeapManager->GetCurrentCSUDescriptorNum());
 		md3dDevice->CreateShaderResourceView(mShadowMap->DSResource()->fPUResource, &srvDesc, shadowCPUSrv);
-		mHeapManager->AddIndex(1);
-		ShadowTexSrvInit = true;
+		mHeapManager->AddCSUHeapDescriptorIndex(1);
+		mShadowMap->bInit = true;
+	}
+}
+
+void DX12RHI::BuildPPRT(std::shared_ptr<FRenderTarget> mPostProcess)
+{
+	if (!mPostProcess->bInit) 
+	{
+		CD3DX12_CPU_DESCRIPTOR_HANDLE rtvHeapHandle(mHeapManager->GetHeap(HeapType::RTV)->GetCPUDescriptorHandleForHeapStart());
+		rtvHeapHandle.Offset(mHeapManager->GetCurrentRtvDescriptorNum(), mRtvDescriptorSize);
+		auto rtvGpuStart = mHeapManager->GetHeap(HeapType::RTV)->GetGPUDescriptorHandleForHeapStart();
+		mPostProcess->BuildRTBuffer(
+			rtvHeapHandle.ptr, 
+			CD3DX12_GPU_DESCRIPTOR_HANDLE(rtvGpuStart, mHeapManager->GetCurrentRtvDescriptorNum(), mRtvDescriptorSize).ptr, 
+			RTType::RTColorBuffer);
+		mHeapManager->AddRtvHeapDescriptorIndex(1);
+		
+		auto dsvCpuStart = mHeapManager->GetHeap(HeapType::DSV)->GetCPUDescriptorHandleForHeapStart();
+		auto dsvGpuStart = mHeapManager->GetHeap(HeapType::DSV)->GetGPUDescriptorHandleForHeapStart();
+		mPostProcess->BuildRTBuffer(
+			CD3DX12_CPU_DESCRIPTOR_HANDLE(dsvCpuStart, mHeapManager->GetCurrentDsvDescriptorNum(), mDsvDescriptorSize).ptr,
+			CD3DX12_GPU_DESCRIPTOR_HANDLE(dsvGpuStart, mHeapManager->GetCurrentDsvDescriptorNum(), mRtvDescriptorSize).ptr,
+			RTDepthStencilBuffer);
+		mHeapManager->AddDsvHeapDescriptorIndex(1);
+
+		D3D12_SHADER_RESOURCE_VIEW_DESC srvDesc = {};
+		srvDesc.Shader4ComponentMapping = D3D12_DEFAULT_SHADER_4_COMPONENT_MAPPING;
+		srvDesc.Format = DXGI_FORMAT_R32G32B32A32_FLOAT;
+		srvDesc.ViewDimension = D3D12_SRV_DIMENSION_TEXTURE2D;
+		srvDesc.Texture2D.MostDetailedMip = 0;
+		srvDesc.Texture2D.MipLevels = 0;
+		srvDesc.Texture2D.ResourceMinLODClamp = 0.0f;
+		srvDesc.Texture2D.PlaneSlice = 0;
+
+		auto srvCpuStart = mHeapManager->GetCPUDescriptorHandleInHeapStart(HeapType::CBV_SRV_UAV);
+		auto srvGpuStart = mHeapManager->GetGPUDescriptorHandleInHeapStart();
+		auto pprtCPUSrv = CD3DX12_CPU_DESCRIPTOR_HANDLE(srvCpuStart, (INT)mHeapManager->GetCurrentCSUDescriptorNum(), mCbvSrvUavDescriptorSize);
+		mPostProcess->CreateRTTexture((UINT32)mHeapManager->GetCurrentCSUDescriptorNum());
+		md3dDevice->CreateShaderResourceView(mPostProcess->ColorResource(0)->fPUResource, &srvDesc, pprtCPUSrv);
+		mHeapManager->AddCSUHeapDescriptorIndex(1);
+
+		mPostProcess->bInit = true;
 	}
 }
 
@@ -540,10 +583,10 @@ void DX12RHI::BeginTransSceneDataToRenderScene(std::string pso)
 	ThrowIfFailed(mCommandList->Reset(mDirectCmdListAlloc.Get(), mPSOs[pso].Get()));
 }
 
-void DX12RHI::CreateRenderTarget(std::shared_ptr<FRenderTarget>& mShadowMap)
+void DX12RHI::CreateRenderTarget(std::shared_ptr<FRenderTarget>& mShadowMap, float width, float height)
 {
 	mShadowMap = std::make_shared<DXRenderTarget>();
-	mShadowMap->Init(2048, 2048);
+	mShadowMap->Init(width, height);
 }
 
 void DX12RHI::EndTransScene()
@@ -748,8 +791,8 @@ void DX12RHI::UploadMaterialData()
 		auto cbAddress = mObjectMat->Resource()->GetGPUVirtualAddress();
 
 		auto handle = CD3DX12_CPU_DESCRIPTOR_HANDLE(mHeapManager->GetCPUDescriptorHandleInHeapStart(HeapType::CBV_SRV_UAV));
-		handle.Offset(mHeapManager->GetCurrentDescriptorNum(), mCbvSrvUavDescriptorSize);
-		mHeapManager->AddIndex(1);
+		handle.Offset(mHeapManager->GetCurrentCSUDescriptorNum(), mCbvSrvUavDescriptorSize);
+		mHeapManager->AddCSUHeapDescriptorIndex(1);
 
 		D3D12_CONSTANT_BUFFER_VIEW_DESC cbvMatDesc;
 		cbvMatDesc.BufferLocation = cbAddress;
@@ -889,7 +932,7 @@ void DX12RHI::SwapChain()
 void DX12RHI::CreateRtvAndDsvDescriptorHeaps()
 {
 	D3D12_DESCRIPTOR_HEAP_DESC rtvHeapDesc;
-	rtvHeapDesc.NumDescriptors = SwapChainBufferCount;
+	rtvHeapDesc.NumDescriptors = 1024;
 	rtvHeapDesc.Type = D3D12_DESCRIPTOR_HEAP_TYPE_RTV;
 	rtvHeapDesc.Flags = D3D12_DESCRIPTOR_HEAP_FLAG_NONE;
 	rtvHeapDesc.NodeMask = 0;
@@ -897,7 +940,7 @@ void DX12RHI::CreateRtvAndDsvDescriptorHeaps()
 
 
 	D3D12_DESCRIPTOR_HEAP_DESC dsvHeapDesc;
-	dsvHeapDesc.NumDescriptors = 2;
+	dsvHeapDesc.NumDescriptors = 1024;
 	dsvHeapDesc.Type = D3D12_DESCRIPTOR_HEAP_TYPE_DSV;
 	dsvHeapDesc.Flags = D3D12_DESCRIPTOR_HEAP_FLAG_NONE;
 	dsvHeapDesc.NodeMask = 0;
@@ -950,7 +993,6 @@ void DX12RHI::CreateSwapChain()
 	sd.SampleDesc.Quality = m4xMsaaState ? (m4xMsaaQuality - 1) : 0;
 	sd.BufferUsage = DXGI_USAGE_RENDER_TARGET_OUTPUT;
 	sd.BufferCount = SwapChainBufferCount;
-	//sd.OutputWindow = mhMainWnd;
 	sd.OutputWindow = GetActiveWindow();
 	sd.Windowed = true;
 	sd.SwapEffect = DXGI_SWAP_EFFECT_FLIP_DISCARD;

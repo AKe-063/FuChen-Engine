@@ -220,8 +220,9 @@ float4 PS(VertexOut pin) : SV_Target
 		normalize(bumpedNormalW), normalize(gCameraLoc - pin.PosW)),1.0f);
 	float4 Ambient = mColor * 0.03;
 	Ambient = Ambient + (shadow + 0.1) * directLight;
-	return pow(Ambient, 1 / 2.2f);
-
+	Ambient = pow(Ambient, 1 / 2.2f);
+	//Ambient = pow(Ambient, 1 / 2.2f) > 1 ? float4(1.0f, 1.0f, 1.0f, 1.0f) : float4(0.0f, 0.0f, 0.0f, 1.0f);
+	return Ambient;
 	//return pow(pin.NormalW * 0.5f + 0.5f, 1 / 2.2f);
 	//return pow(diffuseAlbedo * (shadow + 0.1), 1 / 2.2f);
 	//return litColor * shadow;

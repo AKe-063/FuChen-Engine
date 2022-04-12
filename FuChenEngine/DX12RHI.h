@@ -38,7 +38,8 @@ public:
 	virtual void BeginBaseDraw()override;
 	virtual void BeginTransSceneDataToRenderScene(std::string pso)override;
 	virtual void BuildShadowRenderTex(std::shared_ptr<FRenderTarget> mShadowMap)override;
-	virtual void CreateRenderTarget(std::shared_ptr<FRenderTarget>& mShadowMap)override;
+	virtual void BuildPPRT(std::shared_ptr<FRenderTarget> mPostProcess)override;
+	virtual void CreateRenderTarget(std::shared_ptr<FRenderTarget>& mShadowMap, float width, float height)override;
 	virtual void DrawShadow(FRenderScene& fRenderScene, std::shared_ptr<FRenderTarget> mShadowMap)override;
 	virtual void DrawPrimitives(FRenderScene& fRenderScene, std::shared_ptr<FRenderTarget> mShadowMap)override;
 	virtual void EndDraw()override;
@@ -114,9 +115,7 @@ private:
 	//DX Init Members
 	static const int SwapChainBufferCount = 2;
 	int mCurrBackBuffer = 0;
-	int flag = 0;
 	bool DCShadowMap = true;
-	bool ShadowTexSrvInit = false;
 	bool nowJustNeedOnce = false;
 	Microsoft::WRL::ComPtr<IDXGIFactory4> mdxgiFactory;
 	Microsoft::WRL::ComPtr<IDXGISwapChain> mSwapChain;

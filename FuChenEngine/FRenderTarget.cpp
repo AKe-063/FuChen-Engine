@@ -8,15 +8,15 @@ DXRenderTarget::DXRenderTarget()
 
 }
 
-void DXRenderTarget::Init(unsigned int width, unsigned int height)
+void DXRenderTarget::Init(float width /*= 2048.0f*/, float height /*= 2048.0f*/)
 {
 	md3dDevice = RHI::Get()->GetDevice()->fDevice;
 
-	mWidth = width;
-	mHeight = height;
+	mWidth = (UINT)width;
+	mHeight = (UINT)height;
 
-	mViewport = { 0.0f, 0.0f, 2048.0f, 2048.0f, 0.0f, 1.0f };
-	mScissorRect = { 0, 0, 2048, 2048 };
+	mViewport = { 0.0f, 0.0f, width, width, 0.0f, 1.0f };
+	mScissorRect = { 0, 0, (int)width, (int)width };
 
 	//BuildResource();
 }
@@ -34,7 +34,7 @@ unsigned int DXRenderTarget::Height()const
 std::shared_ptr<FPUResource> DXRenderTarget::ColorResource(const UINT index)
 {
 	std::shared_ptr<FPUResource> fResource = std::make_shared<FPUResource>();
-	fResource->fPUResource = mRenderTargetColorBuffer[index].Get();
+	fResource->fPUResource = mRenderTargetColorBuffer.Get();
 	return fResource;
 }
 
@@ -47,7 +47,7 @@ std::shared_ptr<FPUResource> DXRenderTarget::DSResource()
 
 SIZE_T DXRenderTarget::Srv(const UINT index)const
 {
-	return rtDesc[index].CPUHandlePtr;
+	return rtDesc.CPUHandlePtr;
 }
 
 SIZE_T DXRenderTarget::Dsv()const
@@ -85,15 +85,51 @@ void DXRenderTarget::CreateRTTexture(const UINT32 index)
 #endif
 }
 
-void DXRenderTarget::AddRTResource(RTType rtType, ID3D12DescriptorHeap* heap)
+void DXRenderTarget::BuildRTBuffer(SIZE_T hCpuHandlePtr, SIZE_T hGpuHandlePtr, RTType rtType)
 {
+	RTDesc mRTDesc;
 	switch (rtType)
 	{
 	case RTColorBuffer:
-		// 		Microsoft::WRL::ComPtr<ID3D12Resource> resource;
-		// 		md3dDevice->CreateRenderTargetView(resource.Get(),nullptr,heap)
+		mRTDesc.CPUHandlePtr = hCpuHandlePtr;
+		mRTDesc.GPUHandlePtr = hGpuHandlePtr;
+		mRTDesc.indexInColorBufferVec = -1;
+		mRTDesc.rtType = rtType;
+		rtDesc = mRTDesc;
+		BuildRTBuffer(rtDesc);
 		break;
 	case RTDepthStencilBuffer:
+		mRTDesc.CPUHandlePtr = hCpuHandlePtr;
+		mRTDesc.GPUHandlePtr = hGpuHandlePtr;
+		mRTDesc.indexInColorBufferVec = -1;
+		mRTDesc.rtType = rtType;
+		rtDSDesc = mRTDesc;
+		BuildRTBuffer(rtDSDesc);
+		break;
+	default:
+		assert(0);
+		break;
+	}
+}
+
+void DXRenderTarget::BuildRTBuffer(RTDesc& rtDesc)
+{
+	switch (rtDesc.rtType)
+	{
+	case RTColorBuffer:
+	{
+		D3D12_RENDER_TARGET_VIEW_DESC rtvDesc;
+		rtvDesc.Format = DXGI_FORMAT_R32G32B32A32_FLOAT;
+		rtvDesc.ViewDimension = D3D12_RTV_DIMENSION_TEXTURE2D;
+		rtvDesc.Texture2D.MipSlice = 0;
+		rtvDesc.Texture2D.PlaneSlice = 0;
+		D3D12_CPU_DESCRIPTOR_HANDLE handle;
+		handle.ptr = rtDesc.CPUHandlePtr;
+		md3dDevice->CreateRenderTargetView(mRenderTargetColorBuffer.Get(), &rtvDesc, handle);
+		break;
+	}
+	case RTDepthStencilBuffer:
+	{
 		D3D12_RESOURCE_DESC texDesc;
 		ZeroMemory(&texDesc, sizeof(D3D12_RESOURCE_DESC));
 		texDesc.Dimension = D3D12_RESOURCE_DIMENSION_TEXTURE2D;
@@ -120,64 +156,7 @@ void DXRenderTarget::AddRTResource(RTType rtType, ID3D12DescriptorHeap* heap)
 			D3D12_RESOURCE_STATE_GENERIC_READ,
 			&optClear,
 			IID_PPV_ARGS(&mRenderTargetDepthStencil)));
-		break;
-	default:
-		assert(0);
-		break;
-	}
-}
 
-void DXRenderTarget::BuildRTBuffer(SIZE_T hCpuHandlePtr,
-	SIZE_T hGpuHandlePtr, RTType rtType)
-{
-	RTDesc rtDesc;
-	switch (rtType)
-	{
-	case RTColorBuffer:
-		rtDesc.CPUHandlePtr = hCpuHandlePtr;
-		rtDesc.GPUHandlePtr = hGpuHandlePtr;
-		rtDesc.indexInColorBufferVec = (int32_t)mRenderTargetColorBuffer.size();
-		rtDesc.rtType = rtType;
-		this->rtDesc.push_back(rtDesc);
-		BuildRTBuffer(this->rtDesc[rtDesc.indexInColorBufferVec]);
-		break;
-	case RTDepthStencilBuffer:
-		rtDesc.CPUHandlePtr = hCpuHandlePtr;
-		rtDesc.GPUHandlePtr = hGpuHandlePtr;
-		rtDesc.indexInColorBufferVec = -1;
-		rtDesc.rtType = rtType;
-		rtDSDesc = rtDesc;
-		BuildRTBuffer(rtDSDesc);
-		break;
-	default:
-		assert(0);
-		break;
-	}
-}
-
-void DXRenderTarget::BuildRTBuffer(RTDesc& rtDesc)
-{
-	switch (rtDesc.rtType)
-	{
-	case RTColorBuffer:
-	{
-// 		D3D12_SHADER_RESOURCE_VIEW_DESC srvDesc = {};
-// 		srvDesc.Shader4ComponentMapping = D3D12_DEFAULT_SHADER_4_COMPONENT_MAPPING;
-// 		srvDesc.Format = DXGI_FORMAT_R24_UNORM_X8_TYPELESS;
-// 		srvDesc.ViewDimension = D3D12_SRV_DIMENSION_TEXTURE2D;
-// 		srvDesc.Texture2D.MostDetailedMip = 0;
-// 		srvDesc.Texture2D.MipLevels = 1;
-// 		srvDesc.Texture2D.ResourceMinLODClamp = 0.0f;
-// 		srvDesc.Texture2D.PlaneSlice = 0;
-// 		CD3DX12_CPU_DESCRIPTOR_HANDLE srvHandle;
-// 		srvHandle.ptr = rtDesc.CPUHandlePtr;
-// 		md3dDevice->CreateShaderResourceView(mRenderTargetColorBuffer[rtDesc.indexInColorBufferVec].Get(), &srvDesc, srvHandle);
-		break;
-	}
-
-
-	case RTDepthStencilBuffer:
-	{
 		D3D12_DEPTH_STENCIL_VIEW_DESC dsvDesc;
 		dsvDesc.Flags = D3D12_DSV_FLAG_NONE;
 		dsvDesc.ViewDimension = D3D12_DSV_DIMENSION_TEXTURE2D;
@@ -188,7 +167,6 @@ void DXRenderTarget::BuildRTBuffer(RTDesc& rtDesc)
 		md3dDevice->CreateDepthStencilView(mRenderTargetDepthStencil.Get(), &dsvDesc, dsvHandle);
 		break;
 	}
-
 	default:
 	{
 		assert(0);
@@ -203,7 +181,7 @@ RTDesc DXRenderTarget::GetRTDesc(RTType rtType, int32_t index /*= -1*/)
 	{
 	case RTColorBuffer:
 	{
-		return rtDesc[index];
+		return rtDesc;
 	}
 	case RTDepthStencilBuffer:
 	{

@@ -22,7 +22,7 @@ class FRenderTarget
 {
 public:
 	virtual ~FRenderTarget() {};
-	virtual void Init(unsigned int width = 2048, unsigned int height = 2048) = 0;
+	virtual void Init(float width = 2048.0f, float height = 2048.0f) = 0;
 	virtual VIEWPORT Viewport()const = 0;
 	virtual TAGRECT ScissorRect()const = 0;
 	virtual SIZE_T Srv(const UINT index)const = 0;
@@ -30,12 +30,13 @@ public:
 	virtual std::shared_ptr<FPUResource> ColorResource(const UINT index) = 0;
 	virtual std::shared_ptr<FPUResource> DSResource() = 0;
 	virtual void CreateRTTexture(const UINT32 index) = 0;
-	virtual void AddRTResource(RTType rtType, ID3D12DescriptorHeap* heap) = 0;
 	virtual void BuildRTBuffer(
-		SIZE_T hCpuSrv,
-		SIZE_T hGpuSrv,
+		SIZE_T hCpuHandlePtr,
+		SIZE_T hGpuHandlePtr,
 		RTType rtType) = 0;
 	virtual RTDesc GetRTDesc(RTType rtType, int32_t index = -1) = 0;
+
+	bool bInit = false;
 };
 
 class DXRenderTarget : public FRenderTarget
@@ -47,7 +48,7 @@ public:
 	DXRenderTarget& operator=(const DXRenderTarget& rhs) = delete;
 	virtual ~DXRenderTarget() {};
 
-	virtual void Init(unsigned int width = 2048, unsigned int height = 2048)override;
+	virtual void Init(float width = 2048.0f, float height = 2048.0f)override;
 	unsigned int Width()const;
 	unsigned int Height()const;
 	virtual std::shared_ptr<FPUResource> ColorResource(const UINT index)override;
@@ -58,10 +59,9 @@ public:
 	virtual VIEWPORT Viewport()const override;
 	virtual TAGRECT ScissorRect()const override;
 	virtual void CreateRTTexture(const UINT32 index)override;
-	virtual void AddRTResource(RTType rtType, ID3D12DescriptorHeap* heap)override;
 	virtual void BuildRTBuffer(
-		SIZE_T hCpuSrv,
-		SIZE_T hGpuSrv,
+		SIZE_T hCpuHandlePtr,
+		SIZE_T hGpuHandlePtr,
 		RTType rtType)override;
 	virtual RTDesc GetRTDesc(RTType rtType, int32_t index = -1)override;
 
@@ -80,8 +80,8 @@ private:
 	UINT mHeight = 0;
 	DXGI_FORMAT mFormat = DXGI_FORMAT_R24G8_TYPELESS;
 
-	std::vector<RTDesc> rtDesc;
-	std::vector<Microsoft::WRL::ComPtr<ID3D12Resource>> mRenderTargetColorBuffer;
+	RTDesc rtDesc;
+	Microsoft::WRL::ComPtr<ID3D12Resource> mRenderTargetColorBuffer = nullptr;
 
 	RTDesc rtDSDesc;
 	Microsoft::WRL::ComPtr<ID3D12Resource> mRenderTargetDepthStencil = nullptr;

@@ -150,9 +150,6 @@
     <ClInclude Include="FLightDesc.h">
       <Filter>Header Files\Resource</Filter>
     </ClInclude>
-    <ClInclude Include="FHeapManager.h">
-      <Filter>Header Files\Render</Filter>
-    </ClInclude>
     <ClInclude Include="FPUResource.h">
       <Filter>Header Files\Render</Filter>
     </ClInclude>
@@ -164,6 +161,9 @@
     </ClInclude>
     <ClInclude Include="FShader.h">
       <Filter>Header Files\Render</Filter>
+    </ClInclude>
+    <ClInclude Include="FHeapManager.h">
+      <Filter>Header Files\Render\DX</Filter>
     </ClInclude>
   </ItemGroup>
   <ItemGroup>
