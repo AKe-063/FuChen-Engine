@@ -35,21 +35,29 @@ void ForwardRenderer::Render()
 {
 	rhi->BeginRender("geo_pso");
 	//Draw ShadowMap
-	rhi->TransShadowMapResourBarrier(mShadowMap->DSResource().get(), 1, RESOURCE_STATE_GENERIC_READ, RESOURCE_STATE_DEPTH_WRITE);
+	rhi->TransResourBarrier(mShadowMap->DSResource().get(), 1, RESOURCE_STATE_GENERIC_READ, RESOURCE_STATE_DEPTH_WRITE);
 	rhi->SetPipelineState("shadow_pso");
 	rhi->SetRenderTargets(0, 0, false, mShadowMap->Dsv());
 	rhi->DrawShadow(fRenderScene, mShadowMap);
 
 	//TransBarrier
-	rhi->TransShadowMapResourBarrier(mShadowMap->DSResource().get(), 1, RESOURCE_STATE_DEPTH_WRITE, RESOURCE_STATE_GENERIC_READ);
+	rhi->TransResourBarrier(mShadowMap->DSResource().get(), 1, RESOURCE_STATE_DEPTH_WRITE, RESOURCE_STATE_GENERIC_READ);
 	rhi->TransCurrentBackBufferResourBarrier(1, RESOURCE_STATE_PRESENT, RESOURCE_STATE_RENDER_TARGET);
+	rhi->TransResourBarrier(mBloomRT->ColorResource(0).get(), 1, RESOURCE_STATE_PRESENT, RESOURCE_STATE_RENDER_TARGET);
+	rhi->TransResourBarrier(mBloomRT->DSResource().get(), 1, RESOURCE_STATE_GENERIC_READ, RESOURCE_STATE_DEPTH_WRITE);
+
+	//Draw to HDRRT
+	rhi->BeginBaseDraw();
+	rhi->SetRenderTargets(1, mBloomRT->Srv(0), false, mBloomRT->Dsv());
+	rhi->DrawBloom(fRenderScene, mShadowMap, mBloomRT);
+	rhi->TransResourBarrier(mBloomRT->ColorResource(0).get(), 1, RESOURCE_STATE_RENDER_TARGET, RESOURCE_STATE_PRESENT);
+	rhi->TransResourBarrier(mBloomRT->DSResource().get(), 1, RESOURCE_STATE_DEPTH_WRITE, RESOURCE_STATE_GENERIC_READ);
 
 	//Draw real object
-	rhi->BeginBaseDraw();
 	rhi->SetRenderTargets(1, rhi->GetCurrentBackBufferViewHandle(), false, rhi->GetDepthStencilViewHandle());
-	rhi->DrawPrimitives(fRenderScene, mShadowMap);
+	rhi->DrawPrimitives(fRenderScene, mShadowMap, mBloomRT);
 	rhi->TransCurrentBackBufferResourBarrier(1, RESOURCE_STATE_RENDER_TARGET, RESOURCE_STATE_PRESENT);
-
+	
 	rhi->EndDraw();
 }
 
@@ -57,6 +65,7 @@ void ForwardRenderer::BuildDirtyPrimitive(FScene& fScene)
 {
 	rhi->BeginTransSceneDataToRenderScene("geo_pso");
 	rhi->BuildShadowRenderTex(mShadowMap);
+	rhi->BuildPPRT(mBloomRT);
 	std::unordered_map<std::string, FActor> allActorMap = fScene.GetAllActor();
 	for (std::string renderActorName : fScene.GetDirtyActor())
 	{

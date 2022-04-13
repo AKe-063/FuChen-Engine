@@ -5,7 +5,8 @@
 enum class PSO_TYPE
 {
 	GLOBAL = 0,
-	SHADOWMAP = 1
+	SHADOWMAP = 1,
+	BLOOM = 2
 };
 
 struct PipelineState
@@ -37,7 +38,7 @@ public:
 	std::unordered_map<std::string, PipelineState> psoMap;
 
 protected:
-	void BuildGlobalRenderPso(FShader& fShader);
+	void BuildGlobalRenderPso(FShader& fShader, const std::string& name);
 	void BuildShadowMapPso(FShader& fShader);
 
 private:

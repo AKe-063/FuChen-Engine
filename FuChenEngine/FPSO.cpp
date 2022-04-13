@@ -27,12 +27,17 @@ void FPsoManager::CreatePso(FShader& fShader, PSO_TYPE psoType)
 	{
 	case PSO_TYPE::GLOBAL:
 	{
-		BuildGlobalRenderPso(fShader);
+		BuildGlobalRenderPso(fShader, "geo_pso");
 		break;
 	}
 	case PSO_TYPE::SHADOWMAP:
 	{
 		BuildShadowMapPso(fShader);
+		break;
+	}
+	case PSO_TYPE::BLOOM:
+	{
+		BuildGlobalRenderPso(fShader, "bloom_pso");
 		break;
 	}
 	default:
@@ -43,7 +48,7 @@ void FPsoManager::CreatePso(FShader& fShader, PSO_TYPE psoType)
 	}
 }
 
-void FPsoManager::BuildGlobalRenderPso(FShader& fShader)
+void FPsoManager::BuildGlobalRenderPso(FShader& fShader, const std::string& name)
 {
 	std::vector<D3D12_INPUT_ELEMENT_DESC> inputLayoutVec;
 	PipelineState pipelineState;
@@ -61,8 +66,8 @@ void FPsoManager::BuildGlobalRenderPso(FShader& fShader)
 		dxInputLayout.InstanceDataStepRate = inputLayout.InstanceDataStepRate;
 		inputLayoutVec.push_back(dxInputLayout);
 	}
-	mInputLayout.insert({ "geo_pso", inputLayoutVec });
-	psoDesc.InputLayout = { mInputLayout["geo_pso"].data(), (UINT)mInputLayout["geo_pso"].size()};
+	mInputLayout.insert({ name, inputLayoutVec });
+	psoDesc.InputLayout = { mInputLayout[name].data(), (UINT)mInputLayout[name].size()};
 	psoDesc.VS =
 	{
 		reinterpret_cast<BYTE*>(fShader.compileResult.mvsByteCode->GetBufferPointer()),
@@ -84,7 +89,7 @@ void FPsoManager::BuildGlobalRenderPso(FShader& fShader)
 	psoDesc.DSVFormat = DXGI_FORMAT_D24_UNORM_S8_UINT;
 
 	pipelineState.psoDesc = psoDesc;
-	psoMap["geo_pso"] = pipelineState;
+	psoMap[name] = pipelineState;
 }
 
 void FPsoManager::BuildShadowMapPso(FShader& fShader)

@@ -41,7 +41,8 @@ public:
 	virtual void BuildPPRT(std::shared_ptr<FRenderTarget> mPostProcess)override;
 	virtual void CreateRenderTarget(std::shared_ptr<FRenderTarget>& mShadowMap, float width, float height)override;
 	virtual void DrawShadow(FRenderScene& fRenderScene, std::shared_ptr<FRenderTarget> mShadowMap)override;
-	virtual void DrawPrimitives(FRenderScene& fRenderScene, std::shared_ptr<FRenderTarget> mShadowMap)override;
+	virtual void DrawPrimitives(FRenderScene& fRenderScene, std::shared_ptr<FRenderTarget> mShadowMap, std::shared_ptr<FRenderTarget> mPPMap)override;
+	virtual void DrawBloom(FRenderScene& fRenderScene, std::shared_ptr<FRenderTarget> mShadowMap, std::shared_ptr<FRenderTarget> mBloom)override;
 	virtual void EndDraw()override;
 	virtual void EndTransScene()override;
 	virtual void SetPipelineState(std::string pso)override;
@@ -53,14 +54,14 @@ public:
 	virtual unsigned __int64 GetDepthStencilViewHandle()override;
 	virtual void TransActorToRenderPrimitive(FActor& actor, FRenderScene& fRenderScene)override;
 	virtual void TransCurrentBackBufferResourBarrier(unsigned int numBarriers, RESOURCE_STATES currentState, RESOURCE_STATES targetState)override;
-	virtual void TransShadowMapResourBarrier(FPUResource* resource, unsigned int numBarriers, RESOURCE_STATES currentState, RESOURCE_STATES targetState)override;
+	virtual void TransResourBarrier(FPUResource* resource, unsigned int numBarriers, RESOURCE_STATES currentState, RESOURCE_STATES targetState)override;
 	virtual void TransTextureToRenderResource(FActor& actor, FTexture* texture, FRenderScene& fRenderScene)override;
 	virtual void UpdateVP()override;
 	virtual void UpdateM(FPrimitive& fPrimitive)override;
 	virtual void UploadMaterialData()override;
 
 protected:
-	void DrawFPrimitive(FPrimitive& fPrimitive, std::shared_ptr<FRenderTarget> mShadowMap = nullptr);
+	void DrawFPrimitive(FPrimitive& fPrimitive, std::shared_ptr<FRenderTarget> mShadowMap = nullptr, std::shared_ptr<FRenderTarget> mPPMap = nullptr);
 	void RSSetViewPorts(unsigned int numViewports, const VIEWPORT* scrernViewport);
 	void RESetScissorRects(unsigned int numRects, const TAGRECT* rect);
 	void ClearBackBuffer(const float* color);

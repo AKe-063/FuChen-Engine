@@ -29,7 +29,7 @@ public:
 	virtual SIZE_T Dsv()const = 0;
 	virtual std::shared_ptr<FPUResource> ColorResource(const UINT index) = 0;
 	virtual std::shared_ptr<FPUResource> DSResource() = 0;
-	virtual void CreateRTTexture(const UINT32 index) = 0;
+	virtual void CreateRTTexture(const UINT32 index, RTType rtType) = 0;
 	virtual void BuildRTBuffer(
 		SIZE_T hCpuHandlePtr,
 		SIZE_T hGpuHandlePtr,
@@ -58,7 +58,7 @@ public:
 
 	virtual VIEWPORT Viewport()const override;
 	virtual TAGRECT ScissorRect()const override;
-	virtual void CreateRTTexture(const UINT32 index)override;
+	virtual void CreateRTTexture(const UINT32 index, RTType rtType)override;
 	virtual void BuildRTBuffer(
 		SIZE_T hCpuHandlePtr,
 		SIZE_T hGpuHandlePtr,

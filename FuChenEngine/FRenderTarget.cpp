@@ -77,11 +77,27 @@ TAGRECT DXRenderTarget::ScissorRect()const
 	return tagRect;
 }
 
-void DXRenderTarget::CreateRTTexture(const UINT32 index)
+void DXRenderTarget::CreateRTTexture(const UINT32 index, RTType rtType)
 {
 #if _DX_PLATFORM
-	rtDSDesc.rtTexture = std::make_shared<DXRenderTexPrimitive>();
-	rtDSDesc.rtTexture->SetSrvIndex(index);
+	switch (rtType)
+	{
+	case RTColorBuffer:
+	{
+		rtDesc.rtTexture = std::make_shared<DXRenderTexPrimitive>();
+		rtDesc.rtTexture->SetSrvIndex(index);
+		break;
+	}
+	case RTDepthStencilBuffer:
+	{
+		rtDSDesc.rtTexture = std::make_shared<DXRenderTexPrimitive>();
+		rtDSDesc.rtTexture->SetSrvIndex(index);
+		break;
+	}
+	default:
+		assert(0);
+		break;
+	}
 #endif
 }
 
@@ -118,8 +134,32 @@ void DXRenderTarget::BuildRTBuffer(RTDesc& rtDesc)
 	{
 	case RTColorBuffer:
 	{
+		D3D12_RESOURCE_DESC texDesc;
+		ZeroMemory(&texDesc, sizeof(D3D12_RESOURCE_DESC));
+		texDesc.Dimension = D3D12_RESOURCE_DIMENSION_TEXTURE2D;
+		texDesc.Alignment = 0;
+		texDesc.Width = mWidth;
+		texDesc.Height = mHeight;
+		texDesc.DepthOrArraySize = 1;
+		texDesc.MipLevels = 1;
+		texDesc.Format = DXGI_FORMAT_R16G16B16A16_FLOAT;
+		texDesc.SampleDesc.Count = 1;
+		texDesc.SampleDesc.Quality = 0;
+		texDesc.Layout = D3D12_TEXTURE_LAYOUT_UNKNOWN;
+		texDesc.Flags = D3D12_RESOURCE_FLAG_ALLOW_RENDER_TARGET;
+
+		float normalClearColor[] = { 1.0f, 1.0f, 1.0f, 1.0f };
+		CD3DX12_CLEAR_VALUE optClear(DXGI_FORMAT_R16G16B16A16_FLOAT, normalClearColor);
+		ThrowIfFailed(md3dDevice->CreateCommittedResource(
+			&CD3DX12_HEAP_PROPERTIES(D3D12_HEAP_TYPE_DEFAULT),
+			D3D12_HEAP_FLAG_NONE,
+			&texDesc,
+			D3D12_RESOURCE_STATE_COMMON,
+			&optClear,
+			IID_PPV_ARGS(&mRenderTargetColorBuffer)));
+
 		D3D12_RENDER_TARGET_VIEW_DESC rtvDesc;
-		rtvDesc.Format = DXGI_FORMAT_R32G32B32A32_FLOAT;
+		rtvDesc.Format = DXGI_FORMAT_R16G16B16A16_FLOAT;
 		rtvDesc.ViewDimension = D3D12_RTV_DIMENSION_TEXTURE2D;
 		rtvDesc.Texture2D.MipSlice = 0;
 		rtvDesc.Texture2D.PlaneSlice = 0;
