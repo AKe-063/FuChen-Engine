@@ -15,6 +15,11 @@ std::string FMaterial::GetPSO()
 	return fPSO;
 }
 
+std::wstring FMaterial::GetShader()
+{
+	return mShaderName;
+}
+
 void FMaterial::SetShader(std::wstring shaderName)
 {
 	mShaderName = shaderName;

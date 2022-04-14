@@ -16,6 +16,15 @@ public:
 	float w;
 };
 
+struct FVector4Int
+{
+public:
+	int x;
+	int y;
+	int z;
+	int w;
+};
+
 struct FVector
 {
 public:
@@ -40,6 +49,14 @@ public:
 		addResult.z = vector.z * z;
 		return addResult;
 	}
+};
+
+
+struct FVector2DInt
+{
+public:
+	int x;
+	int y;
 };
 
 struct FVector2D

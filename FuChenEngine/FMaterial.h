@@ -9,10 +9,11 @@ public:
 	~FMaterial();
 
 	std::string GetPSO();
+	std::wstring GetShader();
 
 	void SetShader(std::wstring shaderName);
 	void SetPSO(std::string pso);
-
+	
 private:
 	std::unordered_map<std::string, FTexture> fTexex;
 	std::string fPSO;

@@ -3,7 +3,6 @@
 Texture2D gDiffuseMap : register(t0);
 Texture2D gNormalMap : register(t1);
 Texture2D gShadowMap : register(t2);
-Texture2D gBloomMap : register(t3);
 
 SamplerState gsamPointWrap        : register(s0);
 /*SamplerState gsamPointClamp       : register(s1);
@@ -141,7 +140,7 @@ float3 BlinnPhong(
 }
 
 float3 ComputeDirectionalLight(
-	float3 LightDirection, float3 LightStrength,
+	float3 LightDirection, float LightStrength,
 	float4 gDiffuseAlbedo, float3 gFresnelR0, float gRoughness,
 	float3 normal, float3 toEye)
 {
@@ -216,9 +215,9 @@ float4 PS(VertexOut pin) : SV_Target
 	float4 mColor = diffuseAlbedo;
 
 	float4 directLight = float4(ComputeDirectionalLight(
-		gLightDir, gLightDensity,
+		gLightDir, gLightDensity + 1.0f,
 		mColor, gFresnelR0, gRoughness,
-		normalize(bumpedNormalW), normalize(gCameraLoc - pin.PosW)),1.0f);
+		normalize(bumpedNormalW), normalize(gCameraLoc.xyz - pin.PosW)),1.0f);
 	float4 Ambient = mColor * 0.03;
 	Ambient = Ambient + (shadow + 0.1) * directLight;
 	Ambient = pow(Ambient, 1 / 2.2f);

@@ -161,8 +161,10 @@ public:
 	~FShader();
 
 	void SetShaderName(std::wstring name);
+	void SetShaderLayout(std::vector<INPUT_ELEMENT_DESC> layout);
 	std::vector<INPUT_ELEMENT_DESC> GetLayout();
 	ShaderCompileResult compileResult;
+	std::wstring RootSignature;
 private:
 	std::wstring name;
 	std::vector<INPUT_ELEMENT_DESC> inputLayout;

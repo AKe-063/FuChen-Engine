@@ -38,11 +38,14 @@ public:
 	virtual void BeginBaseDraw()override;
 	virtual void BeginTransSceneDataToRenderScene(std::string pso)override;
 	virtual void BuildShadowRenderTex(std::shared_ptr<FRenderTarget> mShadowMap)override;
-	virtual void BuildPPRT(std::shared_ptr<FRenderTarget> mPostProcess)override;
+	virtual void BuildPPRT(std::shared_ptr<FRenderTarget> mPostProcess, RESOURCE_FORMAT format)override;
 	virtual void CreateRenderTarget(std::shared_ptr<FRenderTarget>& mShadowMap, float width, float height)override;
 	virtual void DrawShadow(FRenderScene& fRenderScene, std::shared_ptr<FRenderTarget> mShadowMap)override;
 	virtual void DrawPrimitives(FRenderScene& fRenderScene, std::shared_ptr<FRenderTarget> mShadowMap, std::shared_ptr<FRenderTarget> mPPMap)override;
-	virtual void DrawBloom(FRenderScene& fRenderScene, std::shared_ptr<FRenderTarget> mShadowMap, std::shared_ptr<FRenderTarget> mBloom)override;
+	virtual void DrawToHDR(FRenderScene& fRenderScene, std::shared_ptr<FRenderTarget> mShadowMap, std::shared_ptr<FRenderTarget> mBloom)override;
+	virtual void DrawBloomDown(const std::string& psoName, std::shared_ptr<FRenderTarget> mPPMap = nullptr, std::shared_ptr<FRenderTarget> mRT = nullptr)override;
+	virtual void DrawBloomUp(const std::string& psoName, std::shared_ptr<FRenderTarget> mResourceRTUp = nullptr, std::shared_ptr<FRenderTarget> mRmResourceRTDown = nullptr, std::shared_ptr<FRenderTarget> mRT = nullptr)override;
+	virtual void ToneMapps(const std::string& psoName, std::shared_ptr<FRenderTarget> mSceneColor = nullptr, std::shared_ptr<FRenderTarget> mSunmergeps = nullptr)override;
 	virtual void EndDraw()override;
 	virtual void EndTransScene()override;
 	virtual void SetPipelineState(std::string pso)override;
@@ -66,8 +69,6 @@ protected:
 	void RESetScissorRects(unsigned int numRects, const TAGRECT* rect);
 	void ClearBackBuffer(const float* color);
 	void ClearDepthBuffer(unsigned __int64 handle);
-	void SetGraphicsRootSignature();
-	void SetShadowSignature();
 	void ResetCmdListAlloc();
 	void ResetCommandList(std::string pso);
 	void CloseCommandList();
@@ -90,6 +91,8 @@ protected:
 	D3D12_CPU_DESCRIPTOR_HANDLE CurrentBackBufferView()const;
 	D3D12_CPU_DESCRIPTOR_HANDLE DepthStencilView()const;
 
+	void InitTriangle();
+
 private:
 	std::string currentPso;
 	std::unique_ptr<FHeapManager> mHeapManager;
@@ -101,8 +104,7 @@ private:
 	std::vector<D3D12_INPUT_ELEMENT_DESC> mInputLayout;
 	std::unordered_map<std::string, ComPtr<ID3D12PipelineState>> mPSOs;
 	std::unique_ptr<FPsoManager> mFPsoManage;
-	ComPtr<ID3D12RootSignature> mRootSignature = nullptr;
-	ComPtr<ID3D12RootSignature> mShadowSignature = nullptr;
+	std::unordered_map<std::wstring, ComPtr<ID3D12RootSignature>> mRootSignatures;
 
 	// Set true to use 4X MSAA (?.1.8).  The default is false.
 	bool      m4xMsaaState = false;    // 4X MSAA enabled
@@ -134,4 +136,6 @@ private:
 	UINT mCbvSrvUavDescriptorSize = 0;
 	UINT64 mCurrentFence = 0;
 	Window* mWindow;
+
+	MeshGeometry triangle;
 };

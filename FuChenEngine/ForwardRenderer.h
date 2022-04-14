@@ -20,6 +20,9 @@ private:
 	RHI* rhi;
 	FRenderScene fRenderScene;
 	std::shared_ptr<FRenderTarget> mShadowMap;
-	std::shared_ptr<FRenderTarget> mBloomRT;
+	std::shared_ptr<FRenderTarget> mSceneColorRT;
+	std::vector<std::shared_ptr<FRenderTarget>> mBloomDownRT;
+	std::vector<std::shared_ptr<FRenderTarget>> mBloomUpRT;
+	std::shared_ptr<FRenderTarget> mBloomSunMergepsRT;
 	std::shared_ptr<FShaderManager> fShaderManager;
 };

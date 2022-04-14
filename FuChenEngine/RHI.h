@@ -31,11 +31,14 @@ public:
 	virtual void BeginTransSceneDataToRenderScene(std::string pso) = 0;
 	virtual void BeginBaseDraw() = 0;
 	virtual void BuildShadowRenderTex(std::shared_ptr<FRenderTarget> mShadowMap) = 0;
-	virtual void BuildPPRT(std::shared_ptr<FRenderTarget> mPostProcess) = 0;
+	virtual void BuildPPRT(std::shared_ptr<FRenderTarget> mPostProcess, RESOURCE_FORMAT format) = 0;
 	virtual void CreateRenderTarget(std::shared_ptr<FRenderTarget>& mShadowMap, float width, float height) = 0;
 	virtual void DrawShadow(FRenderScene& fRenderScene, std::shared_ptr<FRenderTarget> mShadowMap) = 0;
 	virtual void DrawPrimitives(FRenderScene& fRenderScene, std::shared_ptr<FRenderTarget> mShadowMap, std::shared_ptr<FRenderTarget> mPPMap) = 0;
-	virtual void DrawBloom(FRenderScene& fRenderScene, std::shared_ptr<FRenderTarget> mShadowMap, std::shared_ptr<FRenderTarget> mBloom) = 0;
+	virtual void DrawToHDR(FRenderScene& fRenderScene, std::shared_ptr<FRenderTarget> mShadowMap, std::shared_ptr<FRenderTarget> mBloom) = 0;
+	virtual void DrawBloomDown(const std::string& psoName, std::shared_ptr<FRenderTarget> mPPMap = nullptr, std::shared_ptr<FRenderTarget> mRT = nullptr) = 0;
+	virtual void DrawBloomUp(const std::string& psoName, std::shared_ptr<FRenderTarget> mResourceRTUp = nullptr, std::shared_ptr<FRenderTarget> mRmResourceRTDown = nullptr, std::shared_ptr<FRenderTarget> mRT = nullptr) = 0;
+	virtual void ToneMapps(const std::string& psoName, std::shared_ptr<FRenderTarget> mSceneColor = nullptr, std::shared_ptr<FRenderTarget> mSunmergeps = nullptr) = 0;
 	virtual void EndDraw() = 0;
 	virtual void EndTransScene() = 0;
 	virtual void SetRenderTargets(unsigned int numRenderTarget, unsigned __int64 renderTargetDescriptor, bool RTsSingleHandleToDescriptorRange, unsigned __int64 DepthDescriptor) {};

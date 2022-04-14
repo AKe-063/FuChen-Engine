@@ -6,7 +6,12 @@ enum class PSO_TYPE
 {
 	GLOBAL = 0,
 	SHADOWMAP = 1,
-	BLOOM = 2
+	HDR_GLOBAL = 2,
+	BLOOM_SET_UP = 3,
+	BLOOM_DOWN = 4,
+	BLOOM_UP = 5,
+	BLOOM_SUNMERGEPS = 6,
+	TONEMAPPS = 7
 };
 
 struct PipelineState
@@ -42,6 +47,5 @@ protected:
 	void BuildShadowMapPso(FShader& fShader);
 
 private:
-	//std::unordered_map<std::string, PipelineState> psoMap;
 	std::unordered_map <std::string, std::vector<D3D12_INPUT_ELEMENT_DESC>> mInputLayout;
 };

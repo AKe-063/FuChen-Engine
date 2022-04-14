@@ -21,6 +21,11 @@ void FShader::SetShaderName(std::wstring name)
 	this->name = name;
 }
 
+void FShader::SetShaderLayout(std::vector<INPUT_ELEMENT_DESC> layout)
+{
+	inputLayout = layout;
+}
+
 std::vector<INPUT_ELEMENT_DESC> FShader::GetLayout()
 {
 	return inputLayout;

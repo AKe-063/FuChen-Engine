@@ -45,7 +45,7 @@ std::shared_ptr<FPUResource> DXRenderTarget::DSResource()
 	return fResource;
 }
 
-SIZE_T DXRenderTarget::Srv(const UINT index)const
+SIZE_T DXRenderTarget::Rtv(const UINT index) const
 {
 	return rtDesc.CPUHandlePtr;
 }
@@ -101,7 +101,7 @@ void DXRenderTarget::CreateRTTexture(const UINT32 index, RTType rtType)
 #endif
 }
 
-void DXRenderTarget::BuildRTBuffer(SIZE_T hCpuHandlePtr, SIZE_T hGpuHandlePtr, RTType rtType)
+void DXRenderTarget::BuildRTBuffer(SIZE_T hCpuHandlePtr, SIZE_T hGpuHandlePtr, RTType rtType ,RESOURCE_FORMAT format)
 {
 	RTDesc mRTDesc;
 	switch (rtType)
@@ -112,7 +112,7 @@ void DXRenderTarget::BuildRTBuffer(SIZE_T hCpuHandlePtr, SIZE_T hGpuHandlePtr, R
 		mRTDesc.indexInColorBufferVec = -1;
 		mRTDesc.rtType = rtType;
 		rtDesc = mRTDesc;
-		BuildRTBuffer(rtDesc);
+		BuildRTBuffer(rtDesc, format);
 		break;
 	case RTDepthStencilBuffer:
 		mRTDesc.CPUHandlePtr = hCpuHandlePtr;
@@ -120,7 +120,7 @@ void DXRenderTarget::BuildRTBuffer(SIZE_T hCpuHandlePtr, SIZE_T hGpuHandlePtr, R
 		mRTDesc.indexInColorBufferVec = -1;
 		mRTDesc.rtType = rtType;
 		rtDSDesc = mRTDesc;
-		BuildRTBuffer(rtDSDesc);
+		BuildRTBuffer(rtDSDesc, format);
 		break;
 	default:
 		assert(0);
@@ -128,7 +128,7 @@ void DXRenderTarget::BuildRTBuffer(SIZE_T hCpuHandlePtr, SIZE_T hGpuHandlePtr, R
 	}
 }
 
-void DXRenderTarget::BuildRTBuffer(RTDesc& rtDesc)
+void DXRenderTarget::BuildRTBuffer(RTDesc& rtDesc, RESOURCE_FORMAT format)
 {
 	switch (rtDesc.rtType)
 	{
@@ -142,14 +142,14 @@ void DXRenderTarget::BuildRTBuffer(RTDesc& rtDesc)
 		texDesc.Height = mHeight;
 		texDesc.DepthOrArraySize = 1;
 		texDesc.MipLevels = 1;
-		texDesc.Format = DXGI_FORMAT_R16G16B16A16_FLOAT;
+		texDesc.Format = DXGI_FORMAT(format);//DXGI_FORMAT_R16G16B16A16_FLOAT;
 		texDesc.SampleDesc.Count = 1;
 		texDesc.SampleDesc.Quality = 0;
 		texDesc.Layout = D3D12_TEXTURE_LAYOUT_UNKNOWN;
 		texDesc.Flags = D3D12_RESOURCE_FLAG_ALLOW_RENDER_TARGET;
 
 		float normalClearColor[] = { 1.0f, 1.0f, 1.0f, 1.0f };
-		CD3DX12_CLEAR_VALUE optClear(DXGI_FORMAT_R16G16B16A16_FLOAT, normalClearColor);
+		CD3DX12_CLEAR_VALUE optClear(DXGI_FORMAT(format), normalClearColor);
 		ThrowIfFailed(md3dDevice->CreateCommittedResource(
 			&CD3DX12_HEAP_PROPERTIES(D3D12_HEAP_TYPE_DEFAULT),
 			D3D12_HEAP_FLAG_NONE,
@@ -159,7 +159,7 @@ void DXRenderTarget::BuildRTBuffer(RTDesc& rtDesc)
 			IID_PPV_ARGS(&mRenderTargetColorBuffer)));
 
 		D3D12_RENDER_TARGET_VIEW_DESC rtvDesc;
-		rtvDesc.Format = DXGI_FORMAT_R16G16B16A16_FLOAT;
+		rtvDesc.Format = DXGI_FORMAT(format);//DXGI_FORMAT_R16G16B16A16_FLOAT;
 		rtvDesc.ViewDimension = D3D12_RTV_DIMENSION_TEXTURE2D;
 		rtvDesc.Texture2D.MipSlice = 0;
 		rtvDesc.Texture2D.PlaneSlice = 0;

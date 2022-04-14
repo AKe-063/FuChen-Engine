@@ -35,9 +35,34 @@ void FPsoManager::CreatePso(FShader& fShader, PSO_TYPE psoType)
 		BuildShadowMapPso(fShader);
 		break;
 	}
-	case PSO_TYPE::BLOOM:
+	case PSO_TYPE::HDR_GLOBAL:
+	{
+		BuildGlobalRenderPso(fShader, "hdr_geo_pso");
+		break;
+	}
+	case PSO_TYPE::BLOOM_SET_UP:
 	{
 		BuildGlobalRenderPso(fShader, "bloom_pso");
+		break;
+	}
+	case PSO_TYPE::BLOOM_DOWN:
+	{
+		BuildGlobalRenderPso(fShader, "bloom_down_pso");
+		break;
+	}
+	case PSO_TYPE::BLOOM_UP:
+	{
+		BuildGlobalRenderPso(fShader, "bloom_up_pso");
+		break;
+	}
+	case PSO_TYPE::BLOOM_SUNMERGEPS:
+	{
+		BuildGlobalRenderPso(fShader, "bloom_sunmergeps_pso");
+		break;
+	}
+	case PSO_TYPE::TONEMAPPS:
+	{
+		BuildGlobalRenderPso(fShader, "tonemapps_pso");
 		break;
 	}
 	default:
