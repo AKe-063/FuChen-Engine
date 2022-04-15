@@ -91,24 +91,32 @@ float4 PS(VertexOut pin) : SV_Target
 	float DeltaV = 1.0f / RenderTargetSize[1];
 	float2 DeltaUV = float2(DeltaU, DeltaV);
 
-	float Start = 2.0f / 6.0f;
-	float4 Color0 = gBloomDown.Sample(gBloomInputSampler, Tex + DeltaUV * ScaleUV * Circle(Start, 6.0, 0.0f));
-	float4 Color1 = gBloomDown.Sample(gBloomInputSampler, Tex + DeltaUV * ScaleUV * Circle(Start, 6.0, 1.0f));
-	float4 Color2 = gBloomDown.Sample(gBloomInputSampler, Tex + DeltaUV * ScaleUV * Circle(Start, 6.0, 2.0f));
-	float4 Color3 = gBloomDown.Sample(gBloomInputSampler, Tex + DeltaUV * ScaleUV * Circle(Start, 6.0, 3.0f));
-	float4 Color4 = gBloomDown.Sample(gBloomInputSampler, Tex + DeltaUV * ScaleUV * Circle(Start, 6.0, 4.0f));
-	float4 Color5 = gBloomDown.Sample(gBloomInputSampler, Tex + DeltaUV * ScaleUV * Circle(Start, 6.0, 5.0f));
-	float4 Color6 = gBloomDown.Sample(gBloomInputSampler, Tex);
+	float TotalColors = 6.0f;
+	float Start = 2.0f / TotalColors;
+	float4 Colors[6];
+	for (int i = 0; i < TotalColors; i++)
+	{
+		Colors[i] = gBloomDown.Sample(gBloomInputSampler, Tex + DeltaUV * ScaleUV * Circle(Start, TotalColors, (float)i));
+	}
 
-	float ScaleColor1 = 1.0f / 7.0f;
-	float ScaleColor2 = 1.0f / 7.0f;
-	float4 BloomColor = Color6 * ScaleColor1 +
+	float4 Color = gBloomDown.Sample(gBloomInputSampler, Tex);
+
+	float ScaleColor1 = 1.0f / (TotalColors + 1);
+	float ScaleColor2 = 1.0f / (TotalColors + 1);
+	float4 BloomColor = { 0,0,0,0 };
+	for (int j = 0; j < TotalColors; j++)
+	{
+		BloomColor = BloomColor + Colors[j] * ScaleColor2;
+	}
+	//BloomColor = BloomColor + Colors[TotalColors - 2] * ScaleColor2 * rcp(ScaleColor1 * 1.0f + ScaleColor2 * 6.0f);
+	BloomColor = BloomColor + Color * ScaleColor1;
+	/*float4 BloomColor = Color6 * ScaleColor1 +
 		Color0 * ScaleColor2 +
 		Color1 * ScaleColor2 +
 		Color2 * ScaleColor2 +
 		Color3 * ScaleColor2 +
 		Color4 * ScaleColor2 +
-		Color4 * ScaleColor2 * rcp(ScaleColor1 * 1.0f + ScaleColor2 * 6.0f);
+		Color4 * ScaleColor2 * rcp(ScaleColor1 * 1.0f + ScaleColor2 * 6.0f);*/
 
 	OutColor.rgb = gBloomUp.Sample(gBloomInputSampler, Tex).rgb;
 

@@ -155,8 +155,6 @@ public:
 	virtual unsigned int Height()const = 0;
 	virtual VIEWPORT Viewport()const = 0;
 	virtual TAGRECT ScissorRect()const = 0;
-	virtual SIZE_T Rtv(const UINT index)const = 0;
-	virtual SIZE_T Dsv()const = 0;
 	virtual std::shared_ptr<FPUResource> ColorResource(const UINT index) = 0;
 	virtual std::shared_ptr<FPUResource> DSResource() = 0;
 	virtual void CreateRTTexture(const UINT32 index, RTType rtType) = 0;
@@ -167,7 +165,14 @@ public:
 		RESOURCE_FORMAT format = RESOURCE_FORMAT::FORMAT_UNKNOWN) = 0;
 	virtual RTDesc GetRTDesc(RTType rtType, int32_t index = -1) = 0;
 
+#if _DX_PLATFORM
+	virtual SIZE_T Rtv(const UINT index)const = 0;
+	virtual SIZE_T Dsv()const = 0;
+#endif
+
 	bool bInit = false;
+	UINT mWidth = 0;
+	UINT mHeight = 0;
 };
 
 class DXRenderTarget : public FRenderTarget
@@ -208,8 +213,6 @@ private:
 	D3D12_VIEWPORT mViewport;
 	D3D12_RECT mScissorRect;
 
-	UINT mWidth = 0;
-	UINT mHeight = 0;
 	DXGI_FORMAT mFormat = DXGI_FORMAT_R24G8_TYPELESS;
 
 	RTDesc rtDesc;

@@ -33,7 +33,7 @@ VertexOut VS(VertexIn vin)
 float4 PS(VertexOut pin) : SV_Target
 {
 
-	float BloomDownScale = 1.3f;
+	float BloomDownScale = 1.35f;
 
 	int X = floor(pin.PosH.x);
 	int Y = floor(pin.PosH.y);
@@ -51,9 +51,9 @@ float4 PS(VertexOut pin) : SV_Target
 
 	float2 DeltaUV = float2(DeltaU, DeltaV);
 
-	float DoubleRadias = 14.0f;
+	float DoubleRadias = 8.0f;
 	float StartRaduas = 2.0f / DoubleRadias;
-	float4 Colors[14];
+	float4 Colors[8];
 	float4 Color = gBloomInput.Sample(gBloomInputSampler, Tex);
 	for (int i = 0; i < DoubleRadias; i++)
 	{

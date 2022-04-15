@@ -52,7 +52,7 @@ float4 PS(VertexOut pin) : SV_Target
 	half3 LinearColor = SceneColor.rgb + BloomColor.rgb;
 
 	float4 OutColor = float4(0.0f, 0.0f, 0.0f, 0.0f);
-	OutColor.rgb = ACESToneMapping(LinearColor, 1.0f);
+	OutColor.rgb = ACESToneMapping(LinearColor, 0.75f);
 	OutColor.a = SceneColor.a;
 
 	return OutColor;

@@ -38,7 +38,7 @@ float4 PS(VertexOut pin) : SV_Target
 	float BloomWeightScalar = 1.0f / RenderTargetSize[2];
 	float BloomWeightScalar1 = 1.0f / RenderTargetSize[3];
 
-	float BloomUpScale = 0.7f;
+	float BloomUpScale = 1.0f;
 
 	int X = floor(pin.PosH.x);
 	int Y = floor(pin.PosH.y);
@@ -51,10 +51,10 @@ float4 PS(VertexOut pin) : SV_Target
 	float DeltaV = 1.0f / RenderTargetSize[1];
 	float2 DeltaUV = float2(DeltaU, DeltaV);
 
-	float StartDinominator = 14.0;
+	float StartDinominator = 12.0;
 	float Start = 2.0 / StartDinominator;
-	float4 ColorsUp[14];
-	float4 ColorsDown[14];
+	float4 ColorsUp[12];
+	float4 ColorsDown[12];
 	float4 ColorUpTotal;
 	float4 ColorDownTotal;
 	for (int i = 0; i < StartDinominator; i++)
