@@ -521,7 +521,7 @@ void DX12RHI::BuildConstantBuffer()
 	md3dDevice->CreateConstantBufferView(&cbvCameraDesc, handle);
 }
 
-void DX12RHI::BuildShadowRenderTex(std::shared_ptr<FRenderTarget> mShadowMap)
+void DX12RHI::InitShadowRT(std::shared_ptr<FRenderTarget> mShadowMap)
 {
 	if (!mShadowMap->bInit)
 	{
@@ -551,7 +551,7 @@ void DX12RHI::BuildShadowRenderTex(std::shared_ptr<FRenderTarget> mShadowMap)
 	}
 }
 
-void DX12RHI::BuildPPRT(std::shared_ptr<FRenderTarget> mPostProcess, RESOURCE_FORMAT format)
+void DX12RHI::InitPPRT(std::shared_ptr<FRenderTarget> mPostProcess, RESOURCE_FORMAT format)
 {
 	if (!mPostProcess->bInit) 
 	{

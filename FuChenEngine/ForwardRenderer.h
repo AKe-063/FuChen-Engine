@@ -3,6 +3,7 @@
 #include "RHI.h"
 #include "FRenderTarget.h"
 #include "FShader.h"
+#include "FBloomPP.h"
 
 class ForwardRenderer : public FRenderer
 {
@@ -21,8 +22,6 @@ private:
 	FRenderScene fRenderScene;
 	std::shared_ptr<FRenderTarget> mShadowMap;
 	std::shared_ptr<FRenderTarget> mSceneColorRT;
-	std::vector<std::shared_ptr<FRenderTarget>> mBloomDownRT;
-	std::vector<std::shared_ptr<FRenderTarget>> mBloomUpRT;
-	std::shared_ptr<FRenderTarget> mBloomSunMergepsRT;
+	std::shared_ptr<FBloomPP> mBloomPP;
 	std::shared_ptr<FShaderManager> fShaderManager;
 };

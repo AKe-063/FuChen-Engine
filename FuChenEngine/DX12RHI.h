@@ -37,8 +37,8 @@ public:
 	virtual void BeginRender(std::string pso)override;
 	virtual void BeginBaseDraw()override;
 	virtual void BeginTransSceneDataToRenderScene(std::string pso)override;
-	virtual void BuildShadowRenderTex(std::shared_ptr<FRenderTarget> mShadowMap)override;
-	virtual void BuildPPRT(std::shared_ptr<FRenderTarget> mPostProcess, RESOURCE_FORMAT format)override;
+	virtual void InitShadowRT(std::shared_ptr<FRenderTarget> mShadowMap)override;
+	virtual void InitPPRT(std::shared_ptr<FRenderTarget> mPostProcess, RESOURCE_FORMAT format)override;
 	virtual void CreateRenderTarget(std::shared_ptr<FRenderTarget>& mShadowMap, float width, float height)override;
 	virtual void DrawShadow(FRenderScene& fRenderScene, std::shared_ptr<FRenderTarget> mShadowMap)override;
 	virtual void DrawPrimitives(FRenderScene& fRenderScene, std::shared_ptr<FRenderTarget> mShadowMap, std::shared_ptr<FRenderTarget> mPPMap)override;

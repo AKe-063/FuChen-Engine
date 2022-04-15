@@ -4,10 +4,17 @@
 class FBloomPP
 {
 public:
-	FBloomPP(int32_t downUp, std::shared_ptr<FRenderTarget>& sceneColorRT);
+	FBloomPP(int downUp, std::shared_ptr<FRenderTarget>& sceneColorRT);
 	~FBloomPP();
 
-	int32_t downUpNum = 0;
+	void InitBloomRTs();
+
+	std::shared_ptr<FRenderTarget>& GetBloomSetUpRT();
+	std::shared_ptr<FRenderTarget>& GetBloomSunmergepsRT();
+	std::vector<std::shared_ptr<FRenderTarget>>& GetBloomDownRTs();
+	std::vector<std::shared_ptr<FRenderTarget>>& GetBloomUpRTs();
+
+	int downUpNum = 0;
 
 private:
 	std::shared_ptr<FRenderTarget> mBloomSetUpRT = nullptr;

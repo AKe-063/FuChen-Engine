@@ -30,8 +30,8 @@ public:
 	virtual void BeginRender(std::string pso) = 0;
 	virtual void BeginTransSceneDataToRenderScene(std::string pso) = 0;
 	virtual void BeginBaseDraw() = 0;
-	virtual void BuildShadowRenderTex(std::shared_ptr<FRenderTarget> mShadowMap) = 0;
-	virtual void BuildPPRT(std::shared_ptr<FRenderTarget> mPostProcess, RESOURCE_FORMAT format) = 0;
+	virtual void InitShadowRT(std::shared_ptr<FRenderTarget> mShadowMap) = 0;
+	virtual void InitPPRT(std::shared_ptr<FRenderTarget> mPostProcess, RESOURCE_FORMAT format) = 0;
 	virtual void CreateRenderTarget(std::shared_ptr<FRenderTarget>& mShadowMap, float width, float height) = 0;
 	virtual void DrawShadow(FRenderScene& fRenderScene, std::shared_ptr<FRenderTarget> mShadowMap) = 0;
 	virtual void DrawPrimitives(FRenderScene& fRenderScene, std::shared_ptr<FRenderTarget> mShadowMap, std::shared_ptr<FRenderTarget> mPPMap) = 0;
