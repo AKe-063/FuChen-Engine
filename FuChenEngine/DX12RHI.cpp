@@ -2,6 +2,7 @@
 #include "DX12RHI.h"
 #include "Engine.h"
 #include "FLight.h"
+#include <pix.h>
 
 using Microsoft::WRL::ComPtr;
 using namespace std;
@@ -148,8 +149,6 @@ void DX12RHI::Init(std::shared_ptr<FShaderManager> fShaderManager)
 	BuildPSO(fShaderManager, PSO_TYPE::BLOOM_UP);
 	BuildPSO(fShaderManager, PSO_TYPE::BLOOM_SUNMERGEPS);
 	BuildPSO(fShaderManager, PSO_TYPE::TONEMAPPS);
-
-	InitTriangle();
 
 	// Execute the initialization commands.
 	ThrowIfFailed(GetCommandList()->Close());
@@ -321,18 +320,6 @@ void DX12RHI::BuildRootSignature(std::shared_ptr<FShaderManager> fShaderManager)
 		}
 		fShaderManager->GetShaderMap()[shaderPair.first].RootSignature = shaderPair.first;
 	}
-
-// 	ThrowIfFailed(md3dDevice->CreateRootSignature(
-// 		0,
-// 		fShaderManager->GetShaderMap()[L"..\\FuChenEngine\\Shaders\\color.hlsl"].compileResult.mvsByteCode->GetBufferPointer(),
-// 		fShaderManager->GetShaderMap()[L"..\\FuChenEngine\\Shaders\\color.hlsl"].compileResult.mvsByteCode->GetBufferSize(),
-// 		IID_PPV_ARGS(&mRootSignature)));
-// 
-// 	ThrowIfFailed(md3dDevice->CreateRootSignature(
-// 		0,
-// 		fShaderManager->GetShaderMap()[L"..\\FuChenEngine\\Shaders\\Shadows.hlsl"].compileResult.mvsByteCode->GetBufferPointer(),
-// 		fShaderManager->GetShaderMap()[L"..\\FuChenEngine\\Shaders\\Shadows.hlsl"].compileResult.mvsByteCode->GetBufferSize(),
-// 		IID_PPV_ARGS(&mShadowSignature)));
 }
 
 void DX12RHI::BuildShadersAndInputLayout(std::shared_ptr<FShaderManager> fShaderManager)
@@ -347,19 +334,6 @@ void DX12RHI::BuildShadersAndInputLayout(std::shared_ptr<FShaderManager> fShader
 		std::vector<INPUT_ELEMENT_DESC> mInputLayout = shaderPair.second.GetLayout();
 		fShaderManager->GetShaderMap()[shaderPair.first] = FShader(shaderPair.first, result, mInputLayout);
 	}
-	
-// 	mvsByteCode = d3dUtil::CompileShader(L"..\\FuChenEngine\\Shaders\\color.hlsl", nullptr, "VS", "vs_5_0");
-// 	mpsByteCode = d3dUtil::CompileShader(L"..\\FuChenEngine\\Shaders\\color.hlsl", nullptr, "PS", "ps_5_0");
-// 	mvsShadowShader = d3dUtil::CompileShader(L"..\\FuChenEngine\\Shaders\\Shadows.hlsl", nullptr, "VS", "vs_5_0");
-// 	mpsShadowShader = d3dUtil::CompileShader(L"..\\FuChenEngine\\Shaders\\Shadows.hlsl", nullptr, "PS", "ps_5_0");
-// 
-// 	mInputLayout =
-// 	{
-// 		{ "POSITION", 0, DXGI_FORMAT_R32G32B32_FLOAT, 0, 0, D3D12_INPUT_CLASSIFICATION_PER_VERTEX_DATA, 0 },
-// 		{ "Color", 0, DXGI_FORMAT_R32G32B32A32_FLOAT, 0, 12, D3D12_INPUT_CLASSIFICATION_PER_VERTEX_DATA, 0 },
-// 		{ "Normal", 0, DXGI_FORMAT_R32G32B32A32_FLOAT, 0, 28, D3D12_INPUT_CLASSIFICATION_PER_VERTEX_DATA, 0 },
-// 		{ "TEXCOORD", 0, DXGI_FORMAT_R32G32_FLOAT, 0, 44, D3D12_INPUT_CLASSIFICATION_PER_VERTEX_DATA, 0 }
-// 	};
 }
 
 void DX12RHI::BuildPSO(std::shared_ptr<FShaderManager> fShaderManager, PSO_TYPE psoType)
@@ -599,7 +573,7 @@ void DX12RHI::BeginRender(std::string pso)
 
 void DX12RHI::DrawShadow(FRenderScene& fRenderScene, std::shared_ptr<FRenderTarget> mShadowMap)
 {
-	DCShadowMap = true;
+	//DCShadowMap = true;
 	ID3D12DescriptorHeap* descriptorHeaps[] = { mHeapManager->GetHeap(HeapType::CBV_SRV_UAV) };
 	mCommandList->SetDescriptorHeaps(_countof(descriptorHeaps), descriptorHeaps);
 	RSSetViewPorts(1, &mShadowMap->Viewport());
@@ -614,13 +588,33 @@ void DX12RHI::DrawShadow(FRenderScene& fRenderScene, std::shared_ptr<FRenderTarg
 		IASetPriTopology(PRIMITIVE_TOPOLOGY_TRIANGLELIST);
 		DrawFPrimitive(*primitive);
 	}
-	DCShadowMap = false;
+	//DCShadowMap = false;
 }
 
-void DX12RHI::BeginBaseDraw()
+void DX12RHI::BeginDraw(std::shared_ptr<FRenderTarget> mRT, std::string EventName, bool bUseRTViewPort)
 {
-	mCommandList->RSSetViewports(1, &mScreenViewport);
-	mCommandList->RSSetScissorRects(1, &mScissorRect); 
+	PIXBeginEvent(mCommandList.Get(), 0, EventName.c_str());
+	PIXBeginEvent(mCommandQueue.Get(), 0, EventName.c_str());
+	ID3D12DescriptorHeap* descriptorHeaps[] = { mHeapManager->GetHeap(HeapType::CBV_SRV_UAV) };
+	mCommandList->SetDescriptorHeaps(_countof(descriptorHeaps), descriptorHeaps);
+	if (bUseRTViewPort)
+	{
+		RSSetViewPorts(1, &mRT->Viewport());
+		RESetScissorRects(1, &mRT->ScissorRect());
+	}
+	else
+	{
+		mCommandList->RSSetViewports(1, &mScreenViewport);
+		mCommandList->RSSetScissorRects(1, &mScissorRect);
+	}
+	float color[4] = { 1.0f,1.0f,1.0f,1.0f };
+	if (mRT->ColorResource(0)->fPUResource != nullptr)
+	{
+		D3D12_CPU_DESCRIPTOR_HANDLE handle;
+		handle.ptr = mRT->Rtv(0);
+		mCommandList->ClearRenderTargetView(handle, color, 0, nullptr);
+	}
+	ClearDepthBuffer(mRT->Dsv());
 }
 
 void DX12RHI::DrawPrimitives(FRenderScene& fRenderScene, std::shared_ptr<FRenderTarget> mShadowMap, std::shared_ptr<FRenderTarget> mPPMap)
@@ -666,7 +660,6 @@ void DX12RHI::DrawToHDR(FRenderScene& fRenderScene, std::shared_ptr<FRenderTarge
 		IASetPriTopology(PRIMITIVE_TOPOLOGY_TRIANGLELIST);
 		DrawFPrimitive(*primitive, mShadowMap);
 	}
-	currentPso = "";
 }
 
 void DX12RHI::DrawBloomDown(const std::string& psoName, std::shared_ptr<FRenderTarget> mPPMap /*= nullptr*/, std::shared_ptr<FRenderTarget> mRT /*= nullptr*/)
@@ -695,6 +688,19 @@ void DX12RHI::DrawBloomDown(const std::string& psoName, std::shared_ptr<FRenderT
 	mCommandList->DrawIndexedInstanced(
 		triangle.DrawArgs[triangle.Name].IndexCount,
 		1, 0, 0, 0);
+}
+
+void DX12RHI::SetPrimitive(const std::string& psoName, std::shared_ptr<FPrimitive>& fPrimitive)
+{
+	if (currentPso != psoName)
+	{
+		mCommandList->SetPipelineState(mPSOs[psoName].Get());
+		mCommandList->SetGraphicsRootSignature(mFPsoManage->psoMap[psoName].psoDesc.pRootSignature);
+		currentPso = psoName;
+	}
+	mCommandList->IASetVertexBuffers(0, 1, &fPrimitive->GetMeshGeometryInfo().VertexBufferView());
+	mCommandList->IASetIndexBuffer(&fPrimitive->GetMeshGeometryInfo().IndexBufferView());
+	mCommandList->IASetPrimitiveTopology(D3D12_PRIMITIVE_TOPOLOGY::D3D_PRIMITIVE_TOPOLOGY_TRIANGLELIST);
 }
 
 void DX12RHI::DrawBloomUp(const std::string& psoName, std::shared_ptr<FRenderTarget> mResourceRTUp /*= nullptr*/, std::shared_ptr<FRenderTarget> mRmResourceRTDown /*= nullptr*/, std::shared_ptr<FRenderTarget> mRT /*= nullptr*/)
@@ -730,8 +736,10 @@ void DX12RHI::DrawBloomUp(const std::string& psoName, std::shared_ptr<FRenderTar
 		1, 0, 0, 0);
 }
 
-void DX12RHI::ToneMapps(const std::string& psoName, std::shared_ptr<FRenderTarget> mSceneColor /*= nullptr*/, std::shared_ptr<FRenderTarget> mSunmergeps /*= nullptr*/)
+void DX12RHI::ToneMapps(const std::string& psoName, std::shared_ptr<FPrimitive> fPrimitive, std::shared_ptr<FRenderTarget> mSceneColor /*= nullptr*/, std::shared_ptr<FRenderTarget> mSunmergeps /*= nullptr*/)
 {
+	PIXBeginEvent(mCommandList.Get(), 0, "ToneMappsPass");
+	PIXBeginEvent(mCommandQueue.Get(), 0, "ToneMappsPass");
 	ID3D12DescriptorHeap* descriptorHeaps[] = { mHeapManager->GetHeap(HeapType::CBV_SRV_UAV) };
 	mCommandList->SetDescriptorHeaps(_countof(descriptorHeaps), descriptorHeaps);
 	float color[4] = { 1.0f,1.0f,1.0f,1.0f };
@@ -739,8 +747,8 @@ void DX12RHI::ToneMapps(const std::string& psoName, std::shared_ptr<FRenderTarge
 	ClearDepthBuffer(GetDepthStencilViewHandle());
 	mCommandList->SetPipelineState(mPSOs[psoName].Get());
 	mCommandList->SetGraphicsRootSignature(mFPsoManage->psoMap[psoName].psoDesc.pRootSignature);
-	mCommandList->IASetVertexBuffers(0, 1, &triangle.VertexBufferView());
-	mCommandList->IASetIndexBuffer(&triangle.IndexBufferView());
+	mCommandList->IASetVertexBuffers(0, 1, &fPrimitive->GetMeshGeometryInfo().VertexBufferView());
+	mCommandList->IASetIndexBuffer(&fPrimitive->GetMeshGeometryInfo().IndexBufferView());
 	mCommandList->IASetPrimitiveTopology(D3D12_PRIMITIVE_TOPOLOGY::D3D_PRIMITIVE_TOPOLOGY_TRIANGLELIST);
 
 	auto sceneColorTex = CD3DX12_GPU_DESCRIPTOR_HANDLE(mHeapManager->GetGPUDescriptorHandleInHeapStart());
@@ -754,9 +762,9 @@ void DX12RHI::ToneMapps(const std::string& psoName, std::shared_ptr<FRenderTarge
 	rtSize.y = mWindow->GetHeight();
 	mCommandList->SetGraphicsRoot32BitConstants(2, 2, &rtSize, 0);
 
-	mCommandList->DrawIndexedInstanced(
-		triangle.DrawArgs[triangle.Name].IndexCount,
-		1, 0, 0, 0);
+	DrawFPrimitive(*fPrimitive);
+	PIXEndEvent(mCommandList.Get());
+	PIXEndEvent(mCommandQueue.Get());
 }
 
 void DX12RHI::EndDraw()
@@ -766,10 +774,17 @@ void DX12RHI::EndDraw()
 	FlushCommandQueue();
 }
 
-void DX12RHI::BeginTransSceneDataToRenderScene(std::string pso)
+void DX12RHI::PrepareForRender(std::string pso)
 {
 	ThrowIfFailed(mDirectCmdListAlloc->Reset());
-	ThrowIfFailed(mCommandList->Reset(mDirectCmdListAlloc.Get(), mPSOs[pso].Get()));
+	if (pso == "")
+	{
+		ThrowIfFailed(mCommandList->Reset(mDirectCmdListAlloc.Get(), nullptr));
+	}
+	else
+	{
+		ThrowIfFailed(mCommandList->Reset(mDirectCmdListAlloc.Get(), mPSOs[pso].Get()));
+	}
 }
 
 void DX12RHI::CreateRenderTarget(std::shared_ptr<FRenderTarget>& mShadowMap, float width, float height)
@@ -778,7 +793,14 @@ void DX12RHI::CreateRenderTarget(std::shared_ptr<FRenderTarget>& mShadowMap, flo
 	mShadowMap->Init(width, height);
 }
 
-void DX12RHI::EndTransScene()
+void DX12RHI::EndPass()
+{
+	currentPso = "";
+	PIXEndEvent(mCommandList.Get());
+	PIXEndEvent(mCommandQueue.Get());
+}
+
+void DX12RHI::EndPrepare()
 {
 	CloseCommandList();
 	FlushCommandQueue();
@@ -871,35 +893,6 @@ void DX12RHI::SetRenderTargets(unsigned int numRenderTarget, unsigned __int64 re
 
 void DX12RHI::DrawFPrimitive(FPrimitive& fPrimitive, std::shared_ptr<FRenderTarget> mShadowMap /*= nullptr*/, std::shared_ptr<FRenderTarget> mPPMap /*= nullptr*/)
 {
-	mCommandList->SetGraphicsRootConstantBufferView(0, mObjectCB[fPrimitive.GetObjCBIndex()]->Resource()->GetGPUVirtualAddress());
-	mCommandList->SetGraphicsRootConstantBufferView(1, mObjectLight->Resource()->GetGPUVirtualAddress());
-	mCommandList->SetGraphicsRootConstantBufferView(2, mObjectPass->Resource()->GetGPUVirtualAddress());
-
-	if (!DCShadowMap)
-	{
-		mCommandList->SetGraphicsRootConstantBufferView(3, mObjectCamera->Resource()->GetGPUVirtualAddress());
-		mCommandList->SetGraphicsRootConstantBufferView(4, mObjectMat->Resource()->GetGPUVirtualAddress());
-		auto mainTex = CD3DX12_GPU_DESCRIPTOR_HANDLE(mHeapManager->GetGPUDescriptorHandleInHeapStart());
-		mainTex.Offset(fPrimitive.GetMainRsvIndex(), mCbvSrvUavDescriptorSize);
-		auto normalTex = CD3DX12_GPU_DESCRIPTOR_HANDLE(mHeapManager->GetGPUDescriptorHandleInHeapStart());
-		normalTex.Offset(fPrimitive.GetNormalRsvIndex(), mCbvSrvUavDescriptorSize);
-		mCommandList->SetGraphicsRootDescriptorTable(5, mainTex);
-		mCommandList->SetGraphicsRootDescriptorTable(6, normalTex);
-
-		if (mShadowMap != nullptr)
-		{
-			auto shadowTex = CD3DX12_GPU_DESCRIPTOR_HANDLE(mHeapManager->GetGPUDescriptorHandleInHeapStart());
-			shadowTex.Offset(mShadowMap->GetRTDesc(RTDepthStencilBuffer).rtTexture->GetSrvIndex(), mCbvSrvUavDescriptorSize);
-			mCommandList->SetGraphicsRootDescriptorTable(7, shadowTex);
-			if (mPPMap != nullptr)
-			{
-				auto ppMapTex = CD3DX12_GPU_DESCRIPTOR_HANDLE(mHeapManager->GetGPUDescriptorHandleInHeapStart());
-				ppMapTex.Offset(mPPMap->GetRTDesc(RTColorBuffer).rtTexture->GetSrvIndex(), mCbvSrvUavDescriptorSize);
-				mCommandList->SetGraphicsRootDescriptorTable(8, ppMapTex);
-			}
-		}
-	}
-
 	mCommandList->DrawIndexedInstanced(
 		fPrimitive.GetMeshGeometryInfo().DrawArgs[fPrimitive.GetMeshGeometryInfo().Name].IndexCount,
 		1, 0, 0, 0);
@@ -989,6 +982,35 @@ void DX12RHI::UploadMaterialData()
 	}
 	MaterialConstants matConstant;
 	mObjectMat->CopyData(0, matConstant);
+}
+
+void DX12RHI::UploadResourceBuffer(UINT slot, const int index)
+{
+	mCommandList->SetGraphicsRootConstantBufferView(slot, mObjectCB[index]->Resource()->GetGPUVirtualAddress());
+}
+
+void DX12RHI::UploadResourceBuffer(INT32 slotLight, INT32 slotPass, INT32 slotCamera, INT32 slotMat)
+{
+	if (slotLight >= 0)
+		mCommandList->SetGraphicsRootConstantBufferView(slotLight, mObjectLight->Resource()->GetGPUVirtualAddress());
+	if (slotPass >= 0)
+		mCommandList->SetGraphicsRootConstantBufferView(slotPass, mObjectPass->Resource()->GetGPUVirtualAddress());
+	if (slotCamera >= 0)
+		mCommandList->SetGraphicsRootConstantBufferView(slotCamera, mObjectCamera->Resource()->GetGPUVirtualAddress());
+	if (slotMat >= 0)
+		mCommandList->SetGraphicsRootConstantBufferView(slotMat, mObjectMat->Resource()->GetGPUVirtualAddress());
+}
+
+void DX12RHI::UploadResourceTable(UINT slot, int dataAddress)
+{
+	auto handle = CD3DX12_GPU_DESCRIPTOR_HANDLE(mHeapManager->GetGPUDescriptorHandleInHeapStart());
+	handle.Offset(dataAddress, mCbvSrvUavDescriptorSize);
+	mCommandList->SetGraphicsRootDescriptorTable(slot, handle);
+}
+
+void DX12RHI::UploadResourceConstants(UINT slot, UINT dataNum, const void* data, UINT offset)
+{
+	mCommandList->SetGraphicsRoot32BitConstants(slot, dataNum, data, offset);
 }
 
 void DX12RHI::TransActorToRenderPrimitive(FActor& actor, FRenderScene& fRenderScene)
@@ -1233,46 +1255,38 @@ D3D12_CPU_DESCRIPTOR_HANDLE DX12RHI::DepthStencilView()const
 	return mHeapManager->GetCPUDescriptorHandleInHeapStart(HeapType::DSV);
 }
 
-void DX12RHI::InitTriangle()
+std::shared_ptr<FPrimitive> DX12RHI::CreatePrimitiveByVerticesAndIndices(std::vector<Vertex> vertices, std::vector<std::uint16_t> indices)
 {
-	std::vector<Vertex> vertices;
-	std::vector<std::uint16_t> indices = { 0,1,2 };
-
-	for (size_t i = 0; i < 3; i++)
-	{
-		Vertex ver;
-		vertices.push_back(ver);
-	}
-	vertices[0].Pos = vec3(-1.0f, 1.0f, 0.0f);
-	vertices[1].Pos = vec3(-1.0f, -3.0f, 0.0f);
-	vertices[2].Pos = vec3(3.0f, 1.0f, 0.0f);
+	std::shared_ptr<DXPrimitive> primitive = std::make_shared<DXPrimitive>();
 
 	const UINT vbByteSize = (UINT)vertices.size() * sizeof(Vertex);
 	const UINT ibByteSize = (UINT)indices.size() * sizeof(std::uint16_t);
 
-	ThrowIfFailed(D3DCreateBlob(vbByteSize, &triangle.VertexBufferCPU));
-	CopyMemory(triangle.VertexBufferCPU->GetBufferPointer(), vertices.data(), vbByteSize);
+	ThrowIfFailed(D3DCreateBlob(vbByteSize, &primitive->GetMeshGeometryInfo().VertexBufferCPU));
+	CopyMemory(primitive->GetMeshGeometryInfo().VertexBufferCPU->GetBufferPointer(), vertices.data(), vbByteSize);
 
-	ThrowIfFailed(D3DCreateBlob(ibByteSize, &triangle.IndexBufferCPU));
-	CopyMemory(triangle.IndexBufferCPU->GetBufferPointer(), indices.data(), ibByteSize);
+	ThrowIfFailed(D3DCreateBlob(ibByteSize, &primitive->GetMeshGeometryInfo().IndexBufferCPU));
+	CopyMemory(primitive->GetMeshGeometryInfo().IndexBufferCPU->GetBufferPointer(), indices.data(), ibByteSize);
 
-	triangle.VertexBufferGPU = d3dUtil::CreateDefaultBuffer(md3dDevice.Get(),
-		mCommandList.Get(), vertices.data(), vbByteSize, triangle.VertexBufferUploader);
+	primitive->GetMeshGeometryInfo().VertexBufferGPU = d3dUtil::CreateDefaultBuffer(md3dDevice.Get(),
+		mCommandList.Get(), vertices.data(), vbByteSize, primitive->GetMeshGeometryInfo().VertexBufferUploader);
 
-	triangle.IndexBufferGPU = d3dUtil::CreateDefaultBuffer(md3dDevice.Get(),
-		mCommandList.Get(), indices.data(), ibByteSize, triangle.IndexBufferUploader);
+	primitive->GetMeshGeometryInfo().IndexBufferGPU = d3dUtil::CreateDefaultBuffer(md3dDevice.Get(),
+		mCommandList.Get(), indices.data(), ibByteSize, primitive->GetMeshGeometryInfo().IndexBufferUploader);
 
-	triangle.VertexByteStride = sizeof(Vertex);
-	triangle.VertexBufferByteSize = vbByteSize;
-	triangle.IndexFormat = DXGI_FORMAT_R16_UINT;
-	triangle.IndexBufferByteSize = ibByteSize;
+	primitive->GetMeshGeometryInfo().VertexByteStride = sizeof(Vertex);
+	primitive->GetMeshGeometryInfo().VertexBufferByteSize = vbByteSize;
+	primitive->GetMeshGeometryInfo().IndexFormat = DXGI_FORMAT_R16_UINT;
+	primitive->GetMeshGeometryInfo().IndexBufferByteSize = ibByteSize;
 
 	SubmeshGeometry submesh;
 	submesh.IndexCount = (UINT)indices.size();
 	submesh.StartIndexLocation = 0;
 	submesh.BaseVertexLocation = 0;
-	triangle.Name = "triangle";
-	triangle.DrawArgs[triangle.Name] = submesh;
+	primitive->GetMeshGeometryInfo().Name = "primitive->GetMeshGeometryInfo()";
+	primitive->GetMeshGeometryInfo().DrawArgs[primitive->GetMeshGeometryInfo().Name] = submesh;
+
+	return primitive;
 }
 
 void DX12RHI::LogAdapters()

@@ -3,6 +3,11 @@
 #include "FActor.h"
 #include "FScene.h"
 
+enum class POST_PROCESS_TYPE
+{
+	Bloom = 0
+};
+
 class FRenderer
 {
 public:

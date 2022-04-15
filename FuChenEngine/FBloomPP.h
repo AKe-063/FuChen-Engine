@@ -1,5 +1,6 @@
 #pragma once
 #include "FRenderTarget.h"
+#include "FPrimitive.h"
 
 class FBloomPP
 {
@@ -15,6 +16,9 @@ public:
 	std::vector<std::shared_ptr<FRenderTarget>>& GetBloomUpRTs();
 
 	int downUpNum = 0;
+	std::vector<Vertex> vertices;
+	std::vector<std::uint16_t> indices = { 0,1,2 };
+	std::shared_ptr<FPrimitive> fPrimitive = nullptr;
 
 private:
 	std::shared_ptr<FRenderTarget> mBloomSetUpRT = nullptr;

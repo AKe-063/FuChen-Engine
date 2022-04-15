@@ -16,6 +16,15 @@ public:
 	virtual void Render()override;
 	virtual void BuildDirtyPrimitive(FScene& fScene)override;
 
+protected:
+	void ShadowPass();
+	void SceneColorPass();
+	void PostProcessPass(POST_PROCESS_TYPE ppType);
+	void ToneMappsPass();
+
+	//PostProcessPass
+	void BloomPass();
+
 private:
 	bool testInitTextureOnce = true;
 	RHI* rhi;

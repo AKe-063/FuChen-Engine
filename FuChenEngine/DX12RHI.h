@@ -35,19 +35,23 @@ public:
 
 	//Abstract RHI
 	virtual void BeginRender(std::string pso)override;
-	virtual void BeginBaseDraw()override;
-	virtual void BeginTransSceneDataToRenderScene(std::string pso)override;
+	virtual void BeginDraw(std::shared_ptr<FRenderTarget> mRT, std::string EventName, bool bUseRTViewPort)override;
+	virtual void PrepareForRender(std::string pso)override;
 	virtual void InitShadowRT(std::shared_ptr<FRenderTarget> mShadowMap)override;
 	virtual void InitPPRT(std::shared_ptr<FRenderTarget> mPostProcess, RESOURCE_FORMAT format)override;
 	virtual void CreateRenderTarget(std::shared_ptr<FRenderTarget>& mShadowMap, float width, float height)override;
+	virtual void EndPass()override;
+	virtual std::shared_ptr<FPrimitive> CreatePrimitiveByVerticesAndIndices(std::vector<Vertex> vertices, std::vector<std::uint16_t> indices)override;
 	virtual void DrawShadow(FRenderScene& fRenderScene, std::shared_ptr<FRenderTarget> mShadowMap)override;
 	virtual void DrawPrimitives(FRenderScene& fRenderScene, std::shared_ptr<FRenderTarget> mShadowMap, std::shared_ptr<FRenderTarget> mPPMap)override;
 	virtual void DrawToHDR(FRenderScene& fRenderScene, std::shared_ptr<FRenderTarget> mShadowMap, std::shared_ptr<FRenderTarget> mBloom)override;
 	virtual void DrawBloomDown(const std::string& psoName, std::shared_ptr<FRenderTarget> mPPMap = nullptr, std::shared_ptr<FRenderTarget> mRT = nullptr)override;
+	virtual void SetPrimitive(const std::string& psoName, std::shared_ptr<FPrimitive>& fPrimitive)override;
 	virtual void DrawBloomUp(const std::string& psoName, std::shared_ptr<FRenderTarget> mResourceRTUp = nullptr, std::shared_ptr<FRenderTarget> mRmResourceRTDown = nullptr, std::shared_ptr<FRenderTarget> mRT = nullptr)override;
-	virtual void ToneMapps(const std::string& psoName, std::shared_ptr<FRenderTarget> mSceneColor = nullptr, std::shared_ptr<FRenderTarget> mSunmergeps = nullptr)override;
+	virtual void DrawFPrimitive(FPrimitive& fPrimitive, std::shared_ptr<FRenderTarget> mShadowMap = nullptr, std::shared_ptr<FRenderTarget> mPPMap = nullptr)override;
+	virtual void ToneMapps(const std::string& psoName, std::shared_ptr<FPrimitive> fPrimitive, std::shared_ptr<FRenderTarget> mSceneColor = nullptr, std::shared_ptr<FRenderTarget> mSunmergeps = nullptr)override;
 	virtual void EndDraw()override;
-	virtual void EndTransScene()override;
+	virtual void EndPrepare()override;
 	virtual void SetPipelineState(std::string pso)override;
 	virtual void SetRenderTargets(unsigned int numRenderTarget, unsigned __int64 renderTargetDescriptor, bool RTsSingleHandleToDescriptorRange, unsigned __int64 DepthDescriptor)override;
 	virtual std::shared_ptr<FDevice> GetDevice()override;
@@ -62,9 +66,12 @@ public:
 	virtual void UpdateVP()override;
 	virtual void UpdateM(FPrimitive& fPrimitive)override;
 	virtual void UploadMaterialData()override;
+	virtual void UploadResourceBuffer(UINT slot, const int index)override;
+	virtual void UploadResourceTable(UINT slot, int dataAddress)override;
+	virtual void UploadResourceConstants(UINT slot, UINT dataNum, const void* data, UINT offset)override;
+	virtual void UploadResourceBuffer(INT32 slotLight, INT32 slotPass, INT32 slotCamera, INT32 slotMat)override;
 
 protected:
-	void DrawFPrimitive(FPrimitive& fPrimitive, std::shared_ptr<FRenderTarget> mShadowMap = nullptr, std::shared_ptr<FRenderTarget> mPPMap = nullptr);
 	void RSSetViewPorts(unsigned int numViewports, const VIEWPORT* scrernViewport);
 	void RESetScissorRects(unsigned int numRects, const TAGRECT* rect);
 	void ClearBackBuffer(const float* color);
@@ -90,8 +97,6 @@ protected:
 	ID3D12Resource* CurrentBackBuffer()const;
 	D3D12_CPU_DESCRIPTOR_HANDLE CurrentBackBufferView()const;
 	D3D12_CPU_DESCRIPTOR_HANDLE DepthStencilView()const;
-
-	void InitTriangle();
 
 private:
 	std::string currentPso;

@@ -23,6 +23,14 @@ FBloomPP::FBloomPP(int downUp, std::shared_ptr<FRenderTarget>& sceneColorRT)
 		RHI::Get()->CreateRenderTarget(fRT, float(mBloomDownRT[mBloomDownRT.size() - 2 - i]->mWidth), float(mBloomDownRT[mBloomDownRT.size() - 2 - i]->mHeight));
 		mBloomUpRT.push_back(fRT);
 	}
+	for (size_t i = 0; i < 3; i++)
+	{
+		Vertex ver;
+		vertices.push_back(ver);
+	}
+	vertices[0].Pos = vec3(-1.0f, 1.0f, 0.0f);
+	vertices[1].Pos = vec3(-1.0f, -3.0f, 0.0f);
+	vertices[2].Pos = vec3(3.0f, 1.0f, 0.0f);
 }
  
 FBloomPP::~FBloomPP()
@@ -42,6 +50,9 @@ void FBloomPP::InitBloomRTs()
 	{
 		RHI::Get()->InitPPRT(mBloomUpRT[i], RESOURCE_FORMAT::FORMAT_R11G11B10_FLOAT);
 	}
+	RHI::Get()->PrepareForRender("");
+	fPrimitive = RHI::Get()->CreatePrimitiveByVerticesAndIndices(vertices, indices);
+	RHI::Get()->EndPrepare();
 }
 
 std::shared_ptr<FRenderTarget>& FBloomPP::GetBloomSetUpRT()
