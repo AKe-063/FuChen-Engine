@@ -266,3 +266,47 @@ void DXRenderTarget::BuildResource()
 	// 		&optClear,
 	// 		IID_PPV_ARGS(&mShadowMap)));
 }
+
+BackBufferRT::BackBufferRT()
+{
+	mDepthStencilBuffer = std::make_shared<FPUResource>();
+	for (int i = 0; i < SwapChainBufferCount; ++i)
+	{
+		mSwapChainBuffer[i] = std::make_shared<FPUResource>();
+	}
+	mViewport.MaxDepth = 1.0f;
+	mViewport.MinDepth = 0;
+	mViewport.TopLeftX = 0;
+	mViewport.TopLeftY = 0;
+	mViewport.Width = 1440.0f;
+	mViewport.Height = 900.0f;
+
+	mScissorRect.right = 1440;
+	mScissorRect.bottom = 900;
+	mScissorRect.left = 0;
+	mScissorRect.top = 0;
+}
+
+BackBufferRT::~BackBufferRT()
+{
+}
+
+SIZE_T BackBufferRT::GetCurrentBackBufferHandle()
+{
+	return bufferCPUHandle[CurrentBackBufferRT];
+}
+
+void BackBufferRT::SetBackBufferHandle(const SIZE_T handle, const int bufferIndex)
+{
+	bufferCPUHandle[bufferIndex] = handle;
+}
+
+SIZE_T BackBufferRT::GetCurrentBackDepthStencilBufferHandle()
+{
+	return depthStencilBufferCPUHandle;
+}
+
+void BackBufferRT::SetBackDepthStencilBufferHandle(const SIZE_T handle)
+{
+	depthStencilBufferCPUHandle = handle;
+}

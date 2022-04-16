@@ -8,19 +8,19 @@ FBloomPP::FBloomPP(int downUp, std::shared_ptr<FRenderTarget>& sceneColorRT)
 	float width = (float)sceneColorRT->Width() / 4;
 	float height = (float)sceneColorRT->Height() / 4;
 
-	RHI::Get()->CreateRenderTarget(mBloomSetUpRT, width, height);
-	RHI::Get()->CreateRenderTarget(mBloomSunmergepsRT, width, height);
+	RHI::Get()->CreateRenderTarget(mBloomSetUpRT, width, height, false);
+	RHI::Get()->CreateRenderTarget(mBloomSunmergepsRT, width, height, false);
 
 	for (size_t i = 0; i < downUp; i++)
 	{
 		std::shared_ptr<FRenderTarget> fRT;
-		RHI::Get()->CreateRenderTarget(fRT, float(width / pow(2, i + 1)), float(height / pow(2, i + 1)));
+		RHI::Get()->CreateRenderTarget(fRT, float(width / pow(2, i + 1)), float(height / pow(2, i + 1)), false);
 		mBloomDownRT.push_back(fRT);
 	}
 	for (size_t i = 0; i < downUp - 1; i++)
 	{
 		std::shared_ptr<FRenderTarget> fRT;
-		RHI::Get()->CreateRenderTarget(fRT, float(mBloomDownRT[mBloomDownRT.size() - 2 - i]->mWidth), float(mBloomDownRT[mBloomDownRT.size() - 2 - i]->mHeight));
+		RHI::Get()->CreateRenderTarget(fRT, float(mBloomDownRT[mBloomDownRT.size() - 2 - i]->mWidth), float(mBloomDownRT[mBloomDownRT.size() - 2 - i]->mHeight), false);
 		mBloomUpRT.push_back(fRT);
 	}
 	for (size_t i = 0; i < 3; i++)

@@ -33,4 +33,6 @@ private:
 	std::shared_ptr<FRenderTarget> mSceneColorRT;
 	std::shared_ptr<FBloomPP> mBloomPP;
 	std::shared_ptr<FShaderManager> fShaderManager;
+	//BackBufferRT backBufferRT;
+	std::shared_ptr<FRenderTarget> mBackBufferRT;
 };

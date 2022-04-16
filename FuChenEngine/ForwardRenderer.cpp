@@ -44,10 +44,12 @@ void ForwardRenderer::Init()
 	fShaderManager->GetShaderMap()[L"..\\FuChenEngine\\Shaders\\bloomsunmergeps.hlsl"].SetShaderLayout(mInputLayout);
 	fShaderManager->GetShaderMap()[L"..\\FuChenEngine\\Shaders\\tonemapps.hlsl"].SetShaderLayout(mInputLayout);
 
+
 	rhi = RHI::Get();
-	rhi->Init(fShaderManager);
-	rhi->CreateRenderTarget(mShadowMap, 2048.0f, 2048.0f);
-	rhi->CreateRenderTarget(mSceneColorRT, 1440.0f, 900.0f);
+	rhi->CreateRenderTarget(mBackBufferRT, 1440.0f, 900.0f, true);
+	rhi->Init(fShaderManager, *mBackBufferRT->mBackBufferRT);
+	rhi->CreateRenderTarget(mShadowMap, 2048.0f, 2048.0f, false);
+	rhi->CreateRenderTarget(mSceneColorRT, 1440.0f, 900.0f, false);
 
 	mBloomPP = std::make_shared<FBloomPP>(4, mSceneColorRT);
 	mBloomPP->InitBloomRTs();
@@ -83,7 +85,7 @@ void ForwardRenderer::Render()
 // 	rhi->DrawPrimitives(fRenderScene, mShadowMap, mSceneColorRT);
 // 	rhi->TransCurrentBackBufferResourBarrier(1, RESOURCE_STATE_RENDER_TARGET, RESOURCE_STATE_PRESENT);
 	
-	rhi->EndDraw();
+	rhi->EndDraw(*mBackBufferRT->mBackBufferRT);
 }
 
 void ForwardRenderer::BuildDirtyPrimitive(FScene& fScene)
@@ -176,10 +178,20 @@ void ForwardRenderer::PostProcessPass(POST_PROCESS_TYPE ppType)
 
 void ForwardRenderer::ToneMappsPass()
 {
-	rhi->TransCurrentBackBufferResourBarrier(1, RESOURCE_STATE_PRESENT, RESOURCE_STATE_RENDER_TARGET);
-	rhi->SetRenderTargets(1, rhi->GetCurrentBackBufferViewHandle(), false, rhi->GetDepthStencilViewHandle());
-	rhi->ToneMapps("tonemapps_pso", mBloomPP->fPrimitive, mSceneColorRT, mBloomPP->GetBloomSunmergepsRT());
-	rhi->TransCurrentBackBufferResourBarrier(1, RESOURCE_STATE_RENDER_TARGET, RESOURCE_STATE_PRESENT);
+	std::shared_ptr<BackBufferRT> backBufferRT = mBackBufferRT->mBackBufferRT;
+	rhi->TransResourBarrier(backBufferRT->mSwapChainBuffer[backBufferRT->CurrentBackBufferRT].get(), 1, RESOURCE_STATE_PRESENT, RESOURCE_STATE_RENDER_TARGET);
+	rhi->SetRenderTargets(1, backBufferRT->GetCurrentBackBufferHandle(), false, backBufferRT->GetCurrentBackDepthStencilBufferHandle());
+	rhi->BeginDraw(mBackBufferRT, "ToneMappsPass", false);
+	rhi->SetPrimitive("tonemapps_pso", mBloomPP->fPrimitive);
+	rhi->UploadResourceTable(0, mSceneColorRT->GetRTDesc(RTColorBuffer).rtTexture->GetSrvIndex());
+	rhi->UploadResourceTable(1, mBloomPP->GetBloomSunmergepsRT()->GetRTDesc(RTColorBuffer).rtTexture->GetSrvIndex());
+	FVector2DInt rtSize;
+	rtSize.x = (int)backBufferRT->mViewport.Width;
+	rtSize.y = (int)backBufferRT->mViewport.Height;
+	rhi->UploadResourceConstants(2, 2, &rtSize, 0);
+	rhi->DrawFPrimitive(*mBloomPP->fPrimitive);
+	rhi->EndPass();
+	rhi->TransResourBarrier(backBufferRT->mSwapChainBuffer[backBufferRT->CurrentBackBufferRT].get(), 1, RESOURCE_STATE_RENDER_TARGET, RESOURCE_STATE_PRESENT);
 }
 
 void ForwardRenderer::BloomPass()

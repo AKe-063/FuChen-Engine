@@ -135,6 +135,7 @@ enum RTType
 {
 	RTColorBuffer = 0,
 	RTDepthStencilBuffer = 1,
+	RTBackBuffer = 2
 };
 
 struct RTDesc
@@ -144,6 +145,30 @@ struct RTDesc
 	SIZE_T GPUHandlePtr;
 	int32_t indexInColorBufferVec;
 	std::shared_ptr<FRenderTexPrimitive> rtTexture = nullptr;
+};
+
+class BackBufferRT
+{
+public:
+	BackBufferRT();
+	~BackBufferRT();
+
+	SIZE_T GetCurrentBackBufferHandle();
+	void SetBackBufferHandle(const SIZE_T handle, const int bufferIndex);
+	SIZE_T GetCurrentBackDepthStencilBufferHandle();
+	void SetBackDepthStencilBufferHandle(const SIZE_T handle);
+
+	static const int SwapChainBufferCount = 2;
+	int CurrentBackBufferRT = 0;
+	SIZE_T bufferCPUHandle[SwapChainBufferCount];
+	SIZE_T depthStencilBufferCPUHandle;
+	std::shared_ptr<FPUResource> mSwapChainBuffer[SwapChainBufferCount];
+	std::shared_ptr<FPUResource> mDepthStencilBuffer;
+	VIEWPORT mViewport;
+	TAGRECT mScissorRect;
+
+	RESOURCE_FORMAT mBackBufferFormat = RESOURCE_FORMAT::FORMAT_R8G8B8A8_UNORM;
+	RESOURCE_FORMAT mDepthStencilFormat = RESOURCE_FORMAT::FORMAT_D24_UNORM_S8_UINT;
 };
 
 class FRenderTarget
@@ -165,11 +190,14 @@ public:
 		RESOURCE_FORMAT format = RESOURCE_FORMAT::FORMAT_UNKNOWN) = 0;
 	virtual RTDesc GetRTDesc(RTType rtType, int32_t index = -1) = 0;
 
+	std::shared_ptr<BackBufferRT> mBackBufferRT = nullptr;
+
 #if _DX_PLATFORM
 	virtual SIZE_T Rtv(const UINT index)const = 0;
 	virtual SIZE_T Dsv()const = 0;
 #endif
 
+	bool bBackBuffer = false;
 	bool bInit = false;
 	UINT mWidth = 0;
 	UINT mHeight = 0;
@@ -179,7 +207,6 @@ class DXRenderTarget : public FRenderTarget
 {
 public:
 	DXRenderTarget();
-
 	DXRenderTarget(const DXRenderTarget& rhs) = delete;
 	DXRenderTarget& operator=(const DXRenderTarget& rhs) = delete;
 	virtual ~DXRenderTarget() {};
@@ -205,7 +232,6 @@ public:
 protected:
 	void BuildRTBuffer(RTDesc& rtDesc, RESOURCE_FORMAT format = RESOURCE_FORMAT::FORMAT_UNKNOWN);
 	void BuildResource();
-
 private:
 
 	ID3D12Device* md3dDevice = nullptr;
