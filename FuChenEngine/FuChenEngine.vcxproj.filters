@@ -168,6 +168,9 @@
     <ClInclude Include="FBloomPP.h">
       <Filter>Header Files\Render</Filter>
     </ClInclude>
+    <ClInclude Include="FCyberpunkPP.h">
+      <Filter>Header Files\Render</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="stdafx.cpp">
@@ -261,6 +264,9 @@
       <Filter>Source Files\Render</Filter>
     </ClCompile>
     <ClCompile Include="FBloomPP.cpp">
+      <Filter>Source Files\Render</Filter>
+    </ClCompile>
+    <ClCompile Include="FCyberpunkPP.cpp">
       <Filter>Source Files\Render</Filter>
     </ClCompile>
   </ItemGroup>

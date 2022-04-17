@@ -5,7 +5,8 @@
 
 enum class POST_PROCESS_TYPE
 {
-	Bloom = 0
+	Bloom = 0,
+	Cyberpunk = 1
 };
 
 class FRenderer

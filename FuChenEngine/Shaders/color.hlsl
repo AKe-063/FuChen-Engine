@@ -5,12 +5,8 @@ Texture2D gNormalMap : register(t1);
 Texture2D gShadowMap : register(t2);
 
 SamplerState gsamPointWrap        : register(s0);
-/*SamplerState gsamPointClamp       : register(s1);
-SamplerState gsamLinearWrap       : register(s2);
-SamplerState gsamLinearClamp      : register(s3);*/
-SamplerState gsamAnisotropicWrap  : register(s2);
-//SamplerState gsamAnisotropicClamp : register(s5);
 SamplerComparisonState gsamShadow : register(s1);
+SamplerState gsamAnisotropicWrap  : register(s2);
 
 cbuffer cbPerObject : register(b0)
 {
@@ -27,6 +23,7 @@ cbuffer lightConstant : register(b1)
 	float4x4 glightOrthoVP;
 	float gLightDensity;
 	float3 gLightDir;
+	float3 gLightPos;
 }
 
 cbuffer passConstant : register(b2)
@@ -168,6 +165,12 @@ float3 NormalSampleToWorldSpace(float3 normalMapSample, float3 unitNormalW, floa
 	return bumpedNormalW;
 }
 
+float CalculateVecLens(float3 vec)
+{
+	float outLens = sqrt(vec.x * vec.x + vec.y * vec.y + vec.z * vec.z);
+	return outLens;
+}
+
 [RootSignature(FuChenSample_RootSig)]
 VertexOut VS(VertexIn vin)
 {
@@ -221,11 +224,19 @@ float4 PS(VertexOut pin) : SV_Target
 	float4 Ambient = mColor * 0.03;
 	Ambient = Ambient + (shadow + 0.1) * directLight;
 	Ambient = pow(Ambient, 1 / 2.2f);
-	//Ambient = pow(Ambient, 1 / 2.2f) > 1 ? float4(1.0f, 1.0f, 1.0f, 1.0f) : float4(0.0f, 0.0f, 0.0f, 1.0f);
+
+	float4 outColor;
+	/*float lenVec = CalculateVecLens(pin.PosW - gLightPos);
+	if (lenVec >= 100)
+	{
+		outColor = Ambient;
+	}
+	else
+	{
+		outColor = float4(2.0f, 2.0f, 2.0f, 1.0f);
+	}*/
+
 	return Ambient;
-	//return pow(pin.NormalW * 0.5f + 0.5f, 1 / 2.2f);
-	//return pow(diffuseAlbedo * (shadow + 0.1), 1 / 2.2f);
-	//return litColor * shadow;
 }
 
 

@@ -1,4 +1,4 @@
-#include <bloomsunmergeps.hlsli>
+#include <tonemapps.hlsli>
 
 Texture2D gSceneColor : register(t0);
 Texture2D gSunMergeColor : register(t1);

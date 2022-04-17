@@ -165,6 +165,7 @@
     <ClInclude Include="FActor.h" />
     <ClInclude Include="FAssetManager.h" />
     <ClInclude Include="FBloomPP.h" />
+    <ClInclude Include="FCyberpunkPP.h" />
     <ClInclude Include="FHeapManager.h" />
     <ClInclude Include="FInputBase.h" />
     <ClInclude Include="FLight.h" />
@@ -206,6 +207,7 @@
     <ClCompile Include="FActor.cpp" />
     <ClCompile Include="FAssetManager.cpp" />
     <ClCompile Include="FBloomPP.cpp" />
+    <ClCompile Include="FCyberpunkPP.cpp" />
     <ClCompile Include="FHeapManager.cpp" />
     <ClCompile Include="FInputBase.cpp" />
     <ClCompile Include="FLight.cpp" />

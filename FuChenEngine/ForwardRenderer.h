@@ -4,6 +4,7 @@
 #include "FRenderTarget.h"
 #include "FShader.h"
 #include "FBloomPP.h"
+#include "FCyberpunkPP.h"
 
 class ForwardRenderer : public FRenderer
 {
@@ -20,10 +21,10 @@ protected:
 	void ShadowPass();
 	void SceneColorPass();
 	void PostProcessPass(POST_PROCESS_TYPE ppType);
-	void ToneMappsPass();
 
 	//PostProcessPass
 	void BloomPass();
+	void CyberpunkPass();
 
 private:
 	bool testInitTextureOnce = true;
@@ -33,6 +34,6 @@ private:
 	std::shared_ptr<FRenderTarget> mSceneColorRT;
 	std::shared_ptr<FBloomPP> mBloomPP;
 	std::shared_ptr<FShaderManager> fShaderManager;
-	//BackBufferRT backBufferRT;
 	std::shared_ptr<FRenderTarget> mBackBufferRT;
+	std::shared_ptr<FCyberpunkPP> mCyberpunkRT;
 };

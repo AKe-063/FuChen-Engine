@@ -166,6 +166,7 @@ struct LightConstants
 	mat4 lightOrthoVP = MathHelper::Identity4x4();
 	float density;
 	vec3 lightDir;
+	vec3 lightPos;
 };
 
 struct CameraConstants

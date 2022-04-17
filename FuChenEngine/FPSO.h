@@ -11,7 +11,8 @@ enum class PSO_TYPE
 	BLOOM_DOWN = 4,
 	BLOOM_UP = 5,
 	BLOOM_SUNMERGEPS = 6,
-	TONEMAPPS = 7
+	TONEMAPPS = 7,
+	CYBERPUNK = 8
 };
 
 struct PipelineState

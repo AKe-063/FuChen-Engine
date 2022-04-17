@@ -65,6 +65,11 @@ void FPsoManager::CreatePso(FShader& fShader, PSO_TYPE psoType)
 		BuildGlobalRenderPso(fShader, "tonemapps_pso");
 		break;
 	}
+	case PSO_TYPE::CYBERPUNK:
+	{
+		BuildGlobalRenderPso(fShader, "cyberpunk_pso");
+		break;
+	}
 	default:
 	{
 		assert(0);

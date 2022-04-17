@@ -116,7 +116,7 @@ void DX12RHI::OnResize(BackBufferRT& backBufferRT)
 	mScissorRect = { 0, 0, mWindow->GetWidth(), mWindow->GetHeight() };
 
 	// The window resized, so update the aspect ratio and recompute the projection matrix.
-	FScene::GetInstance().GetCamera()->SetLens(0.25f * MathHelper::Pi, mWindow->AspectRatio(), 1.0f, 20000.0f);
+	FScene::GetInstance().GetCamera()->SetLens(0.25f * MathHelper::Pi, mWindow->AspectRatio(), 1.0f, 50000.0f);
 }
 
 void DX12RHI::Init(std::shared_ptr<FShaderManager> fShaderManager, BackBufferRT& backBufferRT)
@@ -151,6 +151,7 @@ void DX12RHI::Init(std::shared_ptr<FShaderManager> fShaderManager, BackBufferRT&
 	BuildPSO(fShaderManager, PSO_TYPE::BLOOM_UP);
 	BuildPSO(fShaderManager, PSO_TYPE::BLOOM_SUNMERGEPS);
 	BuildPSO(fShaderManager, PSO_TYPE::TONEMAPPS);
+	BuildPSO(fShaderManager, PSO_TYPE::CYBERPUNK);
 
 	// Execute the initialization commands.
 	ThrowIfFailed(GetCommandList()->Close());
@@ -418,6 +419,16 @@ void DX12RHI::BuildPSO(std::shared_ptr<FShaderManager> fShaderManager, PSO_TYPE 
 		mFPsoManage->psoMap["tonemapps_pso"].psoDesc.SampleDesc.Quality = m4xMsaaState ? (m4xMsaaQuality - 1) : 0;
 		mFPsoManage->psoMap["tonemapps_pso"].psoDesc.pRootSignature = mRootSignatures[L"..\\FuChenEngine\\Shaders\\tonemapps.hlsl"].Get();
 		ThrowIfFailed(md3dDevice->CreateGraphicsPipelineState(&mFPsoManage->psoMap["tonemapps_pso"].psoDesc, IID_PPV_ARGS(&mPSOs["tonemapps_pso"])));
+		break;
+	}
+	case PSO_TYPE::CYBERPUNK:
+	{
+		mFPsoManage->CreatePso(fShaderManager->GetShaderMap()[L"..\\FuChenEngine\\Shaders\\cyberpunk.hlsl"], psoType);
+		mFPsoManage->psoMap["cyberpunk_pso"].psoDesc.SampleDesc.Count = m4xMsaaState ? 4 : 1;
+		mFPsoManage->psoMap["cyberpunk_pso"].psoDesc.SampleDesc.Quality = m4xMsaaState ? (m4xMsaaQuality - 1) : 0;
+		mFPsoManage->psoMap["cyberpunk_pso"].psoDesc.pRootSignature = mRootSignatures[L"..\\FuChenEngine\\Shaders\\cyberpunk.hlsl"].Get();
+		mFPsoManage->psoMap["cyberpunk_pso"].psoDesc.RTVFormats[0] = DXGI_FORMAT_R16G16B16A16_FLOAT;
+		ThrowIfFailed(md3dDevice->CreateGraphicsPipelineState(&mFPsoManage->psoMap["cyberpunk_pso"].psoDesc, IID_PPV_ARGS(&mPSOs["cyberpunk_pso"])));
 		break;
 	}
 	default:
@@ -772,6 +783,7 @@ void DX12RHI::UpdateVP()
 	lightConstant.lightVP = glm::transpose(Engine::GetInstance().GetFScene()->GetLight(0)->GetFlightDesc()->lightProj * Engine::GetInstance().GetFScene()->GetLight(0)->GetFlightDesc()->lightView);
 	lightConstant.lightDir = Engine::GetInstance().GetFScene()->GetLight(0)->GetFlightDesc()->lightDir;
 	lightConstant.density = Engine::GetInstance().GetFScene()->GetLight(0)->GetFlightDesc()->lightDensity - 1.75f;
+	lightConstant.lightPos = Engine::GetInstance().GetFScene()->GetLight(0)->GetFlightDesc()->lightPos;
 
 	PassConstants passConstant;
 	passConstant.InvViewProj = glm::transpose(Engine::GetInstance().GetFScene()->GetCamera()->GetProj() * Engine::GetInstance().GetFScene()->GetCamera()->GetView());

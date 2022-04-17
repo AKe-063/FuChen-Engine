@@ -44,7 +44,6 @@ public:
 	virtual std::shared_ptr<FPrimitive> CreatePrimitiveByVerticesAndIndices(std::vector<Vertex> vertices, std::vector<std::uint16_t> indices)override;
 	virtual void SetPrimitive(const std::string& psoName, std::shared_ptr<FPrimitive>& fPrimitive)override;
 	virtual void DrawFPrimitive(FPrimitive& fPrimitive, std::shared_ptr<FRenderTarget> mShadowMap = nullptr, std::shared_ptr<FRenderTarget> mPPMap = nullptr)override;
-	virtual void ToneMapps(const std::string& psoName, std::shared_ptr<FPrimitive> fPrimitive, std::shared_ptr<FRenderTarget> mSceneColor = nullptr, std::shared_ptr<FRenderTarget> mSunmergeps = nullptr)override;
 	virtual void EndDraw(BackBufferRT& backBufferRT)override;
 	virtual void EndPrepare()override;
 	virtual void SetRenderTargets(unsigned int numRenderTarget, unsigned __int64 renderTargetDescriptor, bool RTsSingleHandleToDescriptorRange, unsigned __int64 DepthDescriptor)override;
