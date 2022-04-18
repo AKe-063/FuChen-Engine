@@ -36,6 +36,9 @@
     <ClCompile Include="..\FuChenEngine\LoadingSystem.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
+    <ClCompile Include="CommonInputLogic.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="..\FuChenEngine\LoadingSystem.h">
@@ -48,6 +51,9 @@
       <Filter>Header Files</Filter>
     </ClInclude>
     <ClInclude Include="..\FuChenEngine\GameLogic.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="CommonInputLogic.h">
       <Filter>Header Files</Filter>
     </ClInclude>
   </ItemGroup>

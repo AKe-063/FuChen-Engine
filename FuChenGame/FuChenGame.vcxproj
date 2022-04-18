@@ -123,7 +123,7 @@
       <SDLCheck>true</SDLCheck>
       <PreprocessorDefinitions>_DEBUG;_WINDOWS;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <ConformanceMode>true</ConformanceMode>
-      <AdditionalIncludeDirectories>..\FuChenEngine\include\GL;..\FuChenEngine\include\GLFW;..\FuChenEngine\include\glm;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>..\FuChenEngine\include\GL;..\FuChenEngine\include\GLFW;..\FuChenEngine\include\glm;..\FuChenEngine;..\FuChenGame;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
       <RuntimeLibrary>MultiThreadedDebugDLL</RuntimeLibrary>
     </ClCompile>
     <Link>
@@ -165,12 +165,14 @@
       <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">false</ExcludedFromBuild>
       <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Release|x64'">false</ExcludedFromBuild>
     </ClCompile>
+    <ClCompile Include="CommonInputLogic.cpp" />
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="..\FuChenEngine\CameraInputLogic.h" />
     <ClInclude Include="..\FuChenEngine\GameInstance.h" />
     <ClInclude Include="..\FuChenEngine\GameLogic.h" />
     <ClInclude Include="..\FuChenEngine\LoadingSystem.h" />
+    <ClInclude Include="CommonInputLogic.h" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">

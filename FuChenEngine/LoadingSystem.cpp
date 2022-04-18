@@ -33,7 +33,7 @@ bool LoadingSystem::OnAddActorKeyDown()
 {
 	if (FWin32Input::GetInstance().IsKeyDown('J'))
 	{
-		Engine::GetInstance().GetFScene()->AddNewActor("ThirdPersonExampleMap_NewBlueprint_C_1");
+		//Engine::GetInstance().GetFScene()->AddNewActor("ThirdPersonExampleMap_NewBlueprint_C_1");
 		return true;
 	}
 	

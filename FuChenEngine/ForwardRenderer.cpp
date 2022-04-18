@@ -55,8 +55,9 @@ void ForwardRenderer::Render()
 	SceneColorPass();
 
 	//PostProcess pass
-	PostProcessPass(POST_PROCESS_TYPE::Bloom);
-	PostProcessPass(POST_PROCESS_TYPE::Cyberpunk);
+	PostProcessPass();
+// 	PostProcessPass(POST_PROCESS_TYPE::Bloom);
+// 	PostProcessPass(POST_PROCESS_TYPE::Cyberpunk);
 	
 	ToneMappsPass();
 	
@@ -99,6 +100,33 @@ void ForwardRenderer::BuildDirtyPrimitive(FScene& fScene)
 	}
 	rhi->UpdateVP();
 	rhi->UploadMaterialData();
+}
+
+void ForwardRenderer::ChosePostProcess(CHOSE_POST_PROCESS_MODEL modelType)
+{
+	switch (modelType)
+	{
+	case CHOSE_POST_PROCESS_MODEL::BLOOM:
+		postProcessChosed[POST_PROCESS_TYPE::Bloom] = true;
+		break;
+	case CHOSE_POST_PROCESS_MODEL::CYBERPUNK:
+		postProcessChosed[POST_PROCESS_TYPE::Cyberpunk] = true;
+		break;
+	case CHOSE_POST_PROCESS_MODEL::BLEND:
+		break;
+	case CHOSE_POST_PROCESS_MODEL::NONE:
+	{
+
+		for (auto& ppPair : postProcessChosed)
+		{
+			ppPair.second = false;
+		}
+		break;
+	}
+	default:
+		assert(0);
+		break;
+	}
 }
 
 void ForwardRenderer::ShadowPass()
@@ -153,6 +181,17 @@ void ForwardRenderer::PostProcessPass(POST_PROCESS_TYPE ppType)
 	default:
 		assert(0);
 		break;
+	}
+}
+
+void ForwardRenderer::PostProcessPass()
+{
+	for (auto ppPair : postProcessChosed)
+	{
+		if (ppPair.second)
+		{
+			PostProcessPass(ppPair.first);
+		}
 	}
 }
 

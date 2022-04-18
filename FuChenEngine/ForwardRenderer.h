@@ -18,9 +18,12 @@ public:
 	virtual void Render()override;
 	virtual void BuildDirtyPrimitive(FScene& fScene)override;
 
+	virtual void ChosePostProcess(CHOSE_POST_PROCESS_MODEL modelType)override;
+
 protected:
 	void ShadowPass();
 	void SceneColorPass();
+	void PostProcessPass();
 	void PostProcessPass(POST_PROCESS_TYPE ppType);
 	void ToneMappsPass();
 	void BlendPass(std::shared_ptr<FRenderTarget>& mRT, std::shared_ptr<FRenderTarget>& mBlendResourceRT, std::shared_ptr<FRenderTarget>& mBlendBaseRT, const std::string& passName);
@@ -30,6 +33,7 @@ protected:
 	void CyberpunkPass();
 
 private:
+	std::unordered_map<POST_PROCESS_TYPE, bool> postProcessChosed;
 	bool testInitTextureOnce = true;
 	RHI* rhi;
 	FRenderScene fRenderScene;

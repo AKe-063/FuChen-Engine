@@ -3,7 +3,7 @@
 #include "Engine.h"
 
 GameLogic::GameLogic()
-	:loadSystem(), cameraInputLogic()
+	:loadSystem(), cameraInputLogic(), commonInputLogic()
 {
 
 }
@@ -35,10 +35,11 @@ void GameLogic::Run()
 	// 	}
 	cameraInputLogic.OnKeyboardInput();
 	cameraInputLogic.OnMouseInput();
-	if (loadSystem.OnAddActorKeyDown())
-	{
-		//Engine::GetInstance().GetRenderer()->AddNewBuild();
-	}
+	commonInputLogic.OnChoosePostProcessKeyDown();
+// 	if (loadSystem.OnAddActorKeyDown())
+// 	{
+// 		Engine::GetInstance().GetRenderer()->AddNewBuild();
+// 	}
 }
 
 void GameLogic::Destroy()
