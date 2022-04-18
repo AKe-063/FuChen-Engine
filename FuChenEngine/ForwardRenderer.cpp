@@ -165,7 +165,14 @@ void ForwardRenderer::ToneMappsPass()
 	rhi->SetRenderTargets(1, backBufferRT->GetCurrentBackBufferHandle(), false, backBufferRT->GetCurrentBackDepthStencilBufferHandle());
 	rhi->BasePrepare(mBackBufferRT, false);
 	rhi->SetPrimitive("tonemapps_pso", mBlendBufferRT->fPrimitive);
-	rhi->UploadResourceTable(0, mBlendBufferRT->mBlendRT[mBlendBufferRT->currentResourceRT]->GetRTDesc(RTColorBuffer).rtTexture->GetSrvIndex());
+	if (mBlendBufferRT->currentResourceRT == -1)
+	{
+		rhi->UploadResourceTable(0, mSceneColorRT->GetRTDesc(RTColorBuffer).rtTexture->GetSrvIndex());
+	}
+	else
+	{
+		rhi->UploadResourceTable(0, mBlendBufferRT->mBlendRT[mBlendBufferRT->currentResourceRT]->GetRTDesc(RTColorBuffer).rtTexture->GetSrvIndex());
+	}
 	FVector2DInt rtSize;
 	rtSize.x = (int)backBufferRT->mViewport.Width;
 	rtSize.y = (int)backBufferRT->mViewport.Height;

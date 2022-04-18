@@ -143,16 +143,7 @@ void DX12RHI::Init(std::shared_ptr<FShaderManager> fShaderManager, BackBufferRT&
 	BuildConstantBuffer();
 	BuildShadersAndInputLayout(fShaderManager);
 	BuildRootSignature(fShaderManager);
-	BuildPSO(fShaderManager, PSO_TYPE::GLOBAL);
-	BuildPSO(fShaderManager, PSO_TYPE::SHADOWMAP);
-	BuildPSO(fShaderManager, PSO_TYPE::HDR_GLOBAL);
-	BuildPSO(fShaderManager, PSO_TYPE::BLOOM_SET_UP);
-	BuildPSO(fShaderManager, PSO_TYPE::BLOOM_DOWN);
-	BuildPSO(fShaderManager, PSO_TYPE::BLOOM_UP);
-	BuildPSO(fShaderManager, PSO_TYPE::BLOOM_SUNMERGEPS);
-	BuildPSO(fShaderManager, PSO_TYPE::TONEMAPPS);
-	BuildPSO(fShaderManager, PSO_TYPE::CYBERPUNK);
-	BuildPSO(fShaderManager, PSO_TYPE::POST_PROCESS_BLEND);
+	BuildPSO(fShaderManager, PSO_TYPE::ALL_PSO);
 
 	// Execute the initialization commands.
 	ThrowIfFailed(GetCommandList()->Close());
@@ -344,107 +335,121 @@ void DX12RHI::BuildPSO(std::shared_ptr<FShaderManager> fShaderManager, PSO_TYPE 
 {
 	switch (psoType)
 	{
+	case PSO_TYPE::ALL_PSO:
+	{
+
+	}
 	case PSO_TYPE::GLOBAL:
 	{
-		mFPsoManage->CreatePso(fShaderManager->GetShaderMap()[L"..\\FuChenEngine\\Shaders\\color.hlsl"], psoType);
+		//mFPsoManage->CreatePso(fShaderManager->GetShaderMap()[L"..\\FuChenEngine\\Shaders\\color.hlsl"], psoType);
+		mFPsoManage->CreatePso(fShaderManager->GetShaderMap()[L"..\\FuChenEngine\\Shaders\\color.hlsl"], PSO_TYPE::GLOBAL);
 		mFPsoManage->psoMap["geo_pso"].psoDesc.SampleDesc.Count = m4xMsaaState ? 4 : 1;
 		mFPsoManage->psoMap["geo_pso"].psoDesc.SampleDesc.Quality = m4xMsaaState ? (m4xMsaaQuality - 1) : 0;
 		mFPsoManage->psoMap["geo_pso"].psoDesc.pRootSignature = mRootSignatures[L"..\\FuChenEngine\\Shaders\\color.hlsl"].Get();
 		ThrowIfFailed(md3dDevice->CreateGraphicsPipelineState(&mFPsoManage->psoMap["geo_pso"].psoDesc, IID_PPV_ARGS(&mPSOs["geo_pso"])));
-		break;
+		//break;
 	}
 	case PSO_TYPE::SHADOWMAP:
 	{
-		mFPsoManage->CreatePso(fShaderManager->GetShaderMap()[L"..\\FuChenEngine\\Shaders\\Shadows.hlsl"], psoType);
+		//mFPsoManage->CreatePso(fShaderManager->GetShaderMap()[L"..\\FuChenEngine\\Shaders\\Shadows.hlsl"], psoType);
+		mFPsoManage->CreatePso(fShaderManager->GetShaderMap()[L"..\\FuChenEngine\\Shaders\\Shadows.hlsl"], PSO_TYPE::SHADOWMAP);
 		mFPsoManage->psoMap["shadow_pso"].psoDesc.SampleDesc.Count = m4xMsaaState ? 4 : 1;
 		mFPsoManage->psoMap["shadow_pso"].psoDesc.SampleDesc.Quality = m4xMsaaState ? (m4xMsaaQuality - 1) : 0;
 		mFPsoManage->psoMap["shadow_pso"].psoDesc.pRootSignature = mRootSignatures[L"..\\FuChenEngine\\Shaders\\Shadows.hlsl"].Get();
 		ThrowIfFailed(md3dDevice->CreateGraphicsPipelineState(&mFPsoManage->psoMap["shadow_pso"].psoDesc, IID_PPV_ARGS(&mPSOs["shadow_pso"])));
-		break;
+		//break;
 	}
 	case PSO_TYPE::HDR_GLOBAL:
 	{
-		mFPsoManage->CreatePso(fShaderManager->GetShaderMap()[L"..\\FuChenEngine\\Shaders\\color.hlsl"], psoType);
+		//mFPsoManage->CreatePso(fShaderManager->GetShaderMap()[L"..\\FuChenEngine\\Shaders\\color.hlsl"], psoType);
+		mFPsoManage->CreatePso(fShaderManager->GetShaderMap()[L"..\\FuChenEngine\\Shaders\\color.hlsl"], PSO_TYPE::HDR_GLOBAL);
 		mFPsoManage->psoMap["hdr_geo_pso"].psoDesc.SampleDesc.Count = m4xMsaaState ? 4 : 1;
 		mFPsoManage->psoMap["hdr_geo_pso"].psoDesc.SampleDesc.Quality = m4xMsaaState ? (m4xMsaaQuality - 1) : 0;
 		mFPsoManage->psoMap["hdr_geo_pso"].psoDesc.pRootSignature = mRootSignatures[L"..\\FuChenEngine\\Shaders\\color.hlsl"].Get();
 		mFPsoManage->psoMap["hdr_geo_pso"].psoDesc.RTVFormats[0] = DXGI_FORMAT_R16G16B16A16_FLOAT;
 		ThrowIfFailed(md3dDevice->CreateGraphicsPipelineState(&mFPsoManage->psoMap["hdr_geo_pso"].psoDesc, IID_PPV_ARGS(&mPSOs["hdr_geo_pso"])));
-		break;
+		//break;
 	}
 	case PSO_TYPE::BLOOM_SET_UP:
 	{
-		mFPsoManage->CreatePso(fShaderManager->GetShaderMap()[L"..\\FuChenEngine\\Shaders\\bloomsetup.hlsl"], psoType);
+		//mFPsoManage->CreatePso(fShaderManager->GetShaderMap()[L"..\\FuChenEngine\\Shaders\\bloomsetup.hlsl"], psoType);
+		mFPsoManage->CreatePso(fShaderManager->GetShaderMap()[L"..\\FuChenEngine\\Shaders\\bloomsetup.hlsl"], PSO_TYPE::BLOOM_SET_UP);
 		mFPsoManage->psoMap["bloom_pso"].psoDesc.SampleDesc.Count = m4xMsaaState ? 4 : 1;
 		mFPsoManage->psoMap["bloom_pso"].psoDesc.SampleDesc.Quality = m4xMsaaState ? (m4xMsaaQuality - 1) : 0;
 		mFPsoManage->psoMap["bloom_pso"].psoDesc.pRootSignature = mRootSignatures[L"..\\FuChenEngine\\Shaders\\bloomsetup.hlsl"].Get();
 		mFPsoManage->psoMap["bloom_pso"].psoDesc.RTVFormats[0] = DXGI_FORMAT_R11G11B10_FLOAT;
 		ThrowIfFailed(md3dDevice->CreateGraphicsPipelineState(&mFPsoManage->psoMap["bloom_pso"].psoDesc, IID_PPV_ARGS(&mPSOs["bloom_pso"])));
-		break;
+		//break;
 	}
 	case PSO_TYPE::BLOOM_DOWN:
 	{
-		mFPsoManage->CreatePso(fShaderManager->GetShaderMap()[L"..\\FuChenEngine\\Shaders\\bloomdown.hlsl"], psoType);
+		//mFPsoManage->CreatePso(fShaderManager->GetShaderMap()[L"..\\FuChenEngine\\Shaders\\bloomdown.hlsl"], psoType);
+		mFPsoManage->CreatePso(fShaderManager->GetShaderMap()[L"..\\FuChenEngine\\Shaders\\bloomdown.hlsl"], PSO_TYPE::BLOOM_DOWN);
 		mFPsoManage->psoMap["bloom_down_pso"].psoDesc.SampleDesc.Count = m4xMsaaState ? 4 : 1;
 		mFPsoManage->psoMap["bloom_down_pso"].psoDesc.SampleDesc.Quality = m4xMsaaState ? (m4xMsaaQuality - 1) : 0;
 		mFPsoManage->psoMap["bloom_down_pso"].psoDesc.pRootSignature = mRootSignatures[L"..\\FuChenEngine\\Shaders\\bloomdown.hlsl"].Get();
 		mFPsoManage->psoMap["bloom_down_pso"].psoDesc.RTVFormats[0] = DXGI_FORMAT_R11G11B10_FLOAT;
 		ThrowIfFailed(md3dDevice->CreateGraphicsPipelineState(&mFPsoManage->psoMap["bloom_down_pso"].psoDesc, IID_PPV_ARGS(&mPSOs["bloom_down_pso"])));
-		break;
+		//break;
 	}
 	case PSO_TYPE::BLOOM_UP:
 	{
-		mFPsoManage->CreatePso(fShaderManager->GetShaderMap()[L"..\\FuChenEngine\\Shaders\\bloomup.hlsl"], psoType);
+		//mFPsoManage->CreatePso(fShaderManager->GetShaderMap()[L"..\\FuChenEngine\\Shaders\\bloomup.hlsl"], psoType);
+		mFPsoManage->CreatePso(fShaderManager->GetShaderMap()[L"..\\FuChenEngine\\Shaders\\bloomup.hlsl"], PSO_TYPE::BLOOM_UP);
 		mFPsoManage->psoMap["bloom_up_pso"].psoDesc.SampleDesc.Count = m4xMsaaState ? 4 : 1;
 		mFPsoManage->psoMap["bloom_up_pso"].psoDesc.SampleDesc.Quality = m4xMsaaState ? (m4xMsaaQuality - 1) : 0;
 		mFPsoManage->psoMap["bloom_up_pso"].psoDesc.pRootSignature = mRootSignatures[L"..\\FuChenEngine\\Shaders\\bloomup.hlsl"].Get();
 		mFPsoManage->psoMap["bloom_up_pso"].psoDesc.RTVFormats[0] = DXGI_FORMAT_R11G11B10_FLOAT;
 		ThrowIfFailed(md3dDevice->CreateGraphicsPipelineState(&mFPsoManage->psoMap["bloom_up_pso"].psoDesc, IID_PPV_ARGS(&mPSOs["bloom_up_pso"])));
 
-		break;
+		//break;
 	}
 	case PSO_TYPE::BLOOM_SUNMERGEPS:
 	{
-		mFPsoManage->CreatePso(fShaderManager->GetShaderMap()[L"..\\FuChenEngine\\Shaders\\bloomsunmergeps.hlsl"], psoType);
+		//mFPsoManage->CreatePso(fShaderManager->GetShaderMap()[L"..\\FuChenEngine\\Shaders\\bloomsunmergeps.hlsl"], psoType);
+		mFPsoManage->CreatePso(fShaderManager->GetShaderMap()[L"..\\FuChenEngine\\Shaders\\bloomsunmergeps.hlsl"], PSO_TYPE::BLOOM_SUNMERGEPS);
 		mFPsoManage->psoMap["bloom_sunmergeps_pso"].psoDesc.SampleDesc.Count = m4xMsaaState ? 4 : 1;
 		mFPsoManage->psoMap["bloom_sunmergeps_pso"].psoDesc.SampleDesc.Quality = m4xMsaaState ? (m4xMsaaQuality - 1) : 0;
 		mFPsoManage->psoMap["bloom_sunmergeps_pso"].psoDesc.pRootSignature = mRootSignatures[L"..\\FuChenEngine\\Shaders\\bloomsunmergeps.hlsl"].Get();
 		mFPsoManage->psoMap["bloom_sunmergeps_pso"].psoDesc.RTVFormats[0] = DXGI_FORMAT_R16G16B16A16_FLOAT;
 		ThrowIfFailed(md3dDevice->CreateGraphicsPipelineState(&mFPsoManage->psoMap["bloom_sunmergeps_pso"].psoDesc, IID_PPV_ARGS(&mPSOs["bloom_sunmergeps_pso"])));
-		break;
+		//break;
 	}
 	case PSO_TYPE::TONEMAPPS:
 	{
-		mFPsoManage->CreatePso(fShaderManager->GetShaderMap()[L"..\\FuChenEngine\\Shaders\\tonemapps.hlsl"], psoType);
+		//mFPsoManage->CreatePso(fShaderManager->GetShaderMap()[L"..\\FuChenEngine\\Shaders\\tonemapps.hlsl"], psoType);
+		mFPsoManage->CreatePso(fShaderManager->GetShaderMap()[L"..\\FuChenEngine\\Shaders\\tonemapps.hlsl"], PSO_TYPE::TONEMAPPS);
 		mFPsoManage->psoMap["tonemapps_pso"].psoDesc.SampleDesc.Count = m4xMsaaState ? 4 : 1;
 		mFPsoManage->psoMap["tonemapps_pso"].psoDesc.SampleDesc.Quality = m4xMsaaState ? (m4xMsaaQuality - 1) : 0;
 		mFPsoManage->psoMap["tonemapps_pso"].psoDesc.pRootSignature = mRootSignatures[L"..\\FuChenEngine\\Shaders\\tonemapps.hlsl"].Get();
 		ThrowIfFailed(md3dDevice->CreateGraphicsPipelineState(&mFPsoManage->psoMap["tonemapps_pso"].psoDesc, IID_PPV_ARGS(&mPSOs["tonemapps_pso"])));
-		break;
+		//break;
 	}
 	case PSO_TYPE::CYBERPUNK:
 	{
-		mFPsoManage->CreatePso(fShaderManager->GetShaderMap()[L"..\\FuChenEngine\\Shaders\\cyberpunk.hlsl"], psoType);
+		//mFPsoManage->CreatePso(fShaderManager->GetShaderMap()[L"..\\FuChenEngine\\Shaders\\cyberpunk.hlsl"], psoType);
+		mFPsoManage->CreatePso(fShaderManager->GetShaderMap()[L"..\\FuChenEngine\\Shaders\\cyberpunk.hlsl"], PSO_TYPE::CYBERPUNK);
 		mFPsoManage->psoMap["cyberpunk_pso"].psoDesc.SampleDesc.Count = m4xMsaaState ? 4 : 1;
 		mFPsoManage->psoMap["cyberpunk_pso"].psoDesc.SampleDesc.Quality = m4xMsaaState ? (m4xMsaaQuality - 1) : 0;
 		mFPsoManage->psoMap["cyberpunk_pso"].psoDesc.pRootSignature = mRootSignatures[L"..\\FuChenEngine\\Shaders\\cyberpunk.hlsl"].Get();
 		mFPsoManage->psoMap["cyberpunk_pso"].psoDesc.RTVFormats[0] = DXGI_FORMAT_R16G16B16A16_FLOAT;
 		ThrowIfFailed(md3dDevice->CreateGraphicsPipelineState(&mFPsoManage->psoMap["cyberpunk_pso"].psoDesc, IID_PPV_ARGS(&mPSOs["cyberpunk_pso"])));
-		break;
+		//break;
 	}
 	case PSO_TYPE::POST_PROCESS_BLEND:
 	{
-		mFPsoManage->CreatePso(fShaderManager->GetShaderMap()[L"..\\FuChenEngine\\Shaders\\postprocessblend.hlsl"], psoType);
+		//mFPsoManage->CreatePso(fShaderManager->GetShaderMap()[L"..\\FuChenEngine\\Shaders\\postprocessblend.hlsl"], psoType);
+		mFPsoManage->CreatePso(fShaderManager->GetShaderMap()[L"..\\FuChenEngine\\Shaders\\postprocessblend.hlsl"], PSO_TYPE::POST_PROCESS_BLEND);
 		mFPsoManage->psoMap["postprocessblend_pso"].psoDesc.SampleDesc.Count = m4xMsaaState ? 4 : 1;
 		mFPsoManage->psoMap["postprocessblend_pso"].psoDesc.SampleDesc.Quality = m4xMsaaState ? (m4xMsaaQuality - 1) : 0;
 		mFPsoManage->psoMap["postprocessblend_pso"].psoDesc.pRootSignature = mRootSignatures[L"..\\FuChenEngine\\Shaders\\postprocessblend.hlsl"].Get();
 		mFPsoManage->psoMap["postprocessblend_pso"].psoDesc.RTVFormats[0] = DXGI_FORMAT_R16G16B16A16_FLOAT;
 		ThrowIfFailed(md3dDevice->CreateGraphicsPipelineState(&mFPsoManage->psoMap["postprocessblend_pso"].psoDesc, IID_PPV_ARGS(&mPSOs["postprocessblend_pso"])));
-		break;
+		//break;
 	}
 	default:
 	{
-		assert(0);
+		//assert(0);
 		break;
 	}
 	}

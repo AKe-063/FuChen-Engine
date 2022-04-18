@@ -13,7 +13,9 @@ enum class PSO_TYPE
 	BLOOM_SUNMERGEPS = 6,
 	TONEMAPPS = 7,
 	CYBERPUNK = 8,
-	POST_PROCESS_BLEND = 9
+	POST_PROCESS_BLEND = 9,
+
+	ALL_PSO = 100
 };
 
 struct PipelineState

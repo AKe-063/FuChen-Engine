@@ -25,6 +25,11 @@ void FPsoManager::CreatePso(FShader& fShader, PSO_TYPE psoType)
 {
 	switch (psoType)
 	{
+	case PSO_TYPE::ALL_PSO:
+	{
+		assert(0);
+		break;
+	}
 	case PSO_TYPE::GLOBAL:
 	{
 		BuildGlobalRenderPso(fShader, "geo_pso");
