@@ -27,11 +27,13 @@ public:
 	virtual unsigned __int64 GetDepthStencilViewHandle() = 0;
 
 	virtual void BeginRender(std::string pso) = 0;
+	virtual void BeginPass(const std::string& passName) = 0;
 	virtual void PrepareForRender(std::string pso) = 0;
-	virtual void BeginDraw(std::shared_ptr<FRenderTarget> mRT, std::string EventName, bool bUseRTViewPort) = 0;
+	virtual void BasePrepare(std::shared_ptr<FRenderTarget> mRT, bool bUseRTViewPort) = 0;
 	virtual void InitShadowRT(std::shared_ptr<FRenderTarget> mShadowMap) = 0;
 	virtual void InitPPRT(std::shared_ptr<FRenderTarget> mPostProcess, RESOURCE_FORMAT format) = 0;
 	virtual void CreateRenderTarget(std::shared_ptr<FRenderTarget>& mRT, float width, float height, bool bBackBufferRT) = 0;
+	virtual void ClearRT(std::shared_ptr<FRenderTarget>& mRT) = 0;
 	virtual void EndPass() = 0;
 	virtual std::shared_ptr<FPrimitive> CreatePrimitiveByVerticesAndIndices(std::vector<Vertex> vertices, std::vector<std::uint16_t> indices) = 0;
 	virtual void SetPrimitive(const std::string& psoName, std::shared_ptr<FPrimitive>& fPrimitive) = 0;

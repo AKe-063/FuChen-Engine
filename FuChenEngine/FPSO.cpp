@@ -70,6 +70,11 @@ void FPsoManager::CreatePso(FShader& fShader, PSO_TYPE psoType)
 		BuildGlobalRenderPso(fShader, "cyberpunk_pso");
 		break;
 	}
+	case PSO_TYPE::POST_PROCESS_BLEND:
+	{
+		BuildGlobalRenderPso(fShader, "postprocessblend_pso");
+		break;
+	}
 	default:
 	{
 		assert(0);

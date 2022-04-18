@@ -51,6 +51,7 @@ FShaderManager::FShaderManager()
 	AddShader(L"..\\FuChenEngine\\Shaders\\bloomsunmergeps.hlsl");
 	AddShader(L"..\\FuChenEngine\\Shaders\\tonemapps.hlsl");
 	AddShader(L"..\\FuChenEngine\\Shaders\\cyberpunk.hlsl");
+	AddShader(L"..\\FuChenEngine\\Shaders\\postprocessblend.hlsl");
 	mInputLayout.clear();
 	mInputLayout =
 	{
@@ -62,6 +63,7 @@ FShaderManager::FShaderManager()
 	GetShaderMap()[L"..\\FuChenEngine\\Shaders\\bloomsunmergeps.hlsl"].SetShaderLayout(mInputLayout);
 	GetShaderMap()[L"..\\FuChenEngine\\Shaders\\tonemapps.hlsl"].SetShaderLayout(mInputLayout);
 	GetShaderMap()[L"..\\FuChenEngine\\Shaders\\cyberpunk.hlsl"].SetShaderLayout(mInputLayout);
+	GetShaderMap()[L"..\\FuChenEngine\\Shaders\\postprocessblend.hlsl"].SetShaderLayout(mInputLayout);
 }
 
 FShaderManager::~FShaderManager()

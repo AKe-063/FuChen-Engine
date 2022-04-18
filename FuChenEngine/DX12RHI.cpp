@@ -152,6 +152,7 @@ void DX12RHI::Init(std::shared_ptr<FShaderManager> fShaderManager, BackBufferRT&
 	BuildPSO(fShaderManager, PSO_TYPE::BLOOM_SUNMERGEPS);
 	BuildPSO(fShaderManager, PSO_TYPE::TONEMAPPS);
 	BuildPSO(fShaderManager, PSO_TYPE::CYBERPUNK);
+	BuildPSO(fShaderManager, PSO_TYPE::POST_PROCESS_BLEND);
 
 	// Execute the initialization commands.
 	ThrowIfFailed(GetCommandList()->Close());
@@ -431,6 +432,16 @@ void DX12RHI::BuildPSO(std::shared_ptr<FShaderManager> fShaderManager, PSO_TYPE 
 		ThrowIfFailed(md3dDevice->CreateGraphicsPipelineState(&mFPsoManage->psoMap["cyberpunk_pso"].psoDesc, IID_PPV_ARGS(&mPSOs["cyberpunk_pso"])));
 		break;
 	}
+	case PSO_TYPE::POST_PROCESS_BLEND:
+	{
+		mFPsoManage->CreatePso(fShaderManager->GetShaderMap()[L"..\\FuChenEngine\\Shaders\\postprocessblend.hlsl"], psoType);
+		mFPsoManage->psoMap["postprocessblend_pso"].psoDesc.SampleDesc.Count = m4xMsaaState ? 4 : 1;
+		mFPsoManage->psoMap["postprocessblend_pso"].psoDesc.SampleDesc.Quality = m4xMsaaState ? (m4xMsaaQuality - 1) : 0;
+		mFPsoManage->psoMap["postprocessblend_pso"].psoDesc.pRootSignature = mRootSignatures[L"..\\FuChenEngine\\Shaders\\postprocessblend.hlsl"].Get();
+		mFPsoManage->psoMap["postprocessblend_pso"].psoDesc.RTVFormats[0] = DXGI_FORMAT_R16G16B16A16_FLOAT;
+		ThrowIfFailed(md3dDevice->CreateGraphicsPipelineState(&mFPsoManage->psoMap["postprocessblend_pso"].psoDesc, IID_PPV_ARGS(&mPSOs["postprocessblend_pso"])));
+		break;
+	}
 	default:
 	{
 		assert(0);
@@ -582,12 +593,11 @@ void DX12RHI::BeginRender(std::string pso)
 {
 	ThrowIfFailed(mDirectCmdListAlloc->Reset());
 	ThrowIfFailed(mCommandList->Reset(mDirectCmdListAlloc.Get(), mPSOs[pso].Get()));
+	bCmdListAllocOpen = true;
 }
 
-void DX12RHI::BeginDraw(std::shared_ptr<FRenderTarget> mRT, std::string EventName, bool bUseRTViewPort)
+void DX12RHI::BasePrepare(std::shared_ptr<FRenderTarget> mRT, bool bUseRTViewPort)
 {
-	PIXBeginEvent(mCommandList.Get(), 0, EventName.c_str());
-	PIXBeginEvent(mCommandQueue.Get(), 0, EventName.c_str());
 	ID3D12DescriptorHeap* descriptorHeaps[] = { mHeapManager->GetHeap(HeapType::CBV_SRV_UAV) };
 	mCommandList->SetDescriptorHeaps(_countof(descriptorHeaps), descriptorHeaps);
 	if (bUseRTViewPort)
@@ -626,6 +636,11 @@ void DX12RHI::BeginDraw(std::shared_ptr<FRenderTarget> mRT, std::string EventNam
 	}
 }
 
+void DX12RHI::BeginPass(const std::string& passName)
+{
+	PIXBeginEvent(mCommandList.Get(), 0, passName.c_str());
+}
+
 void DX12RHI::SetPrimitive(const std::string& psoName, std::shared_ptr<FPrimitive>& fPrimitive)
 {
 	if (currentPso != psoName)
@@ -648,14 +663,18 @@ void DX12RHI::EndDraw(BackBufferRT& backBufferRT)
 
 void DX12RHI::PrepareForRender(std::string pso)
 {
-	ThrowIfFailed(mDirectCmdListAlloc->Reset());
-	if (pso == "")
+	if (!bCmdListAllocOpen)
 	{
-		ThrowIfFailed(mCommandList->Reset(mDirectCmdListAlloc.Get(), nullptr));
-	}
-	else
-	{
-		ThrowIfFailed(mCommandList->Reset(mDirectCmdListAlloc.Get(), mPSOs[pso].Get()));
+		ThrowIfFailed(mDirectCmdListAlloc->Reset());
+		if (pso == "")
+		{
+			ThrowIfFailed(mCommandList->Reset(mDirectCmdListAlloc.Get(), nullptr));
+		}
+		else
+		{
+			ThrowIfFailed(mCommandList->Reset(mDirectCmdListAlloc.Get(), mPSOs[pso].Get()));
+		}
+		bCmdListAllocOpen = true;
 	}
 }
 
@@ -674,22 +693,41 @@ void DX12RHI::CreateRenderTarget(std::shared_ptr<FRenderTarget>& mRT, float widt
 	}
 }
 
+void DX12RHI::ClearRT(std::shared_ptr<FRenderTarget>& mRT)
+{
+	rhi->TransResourBarrier(mRT->ColorResource(0).get(), 1, RESOURCE_STATE_PRESENT, RESOURCE_STATE_RENDER_TARGET);
+	rhi->TransResourBarrier(mRT->DSResource().get(), 1, RESOURCE_STATE_GENERIC_READ, RESOURCE_STATE_DEPTH_WRITE);
+	float color[4] = { 1.0f,1.0f,1.0f,1.0f };
+
+	D3D12_CPU_DESCRIPTOR_HANDLE handle;
+	handle.ptr = mRT->Rtv(0);
+	mCommandList->ClearRenderTargetView(handle, color, 0, nullptr);
+	ClearDepthBuffer(mRT->Dsv());
+
+	rhi->TransResourBarrier(mRT->ColorResource(0).get(), 1, RESOURCE_STATE_RENDER_TARGET, RESOURCE_STATE_PRESENT);
+	rhi->TransResourBarrier(mRT->DSResource().get(), 1, RESOURCE_STATE_DEPTH_WRITE, RESOURCE_STATE_GENERIC_READ);
+
+}
+
 void DX12RHI::EndPass()
 {
 	currentPso = "";
 	PIXEndEvent(mCommandList.Get());
-	PIXEndEvent(mCommandQueue.Get());
 }
 
 void DX12RHI::EndPrepare()
 {
-	CloseCommandList();
-	FlushCommandQueue();
+	if (bCmdListAllocOpen)
+	{
+		CloseCommandList();
+		FlushCommandQueue();
+	}
 }
 
 void DX12RHI::ResetCmdListAlloc()
 {
 	ThrowIfFailed(mDirectCmdListAlloc->Reset());
+	bCmdListAllocOpen = true;
 }
 
 void DX12RHI::ResetCommandList(std::string pso)
@@ -969,6 +1007,8 @@ void DX12RHI::CloseCommandList()
 	// Add the command list to the queue for execution.
 	ID3D12CommandList* cmdsLists[] = { mCommandList.Get() };
 	mCommandQueue->ExecuteCommandLists(_countof(cmdsLists), cmdsLists);
+	
+	bCmdListAllocOpen = false;
 }
 
 void DX12RHI::SwapChain(BackBufferRT& backBufferRT)

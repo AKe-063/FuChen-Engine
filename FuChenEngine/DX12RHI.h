@@ -35,11 +35,13 @@ public:
 
 	//Abstract RHI
 	virtual void BeginRender(std::string pso)override;
-	virtual void BeginDraw(std::shared_ptr<FRenderTarget> mRT, std::string EventName, bool bUseRTViewPort)override;
+	virtual void BasePrepare(std::shared_ptr<FRenderTarget> mRT, bool bUseRTViewPort)override;
+	virtual void BeginPass(const std::string& passName)override;
 	virtual void PrepareForRender(std::string pso)override;
 	virtual void InitShadowRT(std::shared_ptr<FRenderTarget> mShadowMap)override;
 	virtual void InitPPRT(std::shared_ptr<FRenderTarget> mPostProcess, RESOURCE_FORMAT format)override;
 	virtual void CreateRenderTarget(std::shared_ptr<FRenderTarget>& mRT, float width, float height, bool bBackBufferRT)override;
+	virtual void ClearRT(std::shared_ptr<FRenderTarget>& mRT)override;
 	virtual void EndPass()override;
 	virtual std::shared_ptr<FPrimitive> CreatePrimitiveByVerticesAndIndices(std::vector<Vertex> vertices, std::vector<std::uint16_t> indices)override;
 	virtual void SetPrimitive(const std::string& psoName, std::shared_ptr<FPrimitive>& fPrimitive)override;
@@ -121,5 +123,5 @@ private:
 	UINT64 mCurrentFence = 0;
 	Window* mWindow;
 
-	MeshGeometry triangle;
+	bool bCmdListAllocOpen = false;
 };

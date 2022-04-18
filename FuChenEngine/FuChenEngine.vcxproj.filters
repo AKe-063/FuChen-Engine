@@ -171,6 +171,9 @@
     <ClInclude Include="FCyberpunkPP.h">
       <Filter>Header Files\Render</Filter>
     </ClInclude>
+    <ClInclude Include="FBlendBufferRT.h">
+      <Filter>Header Files\Render</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="stdafx.cpp">
@@ -267,6 +270,9 @@
       <Filter>Source Files\Render</Filter>
     </ClCompile>
     <ClCompile Include="FCyberpunkPP.cpp">
+      <Filter>Source Files\Render</Filter>
+    </ClCompile>
+    <ClCompile Include="FBlendBufferRT.cpp">
       <Filter>Source Files\Render</Filter>
     </ClCompile>
   </ItemGroup>

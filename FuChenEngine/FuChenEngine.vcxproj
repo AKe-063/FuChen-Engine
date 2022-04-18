@@ -183,6 +183,7 @@
     <ClInclude Include="FSingleton.h" />
     <ClInclude Include="FTexture.h" />
     <ClInclude Include="FTextureStruct.h" />
+    <ClInclude Include="FBlendBufferRT.h" />
     <ClInclude Include="FWin32Input.h" />
     <ClInclude Include="GameTimer.h" />
     <ClInclude Include="MathHelper.h" />
@@ -220,6 +221,7 @@
     <ClCompile Include="FScene.cpp" />
     <ClCompile Include="FShader.cpp" />
     <ClCompile Include="FTexture.cpp" />
+    <ClCompile Include="FBlendBufferRT.cpp" />
     <ClCompile Include="FWin32Input.cpp" />
     <ClCompile Include="GameTimer.cpp" />
     <ClCompile Include="MathHelper.cpp" />

@@ -23,13 +23,17 @@ void ForwardRenderer::Init()
 	rhi->CreateRenderTarget(mShadowMap, 2048.0f, 2048.0f, false);
 	rhi->CreateRenderTarget(mSceneColorRT, 1440.0f, 900.0f, false);
 
+	rhi->PrepareForRender("");
 	mBloomPP = std::make_shared<FBloomPP>(4, mSceneColorRT);
 	mBloomPP->InitBloomRTs();
 	mCyberpunkRT = std::make_shared<FCyberpunkPP>(mSceneColorRT);
 	mCyberpunkRT->InitCyberpunkRTs();
+	mBlendBufferRT = std::make_shared<FBlendBufferRT>();
+	mBlendBufferRT->InitBlendBufferRTs();
 
 	rhi->InitShadowRT(mShadowMap);
  	rhi->InitPPRT(mSceneColorRT, RESOURCE_FORMAT::FORMAT_R16G16B16A16_FLOAT);
+	rhi->EndPrepare();
 }
 
 void ForwardRenderer::Destroy()
@@ -41,6 +45,9 @@ void ForwardRenderer::Destroy()
 void ForwardRenderer::Render()
 {
 	rhi->BeginRender("geo_pso");
+	rhi->BeginPass("ClearBlendRT");
+	mBlendBufferRT->BlendRTsClear();
+	rhi->EndPass();
 	//Draw ShadowMap
 	ShadowPass();
 
@@ -49,13 +56,9 @@ void ForwardRenderer::Render()
 
 	//PostProcess pass
 	PostProcessPass(POST_PROCESS_TYPE::Bloom);
-	//PostProcessPass(POST_PROCESS_TYPE::Cyberpunk);
-
-	//Old Render
-// 	rhi->TransCurrentBackBufferResourBarrier(1, RESOURCE_STATE_PRESENT, RESOURCE_STATE_RENDER_TARGET);
-// 	rhi->SetRenderTargets(1, rhi->GetCurrentBackBufferViewHandle(), false, rhi->GetDepthStencilViewHandle());
-// 	rhi->DrawPrimitives(fRenderScene, mShadowMap, mSceneColorRT);
-// 	rhi->TransCurrentBackBufferResourBarrier(1, RESOURCE_STATE_RENDER_TARGET, RESOURCE_STATE_PRESENT);
+	PostProcessPass(POST_PROCESS_TYPE::Cyberpunk);
+	
+	ToneMappsPass();
 	
 	rhi->EndDraw(*mBackBufferRT->mBackBufferRT);
 }
@@ -100,9 +103,10 @@ void ForwardRenderer::BuildDirtyPrimitive(FScene& fScene)
 
 void ForwardRenderer::ShadowPass()
 {
+	rhi->BeginPass("ShadowPass");
 	rhi->TransResourBarrier(mShadowMap->DSResource().get(), 1, RESOURCE_STATE_GENERIC_READ, RESOURCE_STATE_DEPTH_WRITE);
 	rhi->SetRenderTargets(0, 0, false, mShadowMap->Dsv());
-	rhi->BeginDraw(mShadowMap, "ShadowPass", true);
+	rhi->BasePrepare(mShadowMap, true);
 	for (auto primitivePair : fRenderScene.GetAllPrimitives())
 	{
 		rhi->SetPrimitive("shadow_pso", primitivePair.second);
@@ -110,16 +114,17 @@ void ForwardRenderer::ShadowPass()
 		rhi->UploadResourceBuffer(1, 2, -1, -1);
 		rhi->DrawFPrimitive(*primitivePair.second);
 	}
-	rhi->EndPass();
 	rhi->TransResourBarrier(mShadowMap->DSResource().get(), 1, RESOURCE_STATE_DEPTH_WRITE, RESOURCE_STATE_GENERIC_READ);
+	rhi->EndPass();
 }
 
 void ForwardRenderer::SceneColorPass()
 {
-	rhi->TransResourBarrier(mSceneColorRT->ColorResource(0).get(), 1, RESOURCE_STATE_PRESENT, RESOURCE_STATE_RENDER_TARGET);
+	rhi->BeginPass("SceneColorPass");
+	rhi->TransResourBarrier(mSceneColorRT->ColorResource(0).get(), 1, RESOURCE_STATE_COMMON, RESOURCE_STATE_RENDER_TARGET);
 	rhi->TransResourBarrier(mSceneColorRT->DSResource().get(), 1, RESOURCE_STATE_GENERIC_READ, RESOURCE_STATE_DEPTH_WRITE);
 	rhi->SetRenderTargets(1, mSceneColorRT->Rtv(0), false, mSceneColorRT->Dsv());
-	rhi->BeginDraw(mSceneColorRT, "BasePass", false);
+	rhi->BasePrepare(mSceneColorRT, false);
 	for (auto primitivePair : fRenderScene.GetAllPrimitives())
 	{
 		rhi->SetPrimitive("hdr_geo_pso", primitivePair.second);
@@ -130,9 +135,9 @@ void ForwardRenderer::SceneColorPass()
 		rhi->UploadResourceTable(7, mShadowMap->GetRTDesc(RTDepthStencilBuffer).rtTexture->GetSrvIndex());
 		rhi->DrawFPrimitive(*primitivePair.second);
 	}
-	rhi->EndPass();
-	rhi->TransResourBarrier(mSceneColorRT->ColorResource(0).get(), 1, RESOURCE_STATE_RENDER_TARGET, RESOURCE_STATE_PRESENT);
+	rhi->TransResourBarrier(mSceneColorRT->ColorResource(0).get(), 1, RESOURCE_STATE_RENDER_TARGET, RESOURCE_STATE_COMMON);
 	rhi->TransResourBarrier(mSceneColorRT->DSResource().get(), 1, RESOURCE_STATE_DEPTH_WRITE, RESOURCE_STATE_GENERIC_READ);
+	rhi->EndPass();
 }
 
 void ForwardRenderer::PostProcessPass(POST_PROCESS_TYPE ppType)
@@ -151,13 +156,53 @@ void ForwardRenderer::PostProcessPass(POST_PROCESS_TYPE ppType)
 	}
 }
 
+void ForwardRenderer::ToneMappsPass()
+{
+	//ToneMapps
+	rhi->BeginPass("ToneMappsPass");
+	std::shared_ptr<BackBufferRT> backBufferRT = mBackBufferRT->mBackBufferRT;
+	rhi->TransResourBarrier(backBufferRT->mSwapChainBuffer[backBufferRT->CurrentBackBufferRT].get(), 1, RESOURCE_STATE_PRESENT, RESOURCE_STATE_RENDER_TARGET);
+	rhi->SetRenderTargets(1, backBufferRT->GetCurrentBackBufferHandle(), false, backBufferRT->GetCurrentBackDepthStencilBufferHandle());
+	rhi->BasePrepare(mBackBufferRT, false);
+	rhi->SetPrimitive("tonemapps_pso", mBlendBufferRT->fPrimitive);
+	rhi->UploadResourceTable(0, mBlendBufferRT->mBlendRT[mBlendBufferRT->currentResourceRT]->GetRTDesc(RTColorBuffer).rtTexture->GetSrvIndex());
+	FVector2DInt rtSize;
+	rtSize.x = (int)backBufferRT->mViewport.Width;
+	rtSize.y = (int)backBufferRT->mViewport.Height;
+	rhi->UploadResourceConstants(1, 2, &rtSize, 0);
+	rhi->DrawFPrimitive(*mBlendBufferRT->fPrimitive);
+	rhi->TransResourBarrier(backBufferRT->mSwapChainBuffer[backBufferRT->CurrentBackBufferRT].get(), 1, RESOURCE_STATE_RENDER_TARGET, RESOURCE_STATE_PRESENT);
+	rhi->EndPass();
+}
+
+void ForwardRenderer::BlendPass(std::shared_ptr<FRenderTarget>& mRT, std::shared_ptr<FRenderTarget>& mBlendResourceRT, std::shared_ptr<FRenderTarget>& mBlendBaseRT, const std::string& passName)
+{
+	rhi->BeginPass(passName);
+	rhi->TransResourBarrier(mRT->ColorResource(0).get(), 1, RESOURCE_STATE_COMMON, RESOURCE_STATE_RENDER_TARGET);
+	rhi->TransResourBarrier(mRT->DSResource().get(), 1, RESOURCE_STATE_GENERIC_READ, RESOURCE_STATE_DEPTH_WRITE);
+	rhi->SetRenderTargets(1, mRT->Rtv(0), false, mRT->Dsv());
+	rhi->BasePrepare(mRT, false);
+	rhi->SetPrimitive("postprocessblend_pso", mBlendBufferRT->fPrimitive);
+	rhi->UploadResourceTable(0, mBlendBaseRT->GetRTDesc(RTColorBuffer).rtTexture->GetSrvIndex());
+	rhi->UploadResourceTable(1, mBlendResourceRT->GetRTDesc(RTColorBuffer).rtTexture->GetSrvIndex());
+	FVector2DInt rtSize;
+	rtSize.x = (int)mRT->Width();
+	rtSize.y = (int)mRT->Height();
+	rhi->UploadResourceConstants(2, 2, &rtSize, 0);
+	rhi->DrawFPrimitive(*mBlendBufferRT->fPrimitive);
+	rhi->TransResourBarrier(mRT->ColorResource(0).get(), 1, RESOURCE_STATE_RENDER_TARGET, RESOURCE_STATE_COMMON);
+	rhi->TransResourBarrier(mRT->DSResource().get(), 1, RESOURCE_STATE_DEPTH_WRITE, RESOURCE_STATE_GENERIC_READ);
+	rhi->EndPass();
+}
+
 void ForwardRenderer::BloomPass()
 {
 	//Bloom setup
- 	rhi->TransResourBarrier(mBloomPP->GetBloomSetUpRT()->ColorResource(0).get(), 1, RESOURCE_STATE_PRESENT, RESOURCE_STATE_RENDER_TARGET);
+	rhi->BeginPass("BloomSetUpPass");
+ 	rhi->TransResourBarrier(mBloomPP->GetBloomSetUpRT()->ColorResource(0).get(), 1, RESOURCE_STATE_COMMON, RESOURCE_STATE_RENDER_TARGET);
  	rhi->TransResourBarrier(mBloomPP->GetBloomSetUpRT()->DSResource().get(), 1, RESOURCE_STATE_GENERIC_READ, RESOURCE_STATE_DEPTH_WRITE);
  	rhi->SetRenderTargets(1, mBloomPP->GetBloomSetUpRT()->Rtv(0), false, mBloomPP->GetBloomSetUpRT()->Dsv());
-	rhi->BeginDraw(mBloomPP->GetBloomSetUpRT(), "BloomSetUp", false);
+	rhi->BasePrepare(mBloomPP->GetBloomSetUpRT(), false);
 	rhi->SetPrimitive("bloom_pso", mBloomPP->fPrimitive);
 	rhi->UploadResourceTable(0, mSceneColorRT->GetRTDesc(RTColorBuffer).rtTexture->GetSrvIndex());
 	FVector2DInt rtSize;
@@ -165,17 +210,18 @@ void ForwardRenderer::BloomPass()
 	rtSize.y = mSceneColorRT->Height();
 	rhi->UploadResourceConstants(1, 2, &rtSize, 0);
 	rhi->DrawFPrimitive(*mBloomPP->fPrimitive);
-	rhi->EndPass();
- 	rhi->TransResourBarrier(mBloomPP->GetBloomSetUpRT()->ColorResource(0).get(), 1, RESOURCE_STATE_RENDER_TARGET, RESOURCE_STATE_PRESENT);
+ 	rhi->TransResourBarrier(mBloomPP->GetBloomSetUpRT()->ColorResource(0).get(), 1, RESOURCE_STATE_RENDER_TARGET, RESOURCE_STATE_COMMON);
  	rhi->TransResourBarrier(mBloomPP->GetBloomSetUpRT()->DSResource().get(), 1, RESOURCE_STATE_DEPTH_WRITE, RESOURCE_STATE_GENERIC_READ);
- 
+	rhi->EndPass();
+
  	//Bloom down
  	for (size_t i = 0; i < mBloomPP->downUpNum; i++)
  	{
- 		rhi->TransResourBarrier(mBloomPP->GetBloomDownRTs()[i]->ColorResource(0).get(), 1, RESOURCE_STATE_PRESENT, RESOURCE_STATE_RENDER_TARGET);
+		rhi->BeginPass("BloomDownPass");
+ 		rhi->TransResourBarrier(mBloomPP->GetBloomDownRTs()[i]->ColorResource(0).get(), 1, RESOURCE_STATE_COMMON, RESOURCE_STATE_RENDER_TARGET);
  		rhi->TransResourBarrier(mBloomPP->GetBloomDownRTs()[i]->DSResource().get(), 1, RESOURCE_STATE_GENERIC_READ, RESOURCE_STATE_DEPTH_WRITE);
  		rhi->SetRenderTargets(1, mBloomPP->GetBloomDownRTs()[i]->Rtv(0), false, mBloomPP->GetBloomDownRTs()[i]->Dsv());
-		rhi->BeginDraw(mBloomPP->GetBloomDownRTs()[i], "BloomDown", false);
+		rhi->BasePrepare(mBloomPP->GetBloomDownRTs()[i], false);
 		rhi->SetPrimitive("bloom_down_pso", mBloomPP->fPrimitive);
  		if (i == 0)
  		{
@@ -194,18 +240,19 @@ void ForwardRenderer::BloomPass()
 			rhi->UploadResourceConstants(1, 2, &rtSize, 0);
  		}
 		rhi->DrawFPrimitive(*mBloomPP->fPrimitive);
-		rhi->EndPass();
- 		rhi->TransResourBarrier(mBloomPP->GetBloomDownRTs()[i]->ColorResource(0).get(), 1, RESOURCE_STATE_RENDER_TARGET, RESOURCE_STATE_PRESENT);
+ 		rhi->TransResourBarrier(mBloomPP->GetBloomDownRTs()[i]->ColorResource(0).get(), 1, RESOURCE_STATE_RENDER_TARGET, RESOURCE_STATE_COMMON);
  		rhi->TransResourBarrier(mBloomPP->GetBloomDownRTs()[i]->DSResource().get(), 1, RESOURCE_STATE_DEPTH_WRITE, RESOURCE_STATE_GENERIC_READ);
- 	}
+		rhi->EndPass();
+	}
  
  	//Bloom up
  	for (size_t i = 0; i < mBloomPP->downUpNum - 1; i++)
  	{
- 		rhi->TransResourBarrier(mBloomPP->GetBloomUpRTs()[i]->ColorResource(0).get(), 1, RESOURCE_STATE_PRESENT, RESOURCE_STATE_RENDER_TARGET);
+		rhi->BeginPass("BloomUpPass");
+ 		rhi->TransResourBarrier(mBloomPP->GetBloomUpRTs()[i]->ColorResource(0).get(), 1, RESOURCE_STATE_COMMON, RESOURCE_STATE_RENDER_TARGET);
  		rhi->TransResourBarrier(mBloomPP->GetBloomUpRTs()[i]->DSResource().get(), 1, RESOURCE_STATE_GENERIC_READ, RESOURCE_STATE_DEPTH_WRITE);
  		rhi->SetRenderTargets(1, mBloomPP->GetBloomUpRTs()[i]->Rtv(0), false, mBloomPP->GetBloomUpRTs()[i]->Dsv());
-		rhi->BeginDraw(mBloomPP->GetBloomUpRTs()[i], "BloomUp", false);
+		rhi->BasePrepare(mBloomPP->GetBloomUpRTs()[i], false);
 		rhi->SetPrimitive("bloom_up_pso", mBloomPP->fPrimitive);
  		auto bloomDownRTNum = mBloomPP->downUpNum;
  		if (i == 0)
@@ -231,16 +278,17 @@ void ForwardRenderer::BloomPass()
 			rhi->UploadResourceConstants(2, 4, &rtSize, 0);
  		}
 		rhi->DrawFPrimitive(*mBloomPP->fPrimitive);
-		rhi->EndPass();
- 		rhi->TransResourBarrier(mBloomPP->GetBloomUpRTs()[i]->ColorResource(0).get(), 1, RESOURCE_STATE_RENDER_TARGET, RESOURCE_STATE_PRESENT);
+ 		rhi->TransResourBarrier(mBloomPP->GetBloomUpRTs()[i]->ColorResource(0).get(), 1, RESOURCE_STATE_RENDER_TARGET, RESOURCE_STATE_COMMON);
  		rhi->TransResourBarrier(mBloomPP->GetBloomUpRTs()[i]->DSResource().get(), 1, RESOURCE_STATE_DEPTH_WRITE, RESOURCE_STATE_GENERIC_READ);
- 	}
+		rhi->EndPass();
+	}
 
   	//Bloom sunmergeps
- 	rhi->TransResourBarrier(mBloomPP->GetBloomSunmergepsRT()->ColorResource(0).get(), 1, RESOURCE_STATE_PRESENT, RESOURCE_STATE_RENDER_TARGET);
+	rhi->BeginPass("BloomSunmergepsPass");
+ 	rhi->TransResourBarrier(mBloomPP->GetBloomSunmergepsRT()->ColorResource(0).get(), 1, RESOURCE_STATE_COMMON, RESOURCE_STATE_RENDER_TARGET);
  	rhi->TransResourBarrier(mBloomPP->GetBloomSunmergepsRT()->DSResource().get(), 1, RESOURCE_STATE_GENERIC_READ, RESOURCE_STATE_DEPTH_WRITE);
  	rhi->SetRenderTargets(1, mBloomPP->GetBloomSunmergepsRT()->Rtv(0), false, mBloomPP->GetBloomSunmergepsRT()->Dsv());
-	rhi->BeginDraw(mBloomPP->GetBloomSunmergepsRT(), "BloomSunmergeps", false);
+	rhi->BasePrepare(mBloomPP->GetBloomSunmergepsRT(), false);
 	rhi->SetPrimitive("bloom_sunmergeps_pso", mBloomPP->fPrimitive);
 	auto bloomDownRTNum = mBloomPP->downUpNum;
 	rhi->UploadResourceTable(0, mBloomPP->GetBloomUpRTs()[mBloomPP->downUpNum - 2]->GetRTDesc(RTColorBuffer).rtTexture->GetSrvIndex());
@@ -252,56 +300,61 @@ void ForwardRenderer::BloomPass()
 	rtSizeVec4.w = 20;
 	rhi->UploadResourceConstants(2, 4, &rtSizeVec4, 0);
 	rhi->DrawFPrimitive(*mBloomPP->fPrimitive);
-	rhi->EndPass();
- 	rhi->TransResourBarrier(mBloomPP->GetBloomSunmergepsRT()->ColorResource(0).get(), 1, RESOURCE_STATE_RENDER_TARGET, RESOURCE_STATE_PRESENT);
+ 	rhi->TransResourBarrier(mBloomPP->GetBloomSunmergepsRT()->ColorResource(0).get(), 1, RESOURCE_STATE_RENDER_TARGET, RESOURCE_STATE_COMMON);
  	rhi->TransResourBarrier(mBloomPP->GetBloomSunmergepsRT()->DSResource().get(), 1, RESOURCE_STATE_DEPTH_WRITE, RESOURCE_STATE_GENERIC_READ);
-
-	//ToneMapps
-	std::shared_ptr<BackBufferRT> backBufferRT = mBackBufferRT->mBackBufferRT;
-	rhi->TransResourBarrier(backBufferRT->mSwapChainBuffer[backBufferRT->CurrentBackBufferRT].get(), 1, RESOURCE_STATE_PRESENT, RESOURCE_STATE_RENDER_TARGET);
-	rhi->SetRenderTargets(1, backBufferRT->GetCurrentBackBufferHandle(), false, backBufferRT->GetCurrentBackDepthStencilBufferHandle());
-	rhi->BeginDraw(mBackBufferRT, "ToneMappsPass", false);
-	rhi->SetPrimitive("tonemapps_pso", mBloomPP->fPrimitive);
-	rhi->UploadResourceTable(0, mSceneColorRT->GetRTDesc(RTColorBuffer).rtTexture->GetSrvIndex());
-	rhi->UploadResourceTable(1, mBloomPP->GetBloomSunmergepsRT()->GetRTDesc(RTColorBuffer).rtTexture->GetSrvIndex());
-	rtSize.x = (int)backBufferRT->mViewport.Width;
-	rtSize.y = (int)backBufferRT->mViewport.Height;
-	rhi->UploadResourceConstants(2, 2, &rtSize, 0);
-	rhi->DrawFPrimitive(*mBloomPP->fPrimitive);
 	rhi->EndPass();
-	rhi->TransResourBarrier(backBufferRT->mSwapChainBuffer[backBufferRT->CurrentBackBufferRT].get(), 1, RESOURCE_STATE_RENDER_TARGET, RESOURCE_STATE_PRESENT);
+
+	//Blend
+	if (mBlendBufferRT->currentResourceRT == -1)
+	{
+		BlendPass(mBlendBufferRT->mBlendRT[mBlendBufferRT->currentBlendRT], mBloomPP->GetBloomSunmergepsRT(), mSceneColorRT, "BlendBloomPass");
+		mBlendBufferRT->SwapBlendRT();
+	}
+	else
+	{
+		BlendPass(mBlendBufferRT->mBlendRT[mBlendBufferRT->currentBlendRT], mBloomPP->GetBloomSunmergepsRT(), mBlendBufferRT->mBlendRT[mBlendBufferRT->currentResourceRT], "BlendBloomPass");
+		mBlendBufferRT->SwapBlendRT();
+	}
 }
 
 void ForwardRenderer::CyberpunkPass()
 {
 	//Punk Pass
-	rhi->TransResourBarrier(mCyberpunkRT->GetCyberpunkRT()->ColorResource(0).get(), 1, RESOURCE_STATE_PRESENT, RESOURCE_STATE_RENDER_TARGET);
-	rhi->TransResourBarrier(mCyberpunkRT->GetCyberpunkRT()->DSResource().get(), 1, RESOURCE_STATE_GENERIC_READ, RESOURCE_STATE_DEPTH_WRITE);
-	rhi->SetRenderTargets(1, mCyberpunkRT->GetCyberpunkRT()->Rtv(0), false, mCyberpunkRT->GetCyberpunkRT()->Dsv());
-	rhi->BeginDraw(mCyberpunkRT->GetCyberpunkRT(), "Cyberpunk", false);
-	rhi->SetPrimitive("cyberpunk_pso", mCyberpunkRT->fPrimitive);
-	rhi->UploadResourceTable(0, mSceneColorRT->GetRTDesc(RTColorBuffer).rtTexture->GetSrvIndex());
-	FVector2DInt rtSize;
-	rtSize.x = mSceneColorRT->Width();
-	rtSize.y = mSceneColorRT->Height();
-	rhi->UploadResourceConstants(1, 2, &rtSize, 0);
-	rhi->DrawFPrimitive(*mCyberpunkRT->fPrimitive);
+	//Blend
+	rhi->BeginPass("BlendCyberpunkPass");
+	if (mBlendBufferRT->currentResourceRT == -1)
+	{
+		rhi->TransResourBarrier(mBlendBufferRT->mBlendRT[mBlendBufferRT->currentBlendRT]->ColorResource(0).get(), 1, RESOURCE_STATE_COMMON, RESOURCE_STATE_RENDER_TARGET);
+		rhi->TransResourBarrier(mBlendBufferRT->mBlendRT[mBlendBufferRT->currentBlendRT]->DSResource().get(), 1, RESOURCE_STATE_GENERIC_READ, RESOURCE_STATE_DEPTH_WRITE);
+		rhi->SetRenderTargets(1, mBlendBufferRT->mBlendRT[mBlendBufferRT->currentBlendRT]->Rtv(0), false, mBlendBufferRT->mBlendRT[mBlendBufferRT->currentBlendRT]->Dsv());
+		rhi->BasePrepare(mBlendBufferRT->mBlendRT[mBlendBufferRT->currentBlendRT], false);
+		rhi->SetPrimitive("cyberpunk_pso", mCyberpunkRT->fPrimitive);
+		rhi->UploadResourceTable(0, mSceneColorRT->GetRTDesc(RTColorBuffer).rtTexture->GetSrvIndex());
+		FVector2DInt rtSize;
+		rtSize.x = mSceneColorRT->Width();
+		rtSize.y = mSceneColorRT->Height();
+		rhi->UploadResourceConstants(1, 2, &rtSize, 0);
+		rhi->DrawFPrimitive(*mCyberpunkRT->fPrimitive);
+		rhi->TransResourBarrier(mBlendBufferRT->mBlendRT[mBlendBufferRT->currentBlendRT]->ColorResource(0).get(), 1, RESOURCE_STATE_RENDER_TARGET, RESOURCE_STATE_COMMON);
+		rhi->TransResourBarrier(mBlendBufferRT->mBlendRT[mBlendBufferRT->currentBlendRT]->DSResource().get(), 1, RESOURCE_STATE_DEPTH_WRITE, RESOURCE_STATE_GENERIC_READ);
+		mBlendBufferRT->SwapBlendRT();
+	}
+	else
+	{
+		rhi->TransResourBarrier(mBlendBufferRT->mBlendRT[mBlendBufferRT->currentBlendRT]->ColorResource(0).get(), 1, RESOURCE_STATE_COMMON, RESOURCE_STATE_RENDER_TARGET);
+		rhi->TransResourBarrier(mBlendBufferRT->mBlendRT[mBlendBufferRT->currentBlendRT]->DSResource().get(), 1, RESOURCE_STATE_GENERIC_READ, RESOURCE_STATE_DEPTH_WRITE);
+		rhi->SetRenderTargets(1, mBlendBufferRT->mBlendRT[mBlendBufferRT->currentBlendRT]->Rtv(0), false, mBlendBufferRT->mBlendRT[mBlendBufferRT->currentBlendRT]->Dsv());
+		rhi->BasePrepare(mBlendBufferRT->mBlendRT[mBlendBufferRT->currentBlendRT], false);
+		rhi->SetPrimitive("cyberpunk_pso", mCyberpunkRT->fPrimitive);
+		rhi->UploadResourceTable(0, mBlendBufferRT->mBlendRT[mBlendBufferRT->currentResourceRT]->GetRTDesc(RTColorBuffer).rtTexture->GetSrvIndex());
+		FVector2DInt rtSize;
+		rtSize.x = mBlendBufferRT->mBlendRT[mBlendBufferRT->currentResourceRT]->Width();
+		rtSize.y = mBlendBufferRT->mBlendRT[mBlendBufferRT->currentResourceRT]->Height();
+		rhi->UploadResourceConstants(1, 2, &rtSize, 0);
+		rhi->DrawFPrimitive(*mCyberpunkRT->fPrimitive);
+		rhi->TransResourBarrier(mBlendBufferRT->mBlendRT[mBlendBufferRT->currentBlendRT]->ColorResource(0).get(), 1, RESOURCE_STATE_RENDER_TARGET, RESOURCE_STATE_COMMON);
+		rhi->TransResourBarrier(mBlendBufferRT->mBlendRT[mBlendBufferRT->currentBlendRT]->DSResource().get(), 1, RESOURCE_STATE_DEPTH_WRITE, RESOURCE_STATE_GENERIC_READ);
+		mBlendBufferRT->SwapBlendRT();
+	}
 	rhi->EndPass();
-	rhi->TransResourBarrier(mCyberpunkRT->GetCyberpunkRT()->ColorResource(0).get(), 1, RESOURCE_STATE_RENDER_TARGET, RESOURCE_STATE_PRESENT);
-	rhi->TransResourBarrier(mCyberpunkRT->GetCyberpunkRT()->DSResource().get(), 1, RESOURCE_STATE_DEPTH_WRITE, RESOURCE_STATE_GENERIC_READ);
-
-	//ToneMapps
-	std::shared_ptr<BackBufferRT> backBufferRT = mBackBufferRT->mBackBufferRT;
-	rhi->TransResourBarrier(backBufferRT->mSwapChainBuffer[backBufferRT->CurrentBackBufferRT].get(), 1, RESOURCE_STATE_PRESENT, RESOURCE_STATE_RENDER_TARGET);
-	rhi->SetRenderTargets(1, backBufferRT->GetCurrentBackBufferHandle(), false, backBufferRT->GetCurrentBackDepthStencilBufferHandle());
-	rhi->BeginDraw(mBackBufferRT, "ToneMappsPass", false);
-	rhi->SetPrimitive("tonemapps_pso", mBloomPP->fPrimitive);
-	rhi->UploadResourceTable(0, mSceneColorRT->GetRTDesc(RTColorBuffer).rtTexture->GetSrvIndex());
-	rhi->UploadResourceTable(1, mCyberpunkRT->GetCyberpunkRT()->GetRTDesc(RTColorBuffer).rtTexture->GetSrvIndex());
-	rtSize.x = (int)backBufferRT->mViewport.Width;
-	rtSize.y = (int)backBufferRT->mViewport.Height;
-	rhi->UploadResourceConstants(2, 2, &rtSize, 0);
-	rhi->DrawFPrimitive(*mCyberpunkRT->fPrimitive);
-	rhi->EndPass();
-	rhi->TransResourBarrier(backBufferRT->mSwapChainBuffer[backBufferRT->CurrentBackBufferRT].get(), 1, RESOURCE_STATE_RENDER_TARGET, RESOURCE_STATE_PRESENT);
 }

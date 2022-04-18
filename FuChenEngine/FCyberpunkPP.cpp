@@ -26,9 +26,9 @@ FCyberpunkPP::~FCyberpunkPP()
 void FCyberpunkPP::InitCyberpunkRTs()
 {
 	RHI::Get()->InitPPRT(mCyberpunkRT, RESOURCE_FORMAT::FORMAT_R16G16B16A16_FLOAT);
-	RHI::Get()->PrepareForRender("");
+	//RHI::Get()->PrepareForRender("");
 	fPrimitive = RHI::Get()->CreatePrimitiveByVerticesAndIndices(vertices, indices);
-	RHI::Get()->EndPrepare();
+	//RHI::Get()->EndPrepare();
 }
 
 std::shared_ptr<FRenderTarget>& FCyberpunkPP::GetCyberpunkRT()

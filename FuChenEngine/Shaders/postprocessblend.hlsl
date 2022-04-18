@@ -1,6 +1,7 @@
-#include <tonemapps.hlsli>
+#include <postprocessblend.hlsli>
 
 Texture2D gSceneColor : register(t0);
+Texture2D gBlend : register(t1);
 
 SamplerState gSceneColorSampler : register(s0);
 
@@ -15,18 +16,6 @@ struct VertexOut
 {
 	float4 PosH  : SV_POSITION;
 };
-
-float3 ACESToneMapping(float3 color, float adapted_lum)
-{
-	const float A = 2.51f;
-	const float B = 0.03f;
-	const float C = 2.43f;
-	const float D = 0.59f;
-	const float E = 0.14f;
-
-	color *= adapted_lum;
-	return (color * (A * color + B)) / (color * (C * color + D) + E);
-}
 
 [RootSignature(FuChenSample_BloomSig)]
 VertexOut VS(VertexIn vin)
@@ -46,12 +35,11 @@ float4 PS(VertexOut pin) : SV_Target
 	Tex.y = 1.0f * Y / RenderTargetSize[1];
 
 	float4 SceneColor = gSceneColor.Sample(gSceneColorSampler, Tex);
+	float4 BlendColor = gBlend.Sample(gSceneColorSampler, Tex);
 
-	half3 LinearColor = SceneColor.rgb;
+	half3 LinearColor = SceneColor.rgb + BlendColor.rgb;
 
-	float4 OutColor = float4(0.0f, 0.0f, 0.0f, 0.0f);
-	OutColor.rgb = ACESToneMapping(LinearColor, 0.75f);
-	OutColor.a = SceneColor.a;
+	float4 OutColor = float4(LinearColor, SceneColor.a);
 
 	return OutColor;
 }

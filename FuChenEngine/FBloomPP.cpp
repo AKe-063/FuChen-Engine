@@ -50,9 +50,9 @@ void FBloomPP::InitBloomRTs()
 	{
 		RHI::Get()->InitPPRT(mBloomUpRT[i], RESOURCE_FORMAT::FORMAT_R11G11B10_FLOAT);
 	}
-	RHI::Get()->PrepareForRender("");
+	//RHI::Get()->PrepareForRender("");
 	fPrimitive = RHI::Get()->CreatePrimitiveByVerticesAndIndices(vertices, indices);
-	RHI::Get()->EndPrepare();
+	//RHI::Get()->EndPrepare();
 }
 
 std::shared_ptr<FRenderTarget>& FBloomPP::GetBloomSetUpRT()

@@ -5,6 +5,7 @@
 #include "FShader.h"
 #include "FBloomPP.h"
 #include "FCyberpunkPP.h"
+#include "FBlendBufferRT.h"
 
 class ForwardRenderer : public FRenderer
 {
@@ -21,6 +22,8 @@ protected:
 	void ShadowPass();
 	void SceneColorPass();
 	void PostProcessPass(POST_PROCESS_TYPE ppType);
+	void ToneMappsPass();
+	void BlendPass(std::shared_ptr<FRenderTarget>& mRT, std::shared_ptr<FRenderTarget>& mBlendResourceRT, std::shared_ptr<FRenderTarget>& mBlendBaseRT, const std::string& passName);
 
 	//PostProcessPass
 	void BloomPass();
@@ -36,4 +39,5 @@ private:
 	std::shared_ptr<FShaderManager> fShaderManager;
 	std::shared_ptr<FRenderTarget> mBackBufferRT;
 	std::shared_ptr<FCyberpunkPP> mCyberpunkRT;
+	std::shared_ptr<FBlendBufferRT> mBlendBufferRT;
 };
